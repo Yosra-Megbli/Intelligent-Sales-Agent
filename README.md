@@ -1,0 +1,105 @@
+# Sophie — Agent IA de vente Ecofix
+
+Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'électricité et de gaz Ecofix : elle engage la conversation, répond aux objections, collecte et valide les informations nécessaires, puis transmet les leads qualifiés à l'équipe commerciale humaine.
+
+## Statut du projet
+
+**Sophie qualifie des leads et les transmet à un commercial humain. Elle ne génère pas encore de contrat signé.**
+
+Le cycle de vie d'un lead (`domain/enums.py::LeadStatus`) prévoit des statuts `CONTRACT` et `CUSTOMER` pour une vente entièrement conclue, mais rien dans le code actuel ne les atteint. Le parcours réellement implémenté est :
+
+```
+QUALIFIED → (transfert humain déclenché) → APPOINTMENT
+```
+
+Génération de contrat, signature électronique et envoi de confirmation **ne sont pas implémentés** dans cette version. Toute métrique du dashboard intitulée "conversion" ou "vente" reflète une qualification, pas une vente conclue — voir `application/dashboard_service.py`.
+
+## Architecture
+
+```
+backend/                      API Python/FastAPI
+├── domain/                   Modèles métier (Lead, Conversation, Message, Campaign, Activity) + enums
+├── conversation_engine/      State machine pure + Rules Engine (YAML) + Intent Classifier + Dialogue Policy
+├── business_rules/           Règles déclaratives en YAML (qualification, validation, follow-up...)
+├── ai/                       Abstraction LLM (Groq), extraction, génération de réponse, RAG
+├── prompts/                  Prompts en Markdown/YAML (jamais codés en dur en Python)
+├── crm/                      Repositories (leads, conversations, activités, campagnes)
+├── channels/                 Adaptateurs par canal (Web, Telegram ; WhatsApp/Voice prêts, non activés)
+├── outbound/                 Moteur de campagnes sortantes
+├── followup/                 Détection de silence + relances automatiques
+├── api/                      Routes FastAPI, sécurité (clé API, rate limiting, CORS)
+├── application/              Services applicatifs (orchestrent domain + conversation_engine + crm)
+├── dashboard/                Build compilé du dashboard React, servi en statique par FastAPI
+├── docs/                     Documentation d'architecture (state machine, decisions techniques)
+└── tests/ + golden_tests/    Suite de tests unitaires/intégration + scénarios de conversation bout-en-bout
+
+frontend/
+├── artifacts/sophie-dashboard/   Dashboard React (Vite + Tailwind + shadcn/ui + TanStack Query)
+├── artifacts/api-server/         Proxy Node/Express (prod) : masque la clé API au navigateur
+└── lib/                          Client API généré depuis lib/api-spec/openapi.yaml
+```
+
+**Principe central** : le moteur métier (state machine + règles YAML) décide seul de l'état de la conversation et du statut du lead. Le LLM ne fait que formuler les réponses en langage naturel — il ne décide jamais d'une transition d'état ni d'une qualification.
+
+## Stack technique
+
+- Backend : Python 3.12+, FastAPI, SQLAlchemy, PostgreSQL (SQLite pour les tests), Redis
+- IA : Groq (`openai/gpt-oss-120b` par défaut), abstraction `LLMProvider` remplaçable
+- Frontend : React, Vite, TypeScript, Tailwind v4, shadcn/ui, TanStack Query
+- Tests : Pytest (522 tests unitaires/intégration + scénarios golden)
+
+## Démarrage rapide — backend
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate      # Windows : .venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env           # puis renseigner GROQ_API_KEY, DATABASE_URL, etc.
+uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+- Documentation API interactive : http://127.0.0.1:8000/docs
+- Healthcheck : http://127.0.0.1:8000/health
+
+## Démarrage rapide — dashboard React
+
+```bash
+cd frontend
+pnpm install
+pnpm --filter sophie-dashboard dev   # http://localhost:5173, proxy /api -> localhost:8001
+```
+
+En production, le dashboard passe par `frontend/artifacts/api-server` (proxy Node/Express) qui injecte la clé API côté serveur, pour ne jamais l'exposer au navigateur.
+
+## Tests
+
+```bash
+cd backend
+pytest tests/ golden_tests/ -v
+```
+
+## Canaux
+
+| Canal | Statut |
+|---|---|
+| Telegram | Actif et testé — canal du pilote |
+| Web (widget) | Actif et testé |
+| WhatsApp Business | Architecturé et testé (`channels/whatsapp.py`, signature Twilio), non activé pour le pilote actuel |
+| Appel vocal | Architecture complète documentée (`docs/architecture/voice_agent_architecture.md`), STT/TTS Twilio codés, non déployés en direct |
+| SMS, Messenger, Instagram | Non implémentés — roadmap |
+
+## Sécurité
+
+- Toutes les routes API sensibles (conversations, dashboard, campagnes) protégées par une clé `X-API-Key` (comparaison à temps constant)
+- Webhook Telegram vérifié par secret partagé
+- CORS désactivé par défaut (safe-by-default), à configurer explicitement via `CORS_ALLOWED_ORIGINS`
+- Rate limiting appliqué par conversation/IP
+- ⚠️ Par défaut, si `API_KEY` n'est pas configurée, l'authentification est désactivée avec un avertissement en log — à configurer avant tout déploiement réel
+
+## Limites connues du MVP actuel
+
+- Pas de génération/signature de contrat automatique (roadmap)
+- Pas de canal SMS, Messenger, Instagram, Meta Ads (roadmap)
+- WhatsApp et Voice sont architecturés mais non activés dans le pilote (voir tableau des canaux)
+- Néerlandais/Anglais : à confirmer/étendre selon les besoins du pilote (le français est le canal principal actuellement testé)

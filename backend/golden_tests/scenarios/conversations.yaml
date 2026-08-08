@@ -1,0 +1,452 @@
+# Golden Dataset — full, multi-turn conversation scenarios.
+#
+# Each scenario replays a realistic sequence of customer messages through
+# ConversationEngine.process_turn() (conversation_engine/engine.py) and
+# checks the ConversationState + required_action after EVERY turn - not
+# just the final outcome. This is the "conversation, not message" layer the
+# audit called for: it catches state-tracking bugs a single-message test
+# never could (wrong field asked next, a detour that doesn't resume, a
+# rejection that doesn't stick, etc).
+#
+# In the default (fake-provider) pytest run, each turn's `expected_event_type`
+# /`expected_entities` is what the provider is scripted to return - i.e.
+# this suite assumes perfect extraction and tests the deterministic engine
+# wiring underneath it (state machine + rules + dialogue policy). It will
+# NOT catch the LLM misreading a message; that is exactly what
+# run_real_llm_eval.py --conversations is for, using this same file against
+# the real provider.
+#
+# A turn with `system_event` (no `input`) is not a customer message: it
+# represents a server-triggered re-entry into the engine with a plain event,
+# the same pattern application/conversation_service.py already uses for
+# QUALIFICATION_ADVANCE (QUALIFIED -> HANDOFF). See the note on
+# `conv_full_happy_path`'s DATA_VALIDATION turn for why one is needed there.
+
+scenarios:
+
+  - id: conv_full_happy_path
+    category: full_conversation
+    description: >
+      A cooperative Wallonie customer who answers every question in order
+      and reaches HANDOFF (qualified). The main-line path every other
+      scenario is a variation of.
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+
+      - input: "Je voudrais changer de fournisseur d'électricité"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+
+      - input: "Oui, je confirme"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+        expected_action_after: ASK_CUSTOMER_TYPE
+
+      - input: "Je suis un particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+        expected_action_after: ASK_LOCATION
+
+      - input: "J'habite à Bruxelles"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {region: "Bruxelles", city: "Bruxelles"}
+        expected_state_after: COLLECT_SUPPLIER
+        expected_action_after: ASK_SUPPLIER
+
+      - input: "Je suis actuellement chez Luminus"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {current_supplier: "Luminus"}
+        expected_state_after: COLLECT_CONTACT
+        expected_action_after: ASK_CONTACT
+
+      - input: "Marie Dubois, marie.dubois@gmail.com, 0488112233"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities:
+          first_name: "Marie"
+          last_name: "Dubois"
+          email: "marie.dubois@gmail.com"
+          phone: "0488112233"
+        expected_state_after: COLLECT_EAN
+        expected_action_after: ASK_EAN
+
+      - input: "Mon EAN est 541448911001234567"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {ean: "541448911001234567"}
+        expected_state_after: DATA_VALIDATION
+
+      - system_event: CUSTOMER_MESSAGE
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: QUALIFIED
+        expected_action_after: SEND_QUALIFIED_CONFIRMATION
+        notes: >
+          FINDING: reaching DATA_VALIDATION does not run decide_validation()
+          by itself - state_machine.py only evaluates it on the *next*
+          process_turn call (see current_state==DATA_VALIDATION branch).
+          application/conversation_service.py auto-chains this for
+          QUALIFIED->HANDOFF (QUALIFICATION_ADVANCE, F-011 fix) but has no
+          equivalent chain for COLLECT_EAN->DATA_VALIDATION. In production
+          this turn only happens once the customer sends one more message
+          (of any kind) - Sophie does not proactively validate right after
+          the EAN is given. Worth confirming with product owner whether
+          that's intended or a second F-011-style gap.
+
+      - system_event: QUALIFICATION_ADVANCE
+        expected_event_type: QUALIFICATION_ADVANCE
+        expected_entities: {}
+        expected_state_after: HANDOFF
+        expected_action_after: NOTIFY_SALES_TEAM
+
+  - id: conv_price_question_detour_then_resume
+    category: full_conversation
+    description: >
+      Customer asks a neutral price QUESTION mid-qualification, then
+      continues answering normally - checks the FAQ detour returns exactly
+      to the field it interrupted (dialogue_policy resume).
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je veux changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+      - input: "Particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+      - input: "Au fait, c'est gratuit de changer ?"
+        expected_event_type: QUESTION
+        expected_entities: {}
+        expected_state_after: FAQ
+        expected_action_after: ANSWER_FAQ
+        notes: "Mid-COLLECT_LOCATION detour - must remember_previous=True."
+      - input: "D'accord, merci"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: COLLECT_LOCATION
+        expected_action_after: NONE
+        notes: "FAQ resumes to COLLECT_LOCATION (resume_previous), not INTENT_CONFIRMATION or DISCOVERY."
+      - input: "Namur, en Wallonie"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {city: "Namur", region: "Wallonie"}
+        expected_state_after: COLLECT_SUPPLIER
+        notes: "Qualification genuinely continued from where it left off."
+
+  - id: conv_price_objection_detour_then_resume
+    category: full_conversation
+    description: "Same as above but with a genuine OBJECTION instead of a QUESTION."
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je veux changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+      - input: "Particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+      - input: "En fait c'est trop cher, je ne suis pas sûr de vouloir continuer."
+        expected_event_type: OBJECTION
+        expected_entities: {}
+        expected_state_after: OBJECTION
+        expected_action_after: ANSWER_OBJECTION
+      - input: "Bon d'accord, on continue."
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: COLLECT_LOCATION
+        expected_action_after: NONE
+
+  - id: conv_out_of_coverage_rejection
+    category: full_conversation
+    description: "Customer outside Wallonie/Flandre/Bruxelles is rejected at DATA_VALIDATION, not silently stuck."
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je veux changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+      - input: "Particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+      - input: "Lille, dans le Nord de la France"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {city: "Lille"}
+        expected_state_after: COLLECT_SUPPLIER
+        notes: "Region left null (customer only named a city Ecofix doesn't recognize) - still advances; coverage is judged later, not here."
+      - input: "EDF actuellement"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {current_supplier: "EDF"}
+        expected_state_after: COLLECT_CONTACT
+      - input: "Paul Martin, paul.martin@test.fr, 0611223344"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {first_name: "Paul", last_name: "Martin", email: "paul.martin@test.fr", phone: "0611223344"}
+        expected_state_after: COLLECT_EAN
+        notes: "Phone doesn't match the BE pattern either, but that's DATA_VALIDATION's job to catch, not extraction."
+      - input: "123456789012345678"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {ean: "123456789012345678"}
+        expected_state_after: DATA_VALIDATION
+      - system_event: CUSTOMER_MESSAGE
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: REJECTED
+        expected_action_after: SEND_REJECTION
+        notes: "region is null (not in ALLOWED_REGIONS) -> OUT_OF_COVERAGE, checked first in decide_validation() before email/phone/EAN."
+
+  - id: conv_change_of_mind_no
+    category: full_conversation
+    description: "Customer shows only mild interest, then explicitly declines when Sophie asks."
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je me renseigne juste"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: DISCOVERY
+        expected_action_after: ASK_INTENT
+        notes: "Corrected from an earlier version of this scenario (was: expected_state_after INTENT_CONFIRMATION). A generic CUSTOMER_MESSAGE from GREETING deliberately does NOT skip straight to INTENT_CONFIRMATION (see state_machine.py's GREETING branch comment) - only an unambiguous PROVIDE_INFORMATION/CHANGE_INTENT_YES/CHANGE_INTENT_NO does. This scenario predated that fix; its own assertion caught the mismatch (test_full_conversation[conv_change_of_mind_no]) once the fix landed and the scenario was never updated to match."
+      - input: "Non merci, je ne veux pas changer."
+        expected_event_type: CHANGE_INTENT_NO
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+        expected_action_after: CONFIRM_INTENT
+        notes: "DISCOVERY's CHANGE_INTENT_NO always routes to the formal INTENT_CONFIRMATION step first (F-001) - it never jumps straight to REJECTED from here, even though the customer's answer is already unambiguous. Sophie still asks the explicit yes/no confirmation."
+      - input: "Non, vraiment pas."
+        expected_event_type: CHANGE_INTENT_NO
+        expected_entities: {}
+        expected_state_after: REJECTED
+        expected_action_after: SEND_REJECTION
+        notes: "Only from INTENT_CONFIRMATION itself does CHANGE_INTENT_NO produce the REJECTED/SEND_REJECTION transition."
+      - input: "Ok au revoir"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: CLOSED
+        expected_action_after: NONE
+        notes: "REJECTED is one-turn-then-terminal - any further message closes the conversation."
+
+  - id: conv_request_human_mid_qualification
+    category: full_conversation
+    description: "Customer asks for a human partway through qualification - must hand off immediately, from any state."
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je veux changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+      - input: "Particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+      - input: "Écoutez, je préfère parler directement à quelqu'un."
+        expected_event_type: REQUEST_HUMAN
+        expected_entities: {}
+        expected_state_after: HANDOFF
+        expected_action_after: NOTIFY_HUMAN
+      - input: "Vous êtes toujours là ?"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: HANDOFF
+        expected_action_after: STILL_WAITING_FOR_HUMAN
+        notes: "F-016 fix - HANDOFF must reassure, never silently close on one more message."
+
+  - id: conv_invalid_ean_then_corrected
+    category: full_conversation
+    description: "Customer mistypes the EAN (wrong length); Sophie must ask for a correction, not reject or silently accept."
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je veux changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+      - input: "Particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+      - input: "Charleroi, Wallonie"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {city: "Charleroi", region: "Wallonie"}
+        expected_state_after: COLLECT_SUPPLIER
+      - input: "Total Energies"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {current_supplier: "Total Energies"}
+        expected_state_after: COLLECT_CONTACT
+      - input: "Sophie Leroy, sophie.leroy@test.com, 0499001122"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities:
+          first_name: "Sophie"
+          last_name: "Leroy"
+          email: "sophie.leroy@test.com"
+          phone: "0499001122"
+        expected_state_after: COLLECT_EAN
+      - input: "541234"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {ean: "541234"}
+        expected_state_after: DATA_VALIDATION
+        notes: "Only 6 digits, not the required 18 - extractor still captures it as-is."
+      - system_event: CUSTOMER_MESSAGE
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: COLLECT_EAN
+        expected_action_after: ASK_EAN_CORRECTION
+        notes: "validate_ean() fails on length -> CORRECT_FIELD(ean), routes back to COLLECT_EAN, not REJECTED."
+      - input: "Pardon, le bon EAN est 541448911001234567"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {ean: "541448911001234567"}
+        expected_state_after: DATA_VALIDATION
+      - system_event: CUSTOMER_MESSAGE
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: QUALIFIED
+        expected_action_after: SEND_QUALIFIED_CONFIRMATION
+
+  - id: conv_excessive_detours_escalate_to_human
+    category: full_conversation
+    description: >
+      Customer keeps derailing into FAQ/OBJECTION without ever progressing
+      qualification - after max_consecutive_detours (3, per
+      business_rules/dialogue_policy.yaml) Sophie must hand off instead of
+      resuming forever.
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je veux changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+      - input: "C'est gratuit ?"
+        expected_event_type: QUESTION
+        expected_entities: {}
+        expected_state_after: FAQ
+        notes: "detour 1/3"
+      - input: "Et c'est fiable comme entreprise ?"
+        expected_event_type: QUESTION
+        expected_entities: {}
+        expected_state_after: FAQ
+        notes: >
+          FINDING: a second QUESTION arriving while already in FAQ never
+          goes through the resume branch at all - state_machine.py checks
+          the QUESTION global override BEFORE the FAQ/OBJECTION
+          resume-or-escalate branch, for every state including FAQ/OBJECTION
+          themselves. So this turn's transition_state(remember_previous=True)
+          sets conversation.previous_state = conversation.current_state, but
+          current_state is already FAQ here - it overwrites the real
+          previous_state (COLLECT_CUSTOMER_TYPE) with FAQ. Detour count
+          still increments correctly (2/3) so this scenario's HANDOFF ending
+          is unaffected, but a customer who eventually stopped detouring
+          would resume into FAQ instead of COLLECT_CUSTOMER_TYPE - silently
+          losing their qualification progress. Worth a fix in
+          conversation_repository.transition_state or the global-override
+          ordering in state_machine.py.
+      - input: "En fait je ne suis pas sûr, c'est peut-être trop cher."
+        expected_event_type: OBJECTION
+        expected_entities: {}
+        expected_state_after: OBJECTION
+        notes: "detour 3/3 - about to hit max_consecutive_detours"
+      - input: "Bref."
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: HANDOFF
+        expected_action_after: NOTIFY_HUMAN
+        notes: "dialogue_policy.decide_after_detour() escalates instead of resuming a 4th time."
+
+  - id: conv_duplicate_lead_rejection
+    category: full_conversation
+    description: >
+      A second lead qualifies with the same email as an existing lead -
+      F-003 fix (find_duplicate) must reject it at DATA_VALIDATION rather
+      than qualifying the same person twice.
+    setup:
+      existing_lead: {email: "existing.customer@test.com", phone: "0470000000"}
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je veux changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+      - input: "Particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+      - input: "Liège, Wallonie"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {city: "Liège", region: "Wallonie"}
+        expected_state_after: COLLECT_SUPPLIER
+      - input: "Engie"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {current_supplier: "Engie"}
+        expected_state_after: COLLECT_CONTACT
+      - input: "Alex Dupont, existing.customer@test.com, 0470000000"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities:
+          first_name: "Alex"
+          last_name: "Dupont"
+          email: "existing.customer@test.com"
+          phone: "0470000000"
+        expected_state_after: COLLECT_EAN
+        notes: "Same email+phone as the pre-existing lead created in `setup`."
+      - input: "541448911001234567"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {ean: "541448911001234567"}
+        expected_state_after: DATA_VALIDATION
+      - system_event: CUSTOMER_MESSAGE
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: REJECTED
+        expected_action_after: SEND_REJECTION
+        notes: "duplicate check runs before email/phone/EAN format checks, per rules.decide_validation()."

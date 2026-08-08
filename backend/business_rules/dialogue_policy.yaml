@@ -1,0 +1,9 @@
+# Dialogue Policy — Sophie (Ecofix)
+#
+# Declarative only (no expressions/logic - see architecture review). The
+# policy code in conversation_engine/dialogue_policy.py reads this value.
+
+# After this many consecutive FAQ/OBJECTION detours without the customer
+# moving qualification forward, escalate to a human instead of continuing
+# to resume the same collection step.
+max_consecutive_detours: 3

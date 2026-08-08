@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+    "outDir": "dist",
+    "noEmit": true
+  },
+  "references": [
+    {
+      "path": "../../lib/api-zod"
+    }
+  ]
+}

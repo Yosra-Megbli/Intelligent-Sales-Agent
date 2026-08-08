@@ -1,0 +1,27 @@
+# Qualification Rules — Sophie (Ecofix Energy)
+#
+# This file is the single source of truth for what data is required to
+# qualify a lead, and in what order it should be collected. Changing the
+# business rules should mean editing this file, not the Python engine code
+# or any LLM prompt.
+
+required_fields_order:
+  - customer_type      # particulier / professionnel
+  - location            # region + city
+  - current_supplier
+  - contact              # first_name, last_name, email, phone
+  - ean                  # asked last on purpose: sensitive data, after trust
+
+coverage:
+  allowed_regions:
+    - Wallonie
+    - Flandre
+    - Bruxelles
+
+rejection_reasons:
+  - NO_INTENT
+  - NO_CHANGE_INTENT
+  - OUT_OF_COVERAGE
+  - INVALID_CUSTOMER
+  - DUPLICATE_LEAD
+  - REQUEST_HUMAN_ONLY

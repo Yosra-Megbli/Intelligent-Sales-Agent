@@ -1,0 +1,26 @@
+# --- Python (backend/) ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+*.db
+*.sqlite3
+
+# --- Secrets ---
+.env
+.env.local
+*.pem
+
+# --- Node / frontend ---
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+.vite/
+
+# --- OS / editor ---
+.DS_Store
+.vscode/
+.idea/

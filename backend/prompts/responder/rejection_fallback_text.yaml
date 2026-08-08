@@ -1,0 +1,9 @@
+# Rejection fallback text (French) — Sophie (Response Generator)
+# Used when the LLM call fails or no provider is configured.
+
+NO_INTENT: "Je comprends, merci pour votre temps. N'hesitez pas a revenir vers nous si vous changez d'avis."
+NO_CHANGE_INTENT: "D'accord, merci pour votre temps et bonne continuation."
+OUT_OF_COVERAGE: "Malheureusement, Ecofix ne dessert pas encore votre region. Merci pour votre interet."
+INVALID_CUSTOMER: "Nous ne pouvons malheureusement pas donner suite avec les informations fournies. Merci pour votre temps."
+DUPLICATE_LEAD: "Nous avons deja un dossier actif a votre nom, un collegue va vous recontacter."
+REQUEST_HUMAN_ONLY: "Bien note, un collegue va vous contacter directement."

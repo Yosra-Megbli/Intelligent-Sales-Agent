@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecofix-postgres
+    restart: unless-stopped
+    environment:
+      # These MUST match database/postgres.py's DATABASE_URL default
+      # (postgresql+psycopg2://ecofix:ecofix@localhost:5433/ecofix_sophie).
+      # The host port is changed to 5433 to avoid conflicts with any local
+      # PostgreSQL service that may also bind to 5432.
+      POSTGRES_USER: ecofix
+      POSTGRES_PASSWORD: ecofix
+      POSTGRES_DB: ecofix_sophie
+    ports:
+      - "5433:5432"
+    volumes:
+      - ecofix_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecofix -d ecofix_sophie"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ecofix-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - ecofix_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ecofix_postgres_data:
+  ecofix_redis_data:

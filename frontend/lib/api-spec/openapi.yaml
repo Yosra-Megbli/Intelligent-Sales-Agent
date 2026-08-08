@@ -1,0 +1,594 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Sophie — Ecofix AI Sales Agent Dashboard API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: overview
+    description: Dashboard overview and statistics
+  - name: leads
+    description: Lead management
+  - name: campaigns
+    description: Campaign management and analytics
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard/overview:
+    get:
+      operationId: getOverview
+      tags: [overview]
+      summary: Get dashboard overview KPIs
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Overview stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Overview"
+
+  /dashboard/stats:
+    get:
+      operationId: getStats
+      tags: [overview]
+      summary: Get lead counts by status
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+      responses:
+        "200":
+          description: Stats summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsSummary"
+
+  /dashboard/leads:
+    get:
+      operationId: listLeads
+      tags: [leads]
+      summary: List leads with optional filters
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: status
+          in: query
+          required: false
+          schema: { type: string }
+        - name: region
+          in: query
+          required: false
+          schema: { type: string }
+        - name: source
+          in: query
+          required: false
+          schema: { type: string }
+        - name: search
+          in: query
+          required: false
+          schema: { type: string }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: number, default: 50 }
+        - name: offset
+          in: query
+          required: false
+          schema: { type: number, default: 0 }
+      responses:
+        "200":
+          description: Paginated list of leads
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadList"
+
+  /dashboard/leads/{leadId}:
+    get:
+      operationId: getLeadDetail
+      tags: [leads]
+      summary: Get lead detail with conversations and activity
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: leadId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Lead detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeadDetail"
+        "404":
+          description: Not found
+
+  /campaigns:
+    get:
+      operationId: listCampaigns
+      tags: [campaigns]
+      summary: List all campaigns
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: number, default: 50 }
+        - name: offset
+          in: query
+          required: false
+          schema: { type: number, default: 0 }
+      responses:
+        "200":
+          description: Paginated list of campaigns
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignList"
+    post:
+      operationId: createCampaign
+      tags: [campaigns]
+      summary: Create a new campaign
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampaignInput"
+      responses:
+        "201":
+          description: Created campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+
+  /campaigns/{campaignId}:
+    get:
+      operationId: getCampaign
+      tags: [campaigns]
+      summary: Get campaign detail with leads
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: campaignId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: leadsLimit
+          in: query
+          required: false
+          schema: { type: number, default: 50 }
+        - name: leadsOffset
+          in: query
+          required: false
+          schema: { type: number, default: 0 }
+      responses:
+        "200":
+          description: Campaign detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignDetail"
+        "404":
+          description: Not found
+
+  /campaigns/{campaignId}/analytics:
+    get:
+      operationId: getCampaignAnalytics
+      tags: [campaigns]
+      summary: Get campaign analytics (funnel counts and rates)
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: campaignId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Campaign analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampaignAnalytics"
+        "404":
+          description: Not found
+
+  /campaigns/{campaignId}/start:
+    post:
+      operationId: startCampaign
+      tags: [campaigns]
+      summary: Start a draft or paused campaign
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: campaignId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Updated campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Not found
+        "409":
+          description: Invalid transition
+
+  /campaigns/{campaignId}/pause:
+    post:
+      operationId: pauseCampaign
+      tags: [campaigns]
+      summary: Pause a running campaign
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: campaignId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Updated campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Not found
+        "409":
+          description: Invalid transition
+
+  /campaigns/{campaignId}/resume:
+    post:
+      operationId: resumeCampaign
+      tags: [campaigns]
+      summary: Resume a paused campaign
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: campaignId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Updated campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Not found
+        "409":
+          description: Invalid transition
+
+  /leads/import/preview:
+    post:
+      operationId: previewLeadImport
+      tags: [leads]
+      summary: Preview CSV lead import (dry-run)
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CsvImportInput"
+      responses:
+        "200":
+          description: Import preview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportPreview"
+
+  /leads/import:
+    post:
+      operationId: importLeads
+      tags: [leads]
+      summary: Import leads from CSV
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CsvImportInput"
+      responses:
+        "201":
+          description: Import report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportReport"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string }
+
+    Overview:
+      type: object
+      required:
+        - total_leads
+        - active_conversations
+        - active_campaigns
+        - contacted
+        - qualified
+        - rejected
+        - human_handoff
+        - conversion_rate
+      properties:
+        total_leads: { type: number }
+        active_conversations: { type: number }
+        active_campaigns: { type: number }
+        contacted: { type: number }
+        qualified: { type: number }
+        rejected: { type: number }
+        human_handoff: { type: number }
+        conversion_rate: { type: number }
+
+    StatsSummary:
+      type: object
+      required: [total_leads, by_status]
+      properties:
+        total_leads: { type: number }
+        by_status:
+          type: object
+          additionalProperties: { type: number }
+
+    Lead:
+      type: object
+      required: [id, source, status, created_at, updated_at]
+      properties:
+        id: { type: string }
+        first_name: { type: ["string", "null"] }
+        last_name: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        phone: { type: ["string", "null"] }
+        source: { type: string }
+        status: { type: string }
+        rejection_reason: { type: ["string", "null"] }
+        customer_type: { type: ["string", "null"] }
+        region: { type: ["string", "null"] }
+        city: { type: ["string", "null"] }
+        current_supplier: { type: ["string", "null"] }
+        provider: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
+        qualification_score: { type: ["number", "null"] }
+        next_follow_up_date: { type: ["string", "null"], format: date-time }
+        follow_up_category: { type: ["string", "null"] }
+        campaign_id: { type: ["string", "null"] }
+        campaign_name: { type: ["string", "null"] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    LeadList:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Lead" }
+        total: { type: number }
+        limit: { type: number }
+        offset: { type: number }
+
+    Conversation:
+      type: object
+      required: [id, channel, current_state, started_at, last_message_at]
+      properties:
+        id: { type: string }
+        channel: { type: string }
+        current_state: { type: string }
+        started_at: { type: string, format: date-time }
+        last_message_at: { type: string, format: date-time }
+
+    Activity:
+      type: object
+      required: [id, type, created_at]
+      properties:
+        id: { type: string }
+        type: { type: string }
+        details: { type: ["string", "null"] }
+        created_at: { type: string, format: date-time }
+
+    LeadDetail:
+      type: object
+      required: [lead, conversations, activities]
+      properties:
+        lead: { $ref: "#/components/schemas/Lead" }
+        conversations:
+          type: array
+          items: { $ref: "#/components/schemas/Conversation" }
+        activities:
+          type: array
+          items: { $ref: "#/components/schemas/Activity" }
+
+    Campaign:
+      type: object
+      required: [id, name, status, channel, total_leads, sent, created_at, updated_at]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        status: { type: string }
+        channel: { type: string }
+        total_leads: { type: number }
+        sent: { type: number }
+        target_rules: { type: ["string", "null"] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    CampaignList:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Campaign" }
+        total: { type: number }
+        limit: { type: number }
+        offset: { type: number }
+
+    CampaignDetail:
+      type: object
+      required: [campaign, leads, leads_total, leads_limit, leads_offset]
+      properties:
+        campaign: { $ref: "#/components/schemas/Campaign" }
+        leads:
+          type: array
+          items: { $ref: "#/components/schemas/Lead" }
+        leads_total: { type: number }
+        leads_limit: { type: number }
+        leads_offset: { type: number }
+
+    CampaignAnalytics:
+      type: object
+      required:
+        - campaign_id
+        - total
+        - pending
+        - contacted
+        - replied
+        - qualified
+        - rejected
+        - handoff
+        - response_rate
+        - qualification_rate
+      properties:
+        campaign_id: { type: string }
+        total: { type: number }
+        pending: { type: number }
+        contacted: { type: number }
+        replied: { type: number }
+        qualified: { type: number }
+        rejected: { type: number }
+        handoff: { type: number }
+        response_rate: { type: number }
+        qualification_rate: { type: number }
+
+    CampaignInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 180 }
+        target_rules:
+          type: ["object", "null"]
+          additionalProperties: true
+        channel:
+          type: string
+          default: WHATSAPP
+
+    CsvImportInput:
+      type: object
+      required: [csv_text]
+      properties:
+        csv_text: { type: string }
+
+    ImportPreviewRow:
+      type: object
+      required: [row_number, data, would_be_duplicate, missing_identifier]
+      properties:
+        row_number: { type: number }
+        data: { type: object, additionalProperties: true }
+        would_be_duplicate: { type: boolean }
+        missing_identifier: { type: boolean }
+
+    ImportPreview:
+      type: object
+      required: [headers, rows, total_rows, rows_missing_identifier]
+      properties:
+        headers:
+          type: array
+          items: { type: string }
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/ImportPreviewRow" }
+        total_rows: { type: number }
+        rows_missing_identifier: { type: number }
+
+    ImportRowError:
+      type: object
+      required: [row_number, message]
+      properties:
+        row_number: { type: number }
+        message: { type: string }
+
+    ImportReport:
+      type: object
+      required: [rows_read, created, updated, duplicates, skipped, errors, duration_seconds, error_details]
+      properties:
+        rows_read: { type: number }
+        created: { type: number }
+        updated: { type: number }
+        duplicates: { type: number }
+        skipped: { type: number }
+        errors: { type: number }
+        duration_seconds: { type: number }
+        error_details:
+          type: array
+          items: { $ref: "#/components/schemas/ImportRowError" }

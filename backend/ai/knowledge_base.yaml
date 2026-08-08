@@ -1,0 +1,100 @@
+# Knowledge Base — Sophie (Ecofix), Phase 3E
+#
+# Declarative only (no expressions/logic - same discipline as
+# business_rules/*.yaml). Each entry is one fact Sophie is allowed to state
+# when answering an off-topic question (category: faq) or a hesitation/
+# objection (category: objection). `keywords` are the French terms rag.py
+# matches against the customer's raw message to pick the best entry - this
+# file only holds data, ai/rag.py owns the matching logic.
+#
+# `answer` is a factual statement, not a script: ai/responder.py (Phase 3D)
+# phrases it naturally in the customer's language, it never quotes this
+# field verbatim to the customer.
+
+entries:
+  - id: switching_process
+    category: faq
+    keywords: [changer, changement, comment, fonctionne, processus, demarche, basculer, passer]
+    answer: >
+      Changer de fournisseur avec Ecofix se fait entierement en ligne, sans
+      interruption d'electricite ou de gaz : Ecofix s'occupe des demarches
+      administratives aupres de l'ancien fournisseur et du gestionnaire de
+      reseau.
+
+  - id: switching_fees
+    category: faq
+    keywords: [gratuit, payant, cout, prix, frais, ca coute, coute combien]
+    answer: >
+      Le changement de fournisseur vers Ecofix est gratuit ; il n'y a aucun
+      frais de dossier pour ouvrir un nouveau contrat.
+
+  - id: contract_length
+    category: faq
+    keywords: [duree, contrat, engagement, resilier, resiliation, combien de temps, annuler]
+    answer: >
+      Les contrats Ecofix n'ont pas de duree d'engagement minimale et
+      peuvent etre resilies a tout moment, sans frais de resiliation.
+
+  - id: documents_needed
+    category: faq
+    keywords: [document, documents, besoin, fournir, ean, facture, papier, pieces]
+    answer: >
+      Pour ouvrir un dossier, il suffit du code EAN indique sur une facture
+      d'electricite ou de gaz existante, ainsi que des coordonnees du
+      client.
+
+  - id: green_energy
+    category: faq
+    keywords: [vert, verte, renouvelable, ecologique, environnement, propre]
+    answer: >
+      Ecofix propose des contrats d'electricite issue a 100% de sources
+      renouvelables, garanties par des certificats d'origine.
+
+  - id: switching_delay
+    category: faq
+    keywords: [delai, combien de jours, quand, rapide, temps, activation]
+    answer: >
+      Le changement de fournisseur prend generalement entre trois et six
+      semaines, selon le gestionnaire de reseau local, et se deroule
+      automatiquement sans coupure.
+
+  - id: already_have_contract
+    category: objection
+    keywords: [deja, contrat actuel, fournisseur actuel, engage, engagee, suis chez]
+    answer: >
+      Il est possible de comparer une offre Ecofix sans engagement et sans
+      quitter son fournisseur actuel avant d'avoir confirme vouloir changer
+      ; la demarche ne resilie rien tant que le client n'a pas donne son
+      accord.
+
+  - id: price_concern
+    category: objection
+    keywords: [cher, prix, cout, augmenter, augmentation, tarif, budget]
+    answer: >
+      Ecofix etablit une offre personnalisee a partir de la consommation
+      reelle du client, afin de comparer objectivement le tarif propose
+      avec le contrat actuel avant toute decision.
+
+  - id: not_interested_now
+    category: objection
+    keywords: [pas interesse, plus tard, pas maintenant, pas le temps, occupe, rappeler]
+    answer: >
+      Il n'y a aucune urgence : le dossier peut etre laisse en attente et
+      un conseiller Ecofix peut recontacter le client au moment qui lui
+      convient le mieux.
+
+  - id: trust_concern
+    category: objection
+    keywords: [confiance, connais pas, arnaque, serieux, fiable, qui etes vous]
+    answer: >
+      Ecofix est un fournisseur d'energie enregistre en Belgique, regule
+      par les autorites regionales de l'energie (CWaPE, VREG, Brugel selon
+      la region).
+
+  - id: loyalty_to_current_supplier
+    category: objection
+    keywords: [fidele, toujours ete, jamais change, habitude, content de mon fournisseur]
+    answer: >
+      Rester fidele a un fournisseur n'empeche pas de verifier
+      ponctuellement si les conditions actuelles restent competitives ;
+      la comparaison Ecofix est gratuite et sans engagement.

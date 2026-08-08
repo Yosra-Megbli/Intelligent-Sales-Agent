@@ -1,0 +1,26 @@
+packages:
+  - "lib/*"
+  - "artifacts/*"
+
+# NOTE: versions below were not present in the original export (sophie-dashboard.zip
+# only contained "catalog:" references with no root catalog to resolve them against).
+# These are reasonable, mutually-compatible versions for the packages as used in the
+# code (React 18, Tailwind v4 via @tailwindcss/vite, Vite 5). Verify against the
+# original monorepo's lockfile if you have access to it, before relying on this in prod.
+catalog:
+  react: ^18.3.1
+  react-dom: ^18.3.1
+  "@types/react": ^18.3.12
+  "@types/react-dom": ^18.3.1
+  "@types/node": ^20.17.9
+  vite: ^5.4.11
+  "@vitejs/plugin-react": ^4.3.4
+  "@tailwindcss/vite": ^4.0.0
+  tailwindcss: ^4.0.0
+  tailwind-merge: ^2.5.5
+  "class-variance-authority": ^0.7.1
+  clsx: ^2.1.1
+  "framer-motion": ^11.13.1
+  "lucide-react": ^0.468.0
+  zod: ^3.24.0
+  "@tanstack/react-query": ^5.62.0

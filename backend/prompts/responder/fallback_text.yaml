@@ -1,0 +1,25 @@
+# Fallback text (French) — Sophie (Response Generator)
+#
+# Used verbatim when the LLM call fails or no provider is configured. Kept
+# deliberately short and generic - this is a safety net, not the primary
+# phrasing path.
+
+SEND_GREETING: "Bonjour, je suis Sophie, l'assistante d'Ecofix. Je peux vous aider a changer ou revoir votre contrat d'energie."
+ASK_INTENT: "Souhaitez-vous changer de fournisseur d'energie ou revoir votre contrat actuel ?"
+CONFIRM_INTENT: "Si je comprends bien, vous souhaitez changer de fournisseur d'energie. C'est bien cela ?"
+ASK_CUSTOMER_TYPE: "Etes-vous un particulier ou une entreprise ?"
+ASK_LOCATION: "Dans quelle region habitez-vous (Wallonie, Flandre ou Bruxelles) et dans quelle ville ?"
+ASK_CITY_ONLY: "Merci, et dans quelle ville êtes-vous situé(e) ?"
+ASK_SUPPLIER: "Quel est votre fournisseur d'energie actuel ?"
+ASK_CONTACT: "Pouvez-vous me donner votre nom, prenom, email et numero de telephone ?"
+ASK_EAN: "Pouvez-vous me communiquer le code EAN indique sur votre facture d'electricite ou de gaz ?"
+ASK_EAN_CORRECTION: "Ce code EAN ne semble pas correct. Pouvez-vous verifier sur votre facture et me le renvoyer ?"
+ASK_CONTACT_CORRECTION: "Cet email ou ce numero de telephone ne semble pas valide. Pouvez-vous le verifier et me le renvoyer ?"
+SEND_QUALIFIED_CONFIRMATION: "Merci, j'ai toutes les informations necessaires. Un conseiller Ecofix vous recontactera tres prochainement."
+NOTIFY_SALES_TEAM: "Votre dossier a ete transmis a notre equipe commerciale, qui vous recontactera bientot."
+NOTIFY_HUMAN: "Je vous mets en relation avec un collegue qui va prendre le relais."
+STILL_WAITING_FOR_HUMAN: "Un collegue va revenir vers vous tres bientot, merci de patienter."
+ASK_CLARIFICATION: "Desole, je n'ai pas bien compris. Pouvez-vous reformuler ?"
+SEND_FOLLOW_UP: "Je me permets de revenir vers vous au sujet de votre changement de fournisseur d'energie. Souhaitez-vous continuer ?"
+ANSWER_FAQ: "Merci pour votre question, je transmets cela a notre equipe pour vous repondre precisement."
+ANSWER_OBJECTION: "Je comprends votre hesitation. Un conseiller Ecofix pourra vous en dire plus si vous le souhaitez."

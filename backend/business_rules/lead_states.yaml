@@ -1,0 +1,25 @@
+# Lead Lifecycle — Sophie (Ecofix)
+#
+# Informational reference for LeadStatus (domain/enums.py). The CRM lifecycle
+# is distinct from ConversationState (see conversation_state_machine.md).
+
+lifecycle:
+  - NEW
+  - CONTACTED
+  - ENGAGED
+  - QUALIFICATION
+  - QUALIFIED
+  - APPOINTMENT
+  - CONTRACT
+  - CUSTOMER
+
+# REJECTED and CLOSED can be reached from any step above.
+terminal_states:
+  - REJECTED
+  - CLOSED
+
+follow_up_categories:
+  - HOT
+  - WARM
+  - COLD
+  - STOPPED

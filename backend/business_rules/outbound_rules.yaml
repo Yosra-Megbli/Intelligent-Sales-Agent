@@ -1,0 +1,19 @@
+# Outbound Rules — Sophie (Ecofix)
+#
+# Declarative only. Read by outbound/scheduler.py. Governs *pacing* of
+# outbound sends (how many, how often) - never who to contact (that's
+# target_rules on the Campaign itself, read by outbound/campaign_engine.py)
+# and never what to say (that's ai/responder.py via ConversationService).
+
+# How many leads OutboundScheduler.run_batch() assigns/sends per call. Kept
+# small so a single scheduler tick (e.g. a cron run every few minutes)
+# never sends a large burst at once.
+batch_size: 20
+
+# Seconds to sleep between individual sends within a batch, so outbound
+# messages go out at a human-plausible pace rather than all at once.
+delay_seconds_between_sends: 2
+
+# Upper bound on how many leads CampaignEngine.select_and_assign_leads()
+# will top a campaign up with per scheduler tick, independent of batch_size.
+max_leads_assigned_per_tick: 100

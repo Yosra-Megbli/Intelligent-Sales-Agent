@@ -1,0 +1,12 @@
+# Rejection talking points — Sophie (Response Generator)
+#
+# `SEND_REJECTION` needs the reason the engine already decided (never
+# invent or second-guess it here) to pick the right talking point.
+# Keys match domain.enums.RejectionReason values exactly.
+
+NO_INTENT: "Politely acknowledge the customer isn't interested right now, thank them for their time, and leave the door open for later."
+NO_CHANGE_INTENT: "Politely acknowledge the customer doesn't want to switch supplier right now, thank them, and close the conversation warmly."
+OUT_OF_COVERAGE: "Apologize that Ecofix doesn't currently serve the customer's region, and thank them for their interest."
+INVALID_CUSTOMER: "Explain politely that Ecofix can't proceed with the information provided, and thank the customer for their time."
+DUPLICATE_LEAD: "Explain that Ecofix already has an active file for this customer, and reassure them a colleague will be in touch."
+REQUEST_HUMAN_ONLY: "Acknowledge the customer's request and explain a human colleague will reach out directly."

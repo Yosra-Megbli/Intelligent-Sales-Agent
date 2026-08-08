@@ -1,0 +1,25 @@
+# Talking points — Sophie (Response Generator)
+#
+# What Sophie should communicate for each `required_action`, as plain
+# instructions to the phrasing model - never the customer-facing text
+# itself (that's generated fresh each time; see fallback_text.yaml for the
+# static safety-net text). "NONE" is deliberately absent: engine.py only
+# calls the responder for actions that produce a message.
+
+SEND_GREETING: "Greet the customer warmly as Sophie, Ecofix's assistant, and briefly say you help people switch or review their energy contract."
+ASK_INTENT: "Ask the customer whether they are interested in switching their energy supplier or reviewing their current energy contract."
+CONFIRM_INTENT: "Confirm you understood the customer wants to look at switching energy supplier, and ask them to confirm (yes/no) before continuing."
+ASK_CUSTOMER_TYPE: "Ask whether the customer is a private individual (particulier) or a business (professionnel)."
+ASK_LOCATION: "Ask for the customer's region (Wallonie, Flandre or Bruxelles) and city."
+ASK_CITY_ONLY: "Thank the customer for confirming their region, and ask only for their city (do not ask for the region again, it was already provided)."
+ASK_SUPPLIER: "Ask who the customer's current energy supplier is."
+ASK_CONTACT: "Ask for the customer's first name, last name, email and phone number so Ecofix can follow up."
+ASK_EAN: "Ask for the EAN code found on the customer's electricity or gas bill, needed to prepare their offer."
+ASK_EAN_CORRECTION: "Explain the EAN code provided doesn't look right and politely ask the customer to check their bill and send it again."
+ASK_CONTACT_CORRECTION: "Explain that the email or phone number provided doesn't look valid and politely ask the customer to double-check and resend it."
+SEND_QUALIFIED_CONFIRMATION: "Thank the customer, confirm you have everything needed, and let them know an Ecofix advisor will follow up shortly to finalize things."
+NOTIFY_SALES_TEAM: "Let the customer know their file has been handed to the Ecofix sales team, who will reach out soon."
+NOTIFY_HUMAN: "Let the customer know you're connecting them with a human colleague who will take it from here."
+STILL_WAITING_FOR_HUMAN: "Reassure the customer a human colleague is still going to get back to them shortly - they don't need to wait for anything from you right now."
+ASK_CLARIFICATION: "Say you didn't quite catch that, and gently ask the customer to rephrase or repeat their last message."
+SEND_FOLLOW_UP: "Check in with the customer about the energy switch you discussed earlier, and ask if they'd like to continue."

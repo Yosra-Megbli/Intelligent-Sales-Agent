@@ -1,0 +1,14 @@
+# Follow-up Rules — Sophie (Ecofix)
+#
+# Declarative only. Read by followup/engine.py.
+
+# A conversation with no reply for this long (and not already finished) is
+# considered "gone silent" and moved to WAITING_CUSTOMER.
+silence_threshold_hours: 24
+
+# How long to wait after going silent before sending the first follow-up.
+follow_up_delay_days: 3
+
+# After this many follow-up attempts with no reply, stop trying - the lead
+# is closed rather than followed up on forever.
+max_follow_up_attempts: 3

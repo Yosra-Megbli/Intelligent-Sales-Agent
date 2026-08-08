@@ -1,0 +1,17 @@
+# Validation Rules — Sophie (Ecofix Energy)
+
+ean:
+  length: 18
+  numeric_only: true
+  # An invalid EAN is a correction request (back to COLLECT_EAN), never a
+  # rejection - the customer may have simply mistyped it.
+
+email:
+  must_contain: "@"
+
+phone:
+  # Belgian mobile format, e.g. 0488112233. Kept intentionally simple for
+  # the MVP; can be replaced with a stricter regex/lib (e.g. phonenumbers)
+  # later without touching the rest of the engine.
+  country: BE
+  pattern: "^0[0-9]{8,9}$"

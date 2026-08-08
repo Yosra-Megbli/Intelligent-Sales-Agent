@@ -1,0 +1,425 @@
+# Golden Dataset — single-message scenarios
+#
+# Each scenario is one realistic French customer message with the intent/
+# entities Sophie's Extractor (ai/extractor.py) + IntentClassifier
+# (conversation_engine/intent_classifier.py) SHOULD produce.
+#
+# This file is consumed two ways (see golden_tests/harness.py):
+#   1. Fake-provider pytest (test_golden_messages.py): scripts the provider
+#      to return `expected` verbatim, and checks the dataset itself is
+#      well-formed + that Extractor's parsing/normalization doesn't mangle
+#      it. Deterministic, no network, always runs.
+#   2. Real-LLM eval (run_real_llm_eval.py): sends `input` to the actual
+#      configured LLMProvider and diffs the real output against `expected`.
+#      This is the layer that actually answers "does the LLM understand
+#      French customers correctly" - never run inside pytest.
+#
+# `expected_field` mirrors what Sophie's last question was about (passed to
+# the Extractor as context, exactly like ai/extractor.py's `expected_field`
+# param) - null means "no specific question pending" (e.g. right after
+# GREETING/DISCOVERY, or a QUESTION/OBJECTION detour).
+#
+# `current_state` is only used by scenarios that exercise the
+# IntentClassifier's second-pass disambiguation (bare "oui"/"non" etc.) -
+# it is the ConversationState Sophie was on, passed as classifier context.
+
+scenarios:
+
+  # --- 1. Price QUESTION vs price OBJECTION (the ambiguity Claude's audit flagged) ---
+
+  - id: price_q_01
+    category: price_question_vs_objection
+    input: "Bonjour, je voudrais savoir combien coûte votre offre ?"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: >
+      Neutral, first-contact price question - informational, not a
+      hesitation. Must not be classified as OBJECTION just because it
+      mentions cost.
+
+  - id: price_q_02
+    category: price_question_vs_objection
+    input: "C'est combien par mois environ ?"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: "Same intent, more casual phrasing."
+
+  - id: price_q_03
+    category: price_question_vs_objection
+    input: "Est-ce que le changement de fournisseur est payant ?"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: "Question about switching fees specifically (maps to knowledge_base switching_fees)."
+
+  - id: price_obj_01
+    category: price_question_vs_objection
+    input: "C'est trop cher pour moi."
+    expected_field: null
+    expected:
+      event_type: OBJECTION
+      entities: {}
+    notes: "Explicit hesitation/complaint about price - must be OBJECTION, not QUESTION."
+
+  - id: price_obj_02
+    category: price_question_vs_objection
+    input: "Vos prix sont plus élevés que mon fournisseur actuel je pense."
+    expected_field: null
+    expected:
+      event_type: OBJECTION
+      entities: {}
+    notes: "Price comparison used as a reason to hesitate, not a request for information."
+
+  - id: price_obj_03
+    category: price_question_vs_objection
+    input: "Je ne sais pas, ça me semble cher tout ça, je ne suis pas convaincu."
+    expected_field: null
+    expected:
+      event_type: OBJECTION
+      entities: {}
+    notes: "Hesitation phrased indirectly, no explicit question mark."
+
+  - id: price_q_04
+    category: price_question_vs_objection
+    input: "Il y a des frais de dossier ou c'est gratuit ?"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: "Direct yes/no-shaped question about fees - still QUESTION, not OBJECTION."
+
+  # --- 2. changer de fournisseur vs résilier (two different FAQ topics) ---
+
+  - id: switch_vs_cancel_01
+    category: switch_vs_cancel
+    input: "Comment ça se passe pour changer de fournisseur ?"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: "About the switching_process fact."
+
+  - id: switch_vs_cancel_02
+    category: switch_vs_cancel
+    input: "Si je change d'avis, je peux résilier facilement après ?"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: "About contract_length/cancellation terms, distinct topic from switching_process."
+
+  - id: switch_vs_cancel_03
+    category: switch_vs_cancel
+    input: "Je suis déjà chez un autre fournisseur, ça change quoi ?"
+    expected_field: null
+    expected:
+      event_type: OBJECTION
+      entities: {}
+    notes: "already_have_contract objection, not a neutral question."
+
+  - id: switch_vs_cancel_04
+    category: switch_vs_cancel
+    input: "Est-ce que je dois d'abord résilier mon contrat actuel avant de vous contacter ?"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: "Process question about cancellation order/timing."
+
+  # --- 3. Eligibility: region in/out of coverage (extraction only - extractor never judges) ---
+
+  - id: region_01
+    category: eligibility
+    input: "J'habite à Namur, en Wallonie."
+    expected_field: location
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {region: "Wallonie", city: "Namur"}
+    notes: "Covered region - plain extraction."
+
+  - id: region_02
+    category: eligibility
+    input: "Je suis à Lille, dans le Nord de la France."
+    expected_field: location
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {city: "Lille"}
+    notes: >
+      Out-of-coverage region (France, not Belgium). Extractor must still
+      capture it verbatim (F-002 fix) rather than dropping it - rejection
+      is business_rules'/rules.py's job (OUT_OF_COVERAGE), not the
+      extractor's.
+
+  - id: region_03
+    category: eligibility
+    input: "Anvers, en Flandre."
+    expected_field: location
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {region: "Flandre", city: "Anvers"}
+    notes: "Covered region, terse answer."
+
+  # --- 4. EAN correct / malformed (extraction only, validation happens in rules.py) ---
+
+  - id: ean_01
+    category: ean_handling
+    input: "Voici mon code EAN : 541448911001234567"
+    expected_field: ean
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {ean: "541448911001234567"}
+    notes: "18-digit EAN, valid length per validation_rules.yaml."
+
+  - id: ean_02
+    category: ean_handling
+    input: "Mon EAN c'est 12345 je crois, je ne suis pas sûr."
+    expected_field: ean
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {ean: "12345"}
+    notes: >
+      Too short to be valid (validate_ean will reject -> CORRECT_FIELD),
+      but the extractor must still capture exactly what was said, not
+      silently drop it for looking wrong.
+
+  - id: ean_03
+    category: ean_handling
+    input: "Je n'ai pas ma facture sous la main pour le code EAN."
+    expected_field: ean
+    expected:
+      event_type: CUSTOMER_MESSAGE
+      entities: {}
+    notes: "Customer cannot provide the field right now - not a refusal, not data."
+
+  # --- 5. Customer refuses to give EAN / personal info ---
+
+  - id: refuse_ean_01
+    category: refusal
+    input: "Je ne veux pas donner mon code EAN, c'est confidentiel."
+    expected_field: ean
+    expected:
+      event_type: OBJECTION
+      entities: {}
+    notes: "Refusal framed as a trust concern - maps to trust_concern objection."
+
+  - id: refuse_contact_01
+    category: refusal
+    input: "Je ne veux pas donner mon numéro de téléphone pour l'instant."
+    expected_field: contact
+    expected:
+      event_type: OBJECTION
+      entities: {}
+    notes: "Refusal to share contact info."
+
+  # --- 6. Customer requests a human ---
+
+  - id: human_01
+    category: request_human
+    input: "Je préfère parler à quelqu'un directement, pas à un robot."
+    expected_field: null
+    expected:
+      event_type: REQUEST_HUMAN
+      entities: {}
+    notes: "Explicit, unambiguous human request."
+
+  - id: human_02
+    category: request_human
+    input: "Puis-je avoir un conseiller au téléphone ?"
+    expected_field: null
+    expected:
+      event_type: REQUEST_HUMAN
+      entities: {}
+    notes: "Polite request for a human agent."
+
+  - id: human_03
+    category: request_human
+    input: "Ce chatbot ne me convient pas."
+    expected_field: null
+    expected:
+      event_type: REQUEST_HUMAN
+      entities: {}
+    notes: >
+      Complaint about the bot itself - closer to REQUEST_HUMAN than a
+      product OBJECTION; boundary case worth tracking in real-LLM eval.
+
+  # --- 7. Customer changes their mind (yes/no on switching intent) ---
+
+  - id: change_intent_yes_01
+    category: change_of_mind
+    input: "Oui, je veux bien changer de fournisseur."
+    expected_field: null
+    current_state: INTENT_CONFIRMATION
+    expected:
+      event_type: CHANGE_INTENT_YES
+      entities: {}
+
+  - id: change_intent_no_01
+    category: change_of_mind
+    input: "Non, finalement je ne suis pas intéressé."
+    expected_field: null
+    current_state: INTENT_CONFIRMATION
+    expected:
+      event_type: CHANGE_INTENT_NO
+      entities: {}
+
+  - id: change_intent_bare_oui
+    category: change_of_mind
+    input: "Oui"
+    expected_field: null
+    current_state: INTENT_CONFIRMATION
+    expected:
+      event_type: CHANGE_INTENT_YES
+      entities: {}
+    notes: >
+      Bare "oui" right after the yes/no confirmation question - this is
+      exactly the case intent_classifier.py's second-pass disambiguation
+      exists for (Extractor alone is single-message/context-light and may
+      fall back to CUSTOMER_MESSAGE here).
+
+  - id: change_intent_bare_non
+    category: change_of_mind
+    input: "Non"
+    expected_field: null
+    current_state: INTENT_CONFIRMATION
+    expected:
+      event_type: CHANGE_INTENT_NO
+      entities: {}
+
+  # --- 8. Incomplete / partial information ---
+
+  - id: partial_info_01
+    category: incomplete_information
+    input: "Je m'appelle Marie"
+    expected_field: contact
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {first_name: "Marie"}
+    notes: "Only first_name given - contact field group stays incomplete, rules.py handles re-asking."
+
+  - id: partial_info_02
+    category: incomplete_information
+    input: "Marie Dubois, marie.dubois@gmail.com"
+    expected_field: contact
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {first_name: "Marie", last_name: "Dubois", email: "marie.dubois@gmail.com"}
+    notes: "Missing phone - still PROVIDE_INFORMATION with partial entities."
+
+  - id: partial_info_03
+    category: incomplete_information
+    input: "0488 11 22 33"
+    expected_field: contact
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {phone: "0488112233"}
+    notes: "Phone with spaces - extractor strips spaces per _normalize_entities."
+
+  # --- 9. Customer repeats the same question ---
+
+  - id: repeated_question_01
+    category: repeated_question
+    input: "Je vous ai déjà demandé, c'est gratuit de changer ou pas ?"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: >
+      Still a QUESTION even though phrased with frustration at repeating
+      itself - the frustration alone isn't enough signal for OBJECTION.
+
+  # --- 10. Informal French / spelling errors / SMS-speak ---
+
+  - id: informal_01
+    category: informal_french
+    input: "cc je voudré changé de fournisseur svp"
+    expected_field: null
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {}
+    notes: >
+      Heavy SMS-speak/misspellings ("voudré", "changé", "svp") expressing
+      intent to switch, no extractable structured fields yet.
+
+  - id: informal_02
+    category: informal_french
+    input: "sa coute cb par mois ??"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: "Misspelled 'ça coûte combien' - must still resolve to QUESTION about price, not OBJECTION."
+
+  - id: informal_03
+    category: informal_french
+    input: "javai deja un fournisseur pk je changerai"
+    expected_field: null
+    expected:
+      event_type: OBJECTION
+      entities: {}
+    notes: "No accents/spacing, rhetorical 'why would I switch' - loyalty/already-have-contract objection."
+
+  # --- 11. Small talk / greeting / off-topic chit-chat ---
+
+  - id: smalltalk_01
+    category: small_talk
+    input: "Bonjour !"
+    expected_field: null
+    expected:
+      event_type: CUSTOMER_MESSAGE
+      entities: {}
+
+  - id: smalltalk_02
+    category: small_talk
+    input: "Merci, bonne journée à vous aussi."
+    expected_field: null
+    expected:
+      event_type: CUSTOMER_MESSAGE
+      entities: {}
+
+  # --- 12. Multiple entities in one message ---
+
+  - id: multi_entity_01
+    category: multi_entity
+    input: "Je suis un particulier, j'habite à Liège en Wallonie, et je suis actuellement chez Engie."
+    expected_field: null
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {customer_type: "particulier", city: "Liège", region: "Wallonie", current_supplier: "Engie"}
+    notes: "Customer volunteers three field groups' worth of data unprompted, ahead of where Sophie asked."
+
+  - id: multi_entity_02
+    category: multi_entity
+    input: "Jean Petit, jean.petit@outlook.com, 0477889900, et mon EAN est 541234567890123456"
+    expected_field: contact
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities:
+        first_name: "Jean"
+        last_name: "Petit"
+        email: "jean.petit@outlook.com"
+        phone: "0477889900"
+        ean: "541234567890123456"
+    notes: "Customer answers contact AND jumps ahead to EAN in the same message."
+
+  # --- 13. Professional customer type ---
+
+  - id: customer_type_01
+    category: entity_extraction
+    input: "Je suis une entreprise, donc professionnel."
+    expected_field: customer_type
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {customer_type: "professionnel"}
+
+  - id: customer_type_02
+    category: entity_extraction
+    input: "particulier"
+    expected_field: customer_type
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {customer_type: "particulier"}
