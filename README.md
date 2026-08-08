@@ -46,7 +46,7 @@ frontend/
 - Backend : Python 3.12+, FastAPI, SQLAlchemy, PostgreSQL (SQLite pour les tests), Redis
 - IA : Groq (`openai/gpt-oss-120b` par défaut), abstraction `LLMProvider` remplaçable
 - Frontend : React, Vite, TypeScript, Tailwind v4, shadcn/ui, TanStack Query
-- Tests : Pytest (522 tests unitaires/intégration + scénarios golden)
+- Tests : Pytest (583 tests unitaires/intégration + scénarios golden)
 
 ## Démarrage rapide — backend
 
@@ -56,11 +56,14 @@ python -m venv .venv
 source .venv/bin/activate      # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env           # puis renseigner GROQ_API_KEY, DATABASE_URL, etc.
-uvicorn api.main:app --host 127.0.0.1 --port 8000
+uvicorn api.main:app --host 127.0.0.1 --port 8001
 ```
 
-- Documentation API interactive : http://127.0.0.1:8000/docs
-- Healthcheck : http://127.0.0.1:8000/health
+Le port `8001` n'est pas arbitraire : c'est celui que le dashboard React attend
+(`frontend/artifacts/sophie-dashboard/vite.config.ts` proxy `/api` dessus en dev).
+
+- Documentation API interactive : http://127.0.0.1:8001/docs
+- Healthcheck : http://127.0.0.1:8001/health
 
 ## Démarrage rapide — dashboard React
 
@@ -106,7 +109,7 @@ pytest tests/ golden_tests/ -v
 | Telegram | Actif et testé — canal du pilote |
 | Web (widget) | Actif et testé |
 | WhatsApp Business | Architecturé et testé (`channels/whatsapp.py`, signature Twilio), non activé pour le pilote actuel |
-| Appel vocal | Architecture complète documentée (`docs/architecture/voice_agent_architecture.md`), STT/TTS Twilio codés, non déployés en direct |
+| Appel vocal | Pipeline complet câblé (`application/voice_inbound_service.py` + `channels/voice/session_manager.py`, STT/TTS Twilio) ; il ne manque qu'un compte Twilio Voice réel (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_VOICE_NUMBER`/`PUBLIC_BASE_URL`) pour un appel en conditions réelles — voir `docs/architecture/voice_agent_architecture.md` |
 | SMS, Messenger, Instagram | Non implémentés — roadmap |
 
 ## Sécurité
