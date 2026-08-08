@@ -37,7 +37,7 @@ from domain.models.lead import Lead
 # file is ignored. `name` is split on the first space into first/last name;
 # every other column maps straight onto a Lead field of the same name,
 # except `source` (see _resolve_source below).
-_KNOWN_COLUMNS = {"name", "phone", "email", "region", "source", "provider", "notes"}
+_KNOWN_COLUMNS = {"name", "phone", "email", "region", "source", "provider", "notes", "telegram_chat_id"}
 
 
 @dataclass
@@ -185,6 +185,7 @@ class LeadImportService:
             "region": _clean(raw.get("region")),
             "provider": _clean(raw.get("provider")),
             "notes": _clean(raw.get("notes")),
+            "telegram_chat_id": _clean(raw.get("telegram_chat_id")),
         }
 
     @staticmethod

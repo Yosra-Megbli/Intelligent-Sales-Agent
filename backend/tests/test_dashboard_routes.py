@@ -101,6 +101,14 @@ def test_list_leads_returns_seeded_leads(client):
     assert body["items"][0]["status"] == "NEW"
 
 
+def test_list_leads_exposes_telegram_chat_id(client):
+    _seed_lead(client, first_name="Jean", telegram_chat_id="987654321")
+
+    response = client.get("/api/dashboard/leads")
+
+    assert response.json()["items"][0]["telegram_chat_id"] == "987654321"
+
+
 def test_list_leads_filters_by_status_query_param(client):
     _seed_lead(client, first_name="Jean")
 

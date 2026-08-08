@@ -74,6 +74,32 @@ def test_telegram_channel_falls_back_to_lead_id_when_no_prior_telegram_conversat
     assert result.sent == 1
 
 
+def test_telegram_channel_prefers_the_leads_own_chat_id_over_a_conversation_lookup(db_session):
+    """A lead created via CSV import/manual entry with telegram_chat_id set
+    directly must be targetable without waiting for a Conversation row -
+    and if a (stale/different) Telegram conversation also happens to exist
+    for this lead, the lead's own chat_id still wins (it's the more
+    directly-authoritative, more recently set value)."""
+    from application.conversation_service import ConversationService
+
+    lead = LeadRepository(db_session).create(source=LeadSource.CSV, first_name="Marie")
+    LeadRepository(db_session).update_fields(lead, telegram_chat_id="11111")
+    db_session.commit()
+
+    # A different chat_id on file via an old Conversation - must lose to
+    # lead.telegram_chat_id above.
+    service = ConversationService(db_session)
+    service.conversation_repo.create(
+        lead_id=lead.id, channel=ConversationChannel.TELEGRAM, external_id="22222"
+    )
+    db_session.commit()
+
+    scheduler = OutboundScheduler(db_session, channel=ConversationChannel.TELEGRAM)
+    resolved = scheduler._resolve_external_id(lead)
+
+    assert resolved == "11111"
+
+
 def test_telegram_channel_reuses_an_existing_telegram_conversations_chat_id(db_session):
     """If this lead already has a Telegram conversation on file (e.g. they
     messaged the bot inbound before), a re-engagement campaign reuses that

@@ -88,7 +88,7 @@ export function ImportLeadsDialog({ open, onOpenChange, onImported }: ImportLead
         {step === 'input' && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Colonnes reconnues : <code>name, phone, email, region, source, provider, notes</code>.
+              Colonnes reconnues : <code>name, phone, email, region, source, provider, notes, telegram_chat_id</code>.
               Chaque ligne doit avoir au moins un email ou un téléphone.
             </p>
             <div className="flex gap-2">

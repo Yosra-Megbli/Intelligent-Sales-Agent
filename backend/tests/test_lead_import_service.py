@@ -29,6 +29,20 @@ def test_import_creates_new_lead_with_extra_fields(db_session):
     assert lead.notes == "Interesse par le solaire"
 
 
+def test_import_creates_a_lead_with_a_telegram_chat_id(db_session):
+    csv_text = _csv(
+        "Karim Test,0470111222,karim@test.com,Wallonie,Website,MetaAds,Interesse,987654321",
+        header="name,phone,email,region,source,provider,notes,telegram_chat_id",
+    )
+
+    report = LeadImportService(db_session).import_csv(csv_text)
+
+    assert report.created == 1
+    lead = LeadRepository(db_session).get_by_email("karim@test.com")
+    assert lead is not None
+    assert lead.telegram_chat_id == "987654321"
+
+
 def test_import_never_creates_a_duplicate_lead_when_email_already_exists(db_session):
     repo = LeadRepository(db_session)
     repo.create(source=LeadSource.WEBSITE, email="jean@test.com", phone="0488000000")

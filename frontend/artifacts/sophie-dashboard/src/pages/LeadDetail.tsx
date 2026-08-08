@@ -1,6 +1,6 @@
 import { Link } from 'wouter';
 import { useGetLeadDetail } from '@workspace/api-client-react';
-import { ArrowLeft, Phone, Mail, MapPin, Briefcase, Zap, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, Send, MapPin, Briefcase, Zap, Calendar, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -111,6 +111,7 @@ export default function LeadDetail({ leadId }: Props) {
               {[
                 { icon: Phone,    label: 'Téléphone',       value: lead.phone },
                 { icon: Mail,     label: 'Email',           value: lead.email },
+                { icon: Send,     label: 'Chat ID Telegram', value: lead.telegram_chat_id },
                 { icon: MapPin,   label: 'Région / Ville',  value: [lead.region, lead.city].filter(Boolean).join(', ') || null },
                 { icon: Briefcase,label: 'Fournisseur',     value: lead.current_supplier },
                 { icon: Zap,      label: 'Type client',     value: lead.customer_type },

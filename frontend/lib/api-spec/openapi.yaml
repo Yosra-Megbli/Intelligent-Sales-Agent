@@ -410,6 +410,7 @@ components:
         last_name: { type: ["string", "null"] }
         email: { type: ["string", "null"] }
         phone: { type: ["string", "null"] }
+        telegram_chat_id: { type: ["string", "null"] }
         source: { type: string }
         status: { type: string }
         rejection_reason: { type: ["string", "null"] }

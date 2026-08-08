@@ -158,17 +158,28 @@ class OutboundScheduler:
           WhatsApp message can be sent cold to any phone number.
         - Telegram: Telegram's Bot API can only message a `chat_id` that
           has already started a conversation with the bot (there is no
-          "cold DM by phone number" on Telegram) - so an outbound Telegram
-          send only actually reaches the customer if this lead already has
-          a prior Telegram conversation on file (e.g. they messaged the bot
-          inbound first, became a lead via `LeadSource.TELEGRAM`, and this
-          campaign is a *re-engagement* send). If no such conversation
-          exists yet, this falls back to the lead's own id - `OutboundSender`
-          still computes and records the greeting either way, it just has
-          nothing real to hand its Telegram sender, exactly like today's
-          `TELEGRAM_BOT_TOKEN`-not-configured case.
+          "cold DM by phone number" on Telegram). Three sources are tried,
+          in priority order:
+            1. `lead.telegram_chat_id`, set directly at CSV import/manual
+               creation time (or backfilled from an inbound conversation -
+               see `application/conversation_service.py`'s
+               `start_conversation`) - lets a lead be targeted immediately,
+               without waiting for a `Conversation` row to exist first.
+            2. A prior Telegram `Conversation.external_id` on file for this
+               lead (e.g. they messaged the bot inbound first, became a
+               lead via `LeadSource.TELEGRAM`, and this campaign is a
+               *re-engagement* send) - kept as a fallback for leads created
+               before `telegram_chat_id` existed, or created through some
+               other inbound path that never set it.
+            3. The lead's own id, as an inert last resort - `OutboundSender`
+               still computes and records the greeting either way, it just
+               has nothing real to hand its Telegram sender, exactly like
+               today's `TELEGRAM_BOT_TOKEN`-not-configured case.
         """
         if self.channel == ConversationChannel.TELEGRAM:
+            if lead.telegram_chat_id:
+                return lead.telegram_chat_id
+
             from crm.conversation_repository import ConversationRepository
 
             conversations = ConversationRepository(self.db).list_for_lead(lead.id)

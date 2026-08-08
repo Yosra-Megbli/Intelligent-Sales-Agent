@@ -72,6 +72,26 @@ pnpm --filter sophie-dashboard dev   # http://localhost:5173, proxy /api -> loca
 
 En production, le dashboard passe par `frontend/artifacts/api-server` (proxy Node/Express) qui injecte la clé API côté serveur, pour ne jamais l'exposer au navigateur.
 
+## Migrations DB
+
+Ce projet n'a pas d'Alembic : `database/postgres.py` appelle uniquement
+`Base.metadata.create_all()` au démarrage, qui crée les tables manquantes
+mais ne modifie jamais une table existante. Un changement de schéma sur une
+table déjà créée (nouvelle colonne, nouvel index...) nécessite donc un
+`ALTER TABLE` manuel, en plus du changement dans `domain/models/`.
+
+Les scripts SQL correspondants vivent dans `backend/database/migrations/`,
+numérotés dans l'ordre où ils doivent être appliqués :
+
+```bash
+psql "$DATABASE_URL" -f backend/database/migrations/0001_add_telegram_chat_id.sql
+```
+
+Sur une base de dev jetable (recréée à chaque fois), ce n'est pas
+nécessaire : `docker compose down -v && docker compose up -d` puis un
+redémarrage du backend suffit, `create_all()` crée alors le schéma à jour
+directement.
+
 ## Tests
 
 ```bash

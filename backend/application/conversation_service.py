@@ -139,6 +139,13 @@ class ConversationService:
         lead = self.lead_repo.create(
             source=source, first_name=first_name, last_name=last_name, email=email, phone=phone
         )
+        # Backfill Lead.telegram_chat_id from this first inbound message too
+        # (not just the Conversation row) - keeps outbound/scheduler.py's
+        # `_resolve_external_id` able to find it straight from the lead,
+        # the same place it looks first for a lead created via CSV import,
+        # instead of only via a Conversation lookup.
+        if channel == ConversationChannel.TELEGRAM and external_id:
+            self.lead_repo.update_fields(lead, telegram_chat_id=external_id)
         conversation = self.conversation_repo.create(
             lead_id=lead.id, channel=channel, language=language, external_id=external_id
         )

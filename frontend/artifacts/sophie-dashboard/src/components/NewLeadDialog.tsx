@@ -29,6 +29,7 @@ const EMPTY_FORM = {
   region: '',
   provider: '',
   notes: '',
+  telegram_chat_id: '',
 };
 
 // Columns the backend's importer actually reads onto the Lead model - see
@@ -36,7 +37,7 @@ const EMPTY_FORM = {
 // `source` is intentionally left out: it's accepted as a CSV column but never
 // mapped onto the Lead (every imported lead gets source=CSV), so exposing a
 // "source" field here would promise something the backend doesn't do.
-const CSV_COLUMNS = ['name', 'phone', 'email', 'region', 'provider', 'notes'];
+const CSV_COLUMNS = ['name', 'phone', 'email', 'region', 'provider', 'notes', 'telegram_chat_id'];
 
 /**
  * "Nouveau Lead" - manual single-lead creation. There is no
@@ -159,6 +160,15 @@ export function NewLeadDialog({ open, onOpenChange, onCreated }: NewLeadDialogPr
                 placeholder="—"
                 value={form.provider}
                 onChange={(e) => set('provider', e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5 col-span-2">
+              <Label htmlFor="lead-telegram-chat-id">Chat ID Telegram (optionnel)</Label>
+              <Input
+                id="lead-telegram-chat-id"
+                placeholder="123456789"
+                value={form.telegram_chat_id}
+                onChange={(e) => set('telegram_chat_id', e.target.value)}
               />
             </div>
           </div>

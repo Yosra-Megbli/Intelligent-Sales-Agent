@@ -21,6 +21,7 @@ class LeadSummary(BaseModel):
     last_name: Optional[str]
     email: Optional[str]
     phone: Optional[str]
+    telegram_chat_id: Optional[str]
     source: str
     status: str
     rejection_reason: Optional[str]
@@ -57,6 +58,7 @@ class LeadSummary(BaseModel):
             last_name=lead.last_name,
             email=lead.email,
             phone=lead.phone,
+            telegram_chat_id=lead.telegram_chat_id,
             source=lead.source.value,
             status=lead.status.value,
             rejection_reason=lead.rejection_reason.value if lead.rejection_reason else None,

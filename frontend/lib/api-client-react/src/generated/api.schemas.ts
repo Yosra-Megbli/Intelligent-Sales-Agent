@@ -37,6 +37,8 @@ export interface Lead {
   email?: string | null;
   /** @nullable */
   phone?: string | null;
+  /** @nullable */
+  telegram_chat_id?: string | null;
   source: string;
   status: string;
   /** @nullable */
