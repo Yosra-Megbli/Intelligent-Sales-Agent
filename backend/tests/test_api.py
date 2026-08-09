@@ -47,6 +47,7 @@ def clean_security_env(monkeypatch):
     monkeypatch.delenv("API_KEY", raising=False)
     monkeypatch.delenv("TELEGRAM_WEBHOOK_SECRET", raising=False)
     monkeypatch.delenv("TWILIO_AUTH_TOKEN", raising=False)
+    monkeypatch.delenv("ENVIRONMENT", raising=False)
 
 
 @pytest.fixture(autouse=True)
@@ -307,3 +308,37 @@ def test_whatsapp_webhook_requires_valid_twilio_signature_once_configured(client
         "/api/whatsapp/webhook", data=payload, headers={"X-Twilio-Signature": valid_signature}
     )
     assert authenticated.status_code == 200
+
+
+# --- P0: production must never boot unauthenticated -------------------------
+
+def test_production_startup_refuses_to_boot_without_required_secrets(monkeypatch):
+    from api.main import _fail_fast_if_misconfigured_for_production
+
+    monkeypatch.setenv("ENVIRONMENT", "production")
+
+    with pytest.raises(RuntimeError, match="API_KEY.*TELEGRAM_WEBHOOK_SECRET"):
+        _fail_fast_if_misconfigured_for_production()
+
+
+def test_production_startup_succeeds_once_required_secrets_are_set(monkeypatch):
+    from api.main import _fail_fast_if_misconfigured_for_production
+
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("API_KEY", "s3cret")
+    monkeypatch.setenv("TELEGRAM_WEBHOOK_SECRET", "tg-secret")
+
+    _fail_fast_if_misconfigured_for_production()  # must not raise
+
+
+def test_non_production_startup_never_fails_even_without_secrets(monkeypatch):
+    """Preserves the existing dev-friendly default (see api/dependencies.py) -
+    ENVIRONMENT unset (or anything other than "production") must behave
+    exactly as before this change."""
+    from api.main import _fail_fast_if_misconfigured_for_production
+
+    monkeypatch.delenv("ENVIRONMENT", raising=False)
+    _fail_fast_if_misconfigured_for_production()  # must not raise
+
+    monkeypatch.setenv("ENVIRONMENT", "staging")
+    _fail_fast_if_misconfigured_for_production()  # must not raise

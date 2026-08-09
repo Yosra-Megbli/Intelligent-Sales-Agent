@@ -25,6 +25,38 @@ from database.postgres import init_db
 app = FastAPI(title="Ecofix Sophie API", version="0.1.0")
 
 
+def _fail_fast_if_misconfigured_for_production() -> None:
+    """P0 security hardening.
+
+    api/dependencies.py's require_api_key / verify_telegram_secret are
+    deliberately dev-friendly: if API_KEY / TELEGRAM_WEBHOOK_SECRET aren't
+    set, they log a warning and let the request through unauthenticated
+    (see that module's docstring) - useful for a first local run, dangerous
+    if it silently reaches a real deployment, since the dashboard's PII-
+    bearing endpoints would then need no credential at all.
+
+    This does not change that default (existing tests, and a first local
+    `uvicorn --reload`, keep working exactly as before) - it adds one new,
+    opt-in gate: set `ENVIRONMENT=production` and a missing required secret
+    becomes a hard startup failure instead of a log line an operator can
+    miss. Never fails when ENVIRONMENT is unset or anything else.
+    """
+    if os.getenv("ENVIRONMENT", "development").strip().lower() != "production":
+        return
+    missing = [name for name in ("API_KEY", "TELEGRAM_WEBHOOK_SECRET") if not os.getenv(name)]
+    if missing:
+        raise RuntimeError(
+            "ENVIRONMENT=production but required secret(s) are not set: "
+            + ", ".join(missing)
+            + ". Refusing to start unauthenticated in production - see backend/.env.example."
+        )
+
+
+@app.on_event("startup")
+def _enforce_production_secrets() -> None:
+    _fail_fast_if_misconfigured_for_production()
+
+
 @app.on_event("startup")
 def _create_tables_if_missing() -> None:
     # Nothing else in this codebase ever called init_db(): there is no

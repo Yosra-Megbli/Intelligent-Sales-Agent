@@ -128,7 +128,9 @@ pytest tests/ golden_tests/ -v
 - Webhook Telegram vérifié par secret partagé
 - CORS désactivé par défaut (safe-by-default), à configurer explicitement via `CORS_ALLOWED_ORIGINS`
 - Rate limiting appliqué par conversation/IP
-- ⚠️ Par défaut, si `API_KEY` n'est pas configurée, l'authentification est désactivée avec un avertissement en log — à configurer avant tout déploiement réel
+- ⚠️ Par défaut (développement), si `API_KEY` n'est pas configurée, l'authentification est désactivée avec un avertissement en log
+- ✅ En définissant `ENVIRONMENT=production` (voir `backend/.env.example`), l'API **refuse de démarrer** si `API_KEY` ou `TELEGRAM_WEBHOOK_SECRET` ne sont pas configurées, au lieu de tourner sans authentification (`api/main.py:_fail_fast_if_misconfigured_for_production`)
+- `backend/.env` (secrets réels) est exclu de git via `.gitignore` et n'a jamais été commit — pour livrer une archive au client, utiliser `scripts/package_client_delivery.ps1` (basé sur `git archive`, ne peut physiquement pas inclure un fichier non commit comme `.env`) plutôt qu'une compression manuelle du dossier
 
 ## Limites connues du MVP actuel
 

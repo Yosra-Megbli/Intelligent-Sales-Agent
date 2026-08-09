@@ -13,6 +13,10 @@ venv/
 .env.local
 *.pem
 
+# --- Client delivery packages (scripts/package_client_delivery.ps1) ---
+/dist/
+*.zip
+
 # --- Node / frontend ---
 node_modules/
 dist/
