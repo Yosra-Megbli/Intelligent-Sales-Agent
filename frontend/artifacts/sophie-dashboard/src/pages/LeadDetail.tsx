@@ -1,13 +1,21 @@
-import { Link } from 'wouter';
-import { useGetLeadDetail } from '@workspace/api-client-react';
-import { ArrowLeft, Phone, Mail, Send, MapPin, Briefcase, Zap, Calendar, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useLocation } from 'wouter';
+import { useGetLeadDetail, useDeleteLead } from '@workspace/api-client-react';
+import { ArrowLeft, Phone, Mail, Send, MapPin, Briefcase, Zap, Calendar, Clock, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { StatusBadge } from '@/components/StatusBadge';
 import { ErrorState } from '@/components/ErrorState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EditLeadDialog } from '@/components/EditLeadDialog';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 // Audit finding #8 (Conversation content): the dashboard used to show only
 // conversation metadata (channel/state/timestamps), never what was actually
@@ -52,6 +60,20 @@ interface Props {
 
 export default function LeadDetail({ leadId }: Props) {
   const { data, isLoading, isError, refetch } = useGetLeadDetail(leadId);
+  const [, navigate] = useLocation();
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const deleteMut = useDeleteLead();
+
+  async function handleDelete() {
+    try {
+      await deleteMut.mutateAsync({ leadId });
+      toast.success('Lead supprimé.');
+      navigate('/leads');
+    } catch {
+      toast.error('La suppression a échoué.');
+    }
+  }
 
   if (isLoading) {
     return (
@@ -103,6 +125,14 @@ export default function LeadDetail({ leadId }: Props) {
               <div className="flex items-center gap-3">
                 <ScoreBadge score={lead.qualification_score} />
                 <StatusBadge status={lead.status} />
+                <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+                  <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                  Modifier
+                </Button>
+                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={() => setDeleteOpen(true)}>
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  Supprimer
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -250,6 +280,30 @@ export default function LeadDetail({ leadId }: Props) {
           </TabsContent>
         </Tabs>
       </div>
+
+      <EditLeadDialog lead={lead} open={editOpen} onOpenChange={setEditOpen} onSaved={() => void refetch()} />
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer ce lead ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {fullName} sera définitivement supprimé, ainsi que ses conversations, messages et
+              son historique d'activité. Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void handleDelete()}
+              disabled={deleteMut.isPending}
+            >
+              {deleteMut.isPending ? 'Suppression…' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

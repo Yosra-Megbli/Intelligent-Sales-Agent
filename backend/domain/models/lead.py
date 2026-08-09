@@ -15,6 +15,7 @@ from sqlalchemy import (
     DateTime,
     Enum as SAEnum,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -40,6 +41,32 @@ class Lead(Base):
     last_name = Column(String(120), nullable=True)
     email = Column(String(255), nullable=True, index=True)
     phone = Column(String(32), nullable=True, index=True)
+
+    # --- Creation-time identity (P1-2: duplicate-lead protection) ---
+    # Deliberately NOT the same columns as `email`/`phone` above, and
+    # deliberately only ever written by LeadRepository.create() (never by
+    # update_fields(), CRM edits, or conversation_engine/engine.py setting
+    # entities extracted mid-conversation). Two different things both look
+    # like "this lead's email" but must not share one column/constraint:
+    #  1. the identity a lead was *created* with (start_conversation/CSV
+    #     import) - this is what a unique constraint can safely enforce,
+    #     since creating two leads for the same real prospect is always a
+    #     bug, never a legitimate business outcome.
+    #  2. `email`/`phone` above, which can legitimately hold a value that
+    #     collides with a *different* lead while conversation_engine/
+    #     rules.py's DATA_VALIDATION step is deciding whether to reject it
+    #     as DUPLICATE_LEAD (F-003) - the lead being rejected must be able
+    #     to durably store the colliding value it was rejected for. A
+    #     table-wide unique constraint on `email`/`phone` themselves would
+    #     turn that existing, intentional business flow into a hard
+    #     IntegrityError instead of a graceful rejection - see
+    #     tests/test_conversation_engine.py::
+    #     test_duplicate_lead_rejected_at_data_validation_regression_f003.
+    # find_duplicate()/get_by_email() below query these columns, not
+    # `email`/`phone` - "is this the same lead" always means "same
+    # creation-time identity" everywhere in the system, one definition.
+    dedup_email = Column(String(255), nullable=True)
+    dedup_phone = Column(String(32), nullable=True)
 
     # --- Source ---
     source = Column(SAEnum(LeadSource, name="lead_source"), nullable=False)
@@ -118,6 +145,40 @@ class Lead(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    # P1-2 (duplicate-lead protection): the application layer already checks
+    # LeadRepository.find_duplicate() before creating a Lead (see
+    # application/conversation_service.py's start_conversation), but that
+    # check-then-insert is a classic race condition under concurrent
+    # requests - two requests can both see "no match" before either has
+    # committed. These partial unique indexes make PostgreSQL itself the
+    # final authority on *creation-time* identity (dedup_email/dedup_phone
+    # above - not email/phone, see their comment for why). NULL values are
+    # excluded (many leads legitimately have no email, or no phone) so only
+    # leads that actually carry the identifier are compared. dedup_email is
+    # stored already-lowercased by LeadRepository.create(), so a plain
+    # equality index is enough - no function-based index needed. `sqlite_
+    # where` mirrors `postgresql_where` so the exact same protection is
+    # exercised by the SQLite-backed test suite, not just in production; see
+    # database/migrations/0002_lead_dedup_unique_indexes.sql for the manual
+    # ALTER needed on any pre-existing PostgreSQL database (this project has
+    # no Alembic - see that file's header for why).
+    __table_args__ = (
+        Index(
+            "ux_leads_dedup_email",
+            dedup_email,
+            unique=True,
+            postgresql_where=dedup_email.isnot(None),
+            sqlite_where=dedup_email.isnot(None),
+        ),
+        Index(
+            "ux_leads_dedup_phone",
+            dedup_phone,
+            unique=True,
+            postgresql_where=dedup_phone.isnot(None),
+            sqlite_where=dedup_phone.isnot(None),
+        ),
     )
 
     # --- Relationships ---

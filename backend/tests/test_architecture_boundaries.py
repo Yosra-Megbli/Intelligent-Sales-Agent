@@ -206,6 +206,18 @@ def test_lead_import_service_never_imports_the_engine_or_ai():
     assert not leaked, f"application/lead_import_service.py must not import these directly: {leaked}"
 
 
+def test_lead_service_never_imports_the_engine_or_ai():
+    """LeadService (Dashboard edit/delete-lead actions) only writes CRM
+    data - same rule as LeadImportService: it must never import
+    conversation_engine or ai/*, since a field edit or delete is never a
+    qualification/dialogue decision."""
+    from application import lead_service as lead_service_module
+
+    imported = _imported_module_names(lead_service_module)
+    leaked = {name for name in imported if any(name.startswith(m) for m in _ENGINE_AND_AI_MODULES)}
+    assert not leaked, f"application/lead_service.py must not import these directly: {leaked}"
+
+
 def test_dashboard_service_never_imports_the_engine_or_ai():
     """DashboardService is read-only reporting, not a use-case that talks to
     the LLM or the Business Engine - unlike ConversationService, it should

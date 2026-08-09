@@ -275,6 +275,51 @@ export const GetCampaignResponse = zod.object({
 
 
 /**
+ * @summary Rename a campaign, or change its target_rules while still DRAFT
+ */
+export const UpdateCampaignParams = zod.object({
+  "campaignId": zod.coerce.string()
+})
+
+export const updateCampaignBodyNameMax = 180;
+
+
+
+export const UpdateCampaignHeader = zod.object({
+  "x-api-key": zod.string().optional()
+})
+
+export const UpdateCampaignBody = zod.object({
+  "name": zod.string().min(1).max(updateCampaignBodyNameMax).optional(),
+  "target_rules": zod.record(zod.string(), zod.unknown()).nullish()
+})
+
+export const UpdateCampaignResponse = zod.object({
+  "id": zod.string(),
+  "name": zod.string(),
+  "status": zod.string(),
+  "channel": zod.string(),
+  "total_leads": zod.number(),
+  "sent": zod.number(),
+  "target_rules": zod.string().nullish(),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a DRAFT or PAUSED campaign (blocked while RUNNING - pause first)
+ */
+export const DeleteCampaignParams = zod.object({
+  "campaignId": zod.coerce.string()
+})
+
+export const DeleteCampaignHeader = zod.object({
+  "x-api-key": zod.string().optional()
+})
+
+
+/**
  * @summary Get campaign analytics (funnel counts and rates)
  */
 export const GetCampaignAnalyticsParams = zod.object({
@@ -368,6 +413,68 @@ export const ResumeCampaignResponse = zod.object({
   "target_rules": zod.string().nullish(),
   "created_at": zod.coerce.date(),
   "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Edit a lead's CRM fields (never status/qualification - Engine-owned)
+ */
+export const UpdateLeadParams = zod.object({
+  "leadId": zod.coerce.string()
+})
+
+export const UpdateLeadHeader = zod.object({
+  "x-api-key": zod.string().optional()
+})
+
+export const UpdateLeadBody = zod.object({
+  "first_name": zod.string().nullish(),
+  "last_name": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "telegram_chat_id": zod.string().nullish(),
+  "region": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "current_supplier": zod.string().nullish(),
+  "provider": zod.string().nullish(),
+  "notes": zod.string().nullish()
+})
+
+export const UpdateLeadResponse = zod.object({
+  "id": zod.string(),
+  "first_name": zod.string().nullish(),
+  "last_name": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "telegram_chat_id": zod.string().nullish(),
+  "source": zod.string(),
+  "status": zod.string(),
+  "rejection_reason": zod.string().nullish(),
+  "customer_type": zod.string().nullish(),
+  "region": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "current_supplier": zod.string().nullish(),
+  "provider": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "qualification_score": zod.number().nullish(),
+  "next_follow_up_date": zod.coerce.date().nullish(),
+  "follow_up_category": zod.string().nullish(),
+  "campaign_id": zod.string().nullish(),
+  "campaign_name": zod.string().nullish(),
+  "created_at": zod.coerce.date(),
+  "updated_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete a lead (also removes its conversations/messages/activities)
+ */
+export const DeleteLeadParams = zod.object({
+  "leadId": zod.coerce.string()
+})
+
+export const DeleteLeadHeader = zod.object({
+  "x-api-key": zod.string().optional()
 })
 
 

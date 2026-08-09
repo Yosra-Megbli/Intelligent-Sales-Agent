@@ -29,6 +29,18 @@ class CreateCampaignRequest(BaseModel):
     channel: ConversationChannel = ConversationChannel.WHATSAPP
 
 
+class UpdateCampaignRequest(BaseModel):
+    """Both optional and unset-by-default - a PATCH only touches what's
+    included (see api/campaign_routes.py's `.model_dump(exclude_unset=True)`).
+    `target_rules` is only actually applied while the campaign is still
+    DRAFT - see CampaignService.update_campaign's docstring for why."""
+
+    model_config = {"extra": "forbid"}
+
+    name: Optional[str] = Field(default=None, min_length=1, max_length=180)
+    target_rules: Optional[dict] = None
+
+
 class CampaignSummary(BaseModel):
     """Lightweight campaign shape for the list/detail/start/pause/resume
     endpoints. Deliberately does NOT include `replied`/`qualified`: those

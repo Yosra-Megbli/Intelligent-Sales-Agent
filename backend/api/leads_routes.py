@@ -32,10 +32,12 @@ from api.leads_schemas import (
     ImportPreviewRowResponse,
     ImportReportResponse,
     ImportRowErrorResponse,
+    UpdateLeadRequest,
 )
 from api.routes import get_db_session
 from application.dashboard_service import DashboardService
 from application.lead_import_service import LeadImportService
+from application.lead_service import InvalidLeadFieldError, LeadNotFoundError, LeadService
 
 router = APIRouter(prefix="/api/leads", tags=["leads"], dependencies=[Depends(require_api_key)])
 
@@ -102,3 +104,27 @@ def get_lead_history(lead_id: UUID, db: Session = Depends(get_db_session)) -> li
     if detail is None:
         raise HTTPException(status_code=404, detail="Lead not found")
     return [ActivitySummary.from_model(a) for a in detail.activities]
+
+
+@router.patch("/{lead_id}", response_model=LeadSummary)
+def update_lead(lead_id: UUID, payload: UpdateLeadRequest, db: Session = Depends(get_db_session)) -> LeadSummary:
+    """CRM data correction only - see application/lead_service.py's
+    `_EDITABLE_FIELDS`; a lead's status/qualification is never editable
+    from here, only the Business Rules Engine sets those.
+    `exclude_unset=True` so an omitted field is left untouched rather than
+    overwritten with null."""
+    try:
+        lead = LeadService(db).update_lead(lead_id, **payload.model_dump(exclude_unset=True))
+    except LeadNotFoundError:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    except InvalidLeadFieldError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return LeadSummary.from_model(lead)
+
+
+@router.delete("/{lead_id}", status_code=204, response_model=None)
+def delete_lead(lead_id: UUID, db: Session = Depends(get_db_session)) -> None:
+    try:
+        LeadService(db).delete_lead(lead_id)
+    except LeadNotFoundError:
+        raise HTTPException(status_code=404, detail="Lead not found")

@@ -127,3 +127,58 @@ def test_get_lead_history_reflects_import_activity(client):
     assert res.status_code == 200
     activity_types = [a["type"] for a in res.json()]
     assert "LEAD_IMPORTED" in activity_types
+
+
+# --- PATCH /api/leads/{id} ------------------------------------------------
+
+
+def test_update_lead_via_route(client):
+    db = client.session_factory()
+    lead = LeadRepository(db).create(source=LeadSource.WEBSITE, first_name="Jean")
+    db.commit()
+    lead_id = str(lead.id)
+
+    res = client.patch(f"/api/leads/{lead_id}", json={"notes": "Appeler demain", "region": "Bruxelles"})
+
+    assert res.status_code == 200
+    body = res.json()
+    assert body["notes"] == "Appeler demain"
+    assert body["region"] == "Bruxelles"
+    assert body["first_name"] == "Jean"  # untouched
+
+
+def test_update_lead_404_when_missing(client):
+    res = client.patch(
+        "/api/leads/00000000-0000-0000-0000-000000000000", json={"notes": "x"}
+    )
+    assert res.status_code == 404
+
+
+def test_update_lead_rejects_engine_owned_field(client):
+    db = client.session_factory()
+    lead = LeadRepository(db).create(source=LeadSource.WEBSITE, first_name="Jean")
+    db.commit()
+
+    res = client.patch(f"/api/leads/{lead.id}", json={"status": "QUALIFIED"})
+
+    assert res.status_code == 422
+
+
+# --- DELETE /api/leads/{id} ------------------------------------------------
+
+
+def test_delete_lead_via_route(client):
+    db = client.session_factory()
+    lead = LeadRepository(db).create(source=LeadSource.WEBSITE, first_name="ToDelete")
+    db.commit()
+    lead_id = str(lead.id)
+
+    res = client.delete(f"/api/leads/{lead_id}")
+
+    assert res.status_code == 204
+    assert client.get(f"/api/leads/{lead_id}").status_code == 404
+
+
+def test_delete_lead_404_when_missing(client):
+    res = client.delete("/api/leads/00000000-0000-0000-0000-000000000000")
+    assert res.status_code == 404

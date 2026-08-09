@@ -212,6 +212,56 @@ paths:
                 $ref: "#/components/schemas/CampaignDetail"
         "404":
           description: Not found
+    patch:
+      operationId: updateCampaign
+      tags: [campaigns]
+      summary: Rename a campaign, or change its target_rules while still DRAFT
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: campaignId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCampaignInput"
+      responses:
+        "200":
+          description: Updated campaign
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Not found
+        "409":
+          description: target_rules change rejected (campaign is not DRAFT)
+    delete:
+      operationId: deleteCampaign
+      tags: [campaigns]
+      summary: Delete a DRAFT or PAUSED campaign (blocked while RUNNING - pause first)
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: campaignId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+        "409":
+          description: Campaign is RUNNING
 
   /campaigns/{campaignId}/analytics:
     get:
@@ -314,6 +364,56 @@ paths:
           description: Not found
         "409":
           description: Invalid transition
+
+  /leads/{leadId}:
+    patch:
+      operationId: updateLead
+      tags: [leads]
+      summary: Edit a lead's CRM fields (never status/qualification - Engine-owned)
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: leadId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateLeadInput"
+      responses:
+        "200":
+          description: Updated lead
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Lead"
+        "404":
+          description: Not found
+        "422":
+          description: Attempted to edit a field the Dashboard is not allowed to change
+    delete:
+      operationId: deleteLead
+      tags: [leads]
+      summary: Delete a lead (also removes its conversations/messages/activities)
+      parameters:
+        - name: x-api-key
+          in: header
+          required: false
+          schema: { type: string }
+        - name: leadId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
 
   /leads/import/preview:
     post:
@@ -543,6 +643,28 @@ components:
         channel:
           type: string
           default: WHATSAPP
+
+    UpdateCampaignInput:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 180 }
+        target_rules:
+          type: ["object", "null"]
+          additionalProperties: true
+
+    UpdateLeadInput:
+      type: object
+      properties:
+        first_name: { type: ["string", "null"] }
+        last_name: { type: ["string", "null"] }
+        email: { type: ["string", "null"] }
+        phone: { type: ["string", "null"] }
+        telegram_chat_id: { type: ["string", "null"] }
+        region: { type: ["string", "null"] }
+        city: { type: ["string", "null"] }
+        current_supplier: { type: ["string", "null"] }
+        provider: { type: ["string", "null"] }
+        notes: { type: ["string", "null"] }
 
     CsvImportInput:
       type: object

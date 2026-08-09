@@ -1,16 +1,27 @@
-import { Link } from 'wouter';
+import { useState } from 'react';
+import { Link, useLocation } from 'wouter';
 import {
   useGetCampaign, useGetCampaignAnalytics,
   useStartCampaign, usePauseCampaign, useResumeCampaign,
+  useUpdateCampaign, useDeleteCampaign,
 } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Play, Pause } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   ResponsiveContainer, FunnelChart, Funnel, LabelList, Tooltip,
 } from 'recharts';
@@ -41,6 +52,10 @@ interface Props {
 
 export default function CampaignDetail({ campaignId }: Props) {
   const qc = useQueryClient();
+  const [, navigate] = useLocation();
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameValue, setRenameValue] = useState('');
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data: campData, isLoading: campLoading, isError: campError, refetch } = useGetCampaign(campaignId);
   const { data: analytics, isLoading: anlLoading } = useGetCampaignAnalytics(campaignId);
@@ -48,10 +63,35 @@ export default function CampaignDetail({ campaignId }: Props) {
   const startMut  = useStartCampaign();
   const pauseMut  = usePauseCampaign();
   const resumeMut = useResumeCampaign();
+  const updateMut = useUpdateCampaign();
+  const deleteMut = useDeleteCampaign();
 
   function invalidate() {
     void qc.invalidateQueries({ queryKey: ['getCampaign', campaignId] });
     void qc.invalidateQueries({ queryKey: ['listCampaigns'] });
+  }
+
+  async function handleRename() {
+    if (!renameValue.trim()) return;
+    try {
+      await updateMut.mutateAsync({ campaignId, data: { name: renameValue.trim() } });
+      toast.success('Campagne renommée');
+      setRenameOpen(false);
+      invalidate();
+    } catch {
+      toast.error('Le renommage a échoué');
+    }
+  }
+
+  async function handleDelete() {
+    try {
+      await deleteMut.mutateAsync({ campaignId });
+      toast.success('Campagne supprimée');
+      void qc.invalidateQueries({ queryKey: ['listCampaigns'] });
+      navigate('/campaigns');
+    } catch {
+      toast.error("La suppression a échoué (une campagne EN COURS doit d'abord être mise en pause).");
+    }
   }
 
   async function handleStart() {
@@ -155,6 +195,23 @@ export default function CampaignDetail({ campaignId }: Props) {
                     <Pause className="h-4 w-4 mr-1" /> Pause
                   </Button>
                 )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setRenameValue(campaign.name); setRenameOpen(true); }}
+                >
+                  <Pencil className="h-4 w-4 mr-1" /> Renommer
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  disabled={campaign.status.toLowerCase() === 'running'}
+                  title={campaign.status.toLowerCase() === 'running' ? 'Mettez en pause avant de supprimer' : undefined}
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  <Trash2 className="h-4 w-4 mr-1" /> Supprimer
+                </Button>
               </div>
             </div>
 
@@ -315,6 +372,53 @@ export default function CampaignDetail({ campaignId }: Props) {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Renommer la campagne</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            <Label htmlFor="rename-campaign">Nom</Label>
+            <Input
+              id="rename-campaign"
+              className="mt-1.5"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && void handleRename()}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameOpen(false)}>Annuler</Button>
+            <Button onClick={() => void handleRename()} disabled={!renameValue.trim() || updateMut.isPending}>
+              {updateMut.isPending ? 'Enregistrement…' : 'Enregistrer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer cette campagne ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{campaign.name}" sera définitivement supprimée. Les leads qui lui étaient
+              assignés ne sont pas supprimés — ils redeviennent disponibles pour une autre
+              campagne. Cette action est irréversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void handleDelete()}
+              disabled={deleteMut.isPending}
+            >
+              {deleteMut.isPending ? 'Suppression…' : 'Supprimer'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

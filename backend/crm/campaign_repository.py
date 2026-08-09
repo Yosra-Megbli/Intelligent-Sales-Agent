@@ -70,3 +70,23 @@ class CampaignRepository:
         campaign.qualified = (campaign.qualified or 0) + 1
         self.db.flush()
         return campaign
+
+    def update_fields(self, campaign: Campaign, **fields) -> Campaign:
+        """Generic field updater, same shape as LeadRepository.update_fields
+        - used for renaming/re-targeting a campaign (application/campaign_service.py
+        decides which fields are safe to change given the campaign's current
+        status; this layer stays dumb and just writes what it's given)."""
+        for key, value in fields.items():
+            if not hasattr(campaign, key):
+                raise AttributeError(f"Campaign has no field '{key}'")
+            setattr(campaign, key, value)
+        self.db.flush()
+        return campaign
+
+    def delete(self, campaign: Campaign) -> None:
+        """Hard delete. Caller (application/campaign_service.py) is
+        responsible for releasing this campaign's leads first
+        (LeadRepository.release_from_campaign) - Lead.campaign_id has a FK
+        to campaigns.id with no ON DELETE CASCADE."""
+        self.db.delete(campaign)
+        self.db.flush()

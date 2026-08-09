@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from domain.enums import ConversationChannel, ConversationState
@@ -219,3 +219,17 @@ class ConversationRepository:
             .where(Lead.campaign_id == campaign_id, Conversation.current_state == state)
         )
         return self.db.scalar(stmt) or 0
+
+    def delete_all_for_lead(self, lead_id: uuid.UUID) -> None:
+        """Deletes every Message then Conversation belonging to this lead -
+        used by application/lead_service.py before a hard Lead delete (see
+        LeadRepository.delete's docstring on why this order matters: no
+        ON DELETE CASCADE exists at the DB level). Messages first since
+        Message.conversation_id has its own NOT NULL FK to conversations.id."""
+        conversation_ids = list(
+            self.db.scalars(select(Conversation.id).where(Conversation.lead_id == lead_id)).all()
+        )
+        if conversation_ids:
+            self.db.execute(delete(Message).where(Message.conversation_id.in_(conversation_ids)))
+        self.db.execute(delete(Conversation).where(Conversation.lead_id == lead_id))
+        self.db.flush()

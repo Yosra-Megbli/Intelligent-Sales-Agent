@@ -18,6 +18,15 @@ from domain.enums import FollowUpCategory, LeadSource, LeadStatus, RejectionReas
 from domain.models.lead import Lead
 
 
+def _ci(email: str) -> str:
+    """Case-insensitive comparison value for an email. The one normalization
+    rule for "is this the same email" - reused by every lookup below instead
+    of each defining its own (get_by_email, find_duplicate). Matches the
+    unique index defined on Lead (func.lower(email)), so what the DB
+    ultimately enforces and what the application checks beforehand agree."""
+    return email.strip().lower()
+
+
 class LeadRepository:
     def __init__(self, db: Session):
         self.db = db
@@ -38,6 +47,12 @@ class LeadRepository:
             last_name=last_name,
             email=email,
             phone=phone,
+            # See Lead.dedup_email/dedup_phone's comment (domain/models/
+            # lead.py): only ever set here, at creation time - this is what
+            # the unique indexes and find_duplicate()/get_by_email() below
+            # actually compare against.
+            dedup_email=_ci(email) if email else None,
+            dedup_phone=phone.strip() if phone else None,
         )
         self.db.add(lead)
         self.db.flush()
@@ -47,37 +62,46 @@ class LeadRepository:
         return self.db.get(Lead, lead_id)
 
     def get_by_email(self, email: str) -> Optional[Lead]:
-        stmt = select(Lead).where(Lead.email == email)
+        stmt = select(Lead).where(Lead.dedup_email == _ci(email))
         return self.db.scalars(stmt).first()
 
     def get_by_phone(self, phone: str) -> Optional[Lead]:
-        stmt = select(Lead).where(Lead.phone == phone)
+        stmt = select(Lead).where(Lead.dedup_phone == phone.strip())
         return self.db.scalars(stmt).first()
 
     def find_duplicate(
         self, email: Optional[str], phone: Optional[str], *, exclude_lead_id: Optional[uuid.UUID] = None
     ) -> Optional[Lead]:
         """Used by the rules engine (via ConversationEngine) to detect
-        DUPLICATE_LEAD before qualifying a lead.
+        DUPLICATE_LEAD before qualifying a lead, by CSV import to avoid
+        creating a second row for a prospect already in the CRM, and by
+        ConversationService.start_conversation (P1-1) to reuse an existing
+        Lead instead of creating a new one. Matches against
+        dedup_email/dedup_phone (the lead's *creation-time* identity, see
+        Lead's comment) - not the live email/phone columns, which can
+        legitimately hold a value that collides with a different lead while
+        DATA_VALIDATION is still deciding whether to reject it as
+        DUPLICATE_LEAD.
 
         `exclude_lead_id` matters as soon as this is actually called from
         the live flow (F-003 fix): by the time DATA_VALIDATION runs, the
-        Lead being validated already has its own email/phone saved. The
-        exclusion is applied in the WHERE clause itself, not by fetching one
-        row and checking its id afterwards - `get_by_email`/`get_by_phone`
-        take the *first* match with no ordering guarantee, so if the lead's
-        own row happened to come back first, a post-fetch check would wrongly
-        conclude "no duplicate" and miss a real one instead of looking further.
+        Lead being validated may already have its own dedup_email/dedup_
+        phone saved. The exclusion is applied in the WHERE clause itself,
+        not by fetching one row and checking its id afterwards -
+        `get_by_email`/`get_by_phone` take the *first* match with no
+        ordering guarantee, so if the lead's own row happened to come back
+        first, a post-fetch check would wrongly conclude "no duplicate" and
+        miss a real one instead of looking further.
         """
         if email:
-            stmt = select(Lead).where(Lead.email == email)
+            stmt = select(Lead).where(Lead.dedup_email == _ci(email))
             if exclude_lead_id is not None:
                 stmt = stmt.where(Lead.id != exclude_lead_id)
             existing = self.db.scalars(stmt).first()
             if existing:
                 return existing
         if phone:
-            stmt = select(Lead).where(Lead.phone == phone)
+            stmt = select(Lead).where(Lead.dedup_phone == phone.strip())
             if exclude_lead_id is not None:
                 stmt = stmt.where(Lead.id != exclude_lead_id)
             existing = self.db.scalars(stmt).first()
@@ -233,3 +257,28 @@ class LeadRepository:
         lead.follow_up_attempts = (lead.follow_up_attempts or 0) + 1
         self.db.flush()
         return lead
+
+    def delete(self, lead: Lead) -> None:
+        """Hard delete. Caller (application/lead_service.py) is responsible
+        for deleting this lead's messages/conversations/activities first -
+        those have a NOT NULL FK to leads.id with no ON DELETE CASCADE, so
+        deleting a lead with either still attached fails at the DB level
+        rather than silently orphaning rows."""
+        self.db.delete(lead)
+        self.db.flush()
+
+    def release_from_campaign(self, campaign_id: uuid.UUID) -> int:
+        """Unassigns every lead currently attached to `campaign_id` (sets
+        campaign_id back to NULL) without touching their status - used when
+        a campaign is deleted (application/campaign_service.py). A lead
+        already CONTACTED/QUALIFIED/etc. keeps that real progress; only its
+        campaign attribution is cleared, so it becomes eligible again for
+        `list_new_for_campaign` only if it's also still NEW (unchanged
+        behaviour, this method doesn't reset status). Returns the number of
+        leads released."""
+        stmt = select(Lead).where(Lead.campaign_id == campaign_id)
+        leads = list(self.db.scalars(stmt).all())
+        for lead in leads:
+            lead.campaign_id = None
+        self.db.flush()
+        return len(leads)

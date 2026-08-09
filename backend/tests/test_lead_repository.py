@@ -30,6 +30,26 @@ def test_find_duplicate_returns_none_when_no_match(db_session):
     assert duplicate is None
 
 
+def test_find_duplicate_matches_email_case_insensitively(db_session):
+    repo = LeadRepository(db_session)
+    existing = repo.create(source=LeadSource.CSV, email="Existing@Email.com")
+
+    duplicate = repo.find_duplicate(email="existing@email.com", phone=None)
+    assert duplicate is not None
+    assert duplicate.id == existing.id
+
+
+def test_create_populates_dedup_columns_from_email_and_phone(db_session):
+    """P1-2: dedup_email/dedup_phone are what the unique indexes actually
+    constrain (see domain/models/lead.py) - creation must always keep them
+    in sync with email/phone (lowercased for email)."""
+    repo = LeadRepository(db_session)
+    lead = repo.create(source=LeadSource.WEBSITE, email="Jean@Test.com", phone=" 0499998877 ")
+
+    assert lead.dedup_email == "jean@test.com"
+    assert lead.dedup_phone == "0499998877"
+
+
 def test_find_duplicate_excludes_the_leads_own_id(db_session):
     """Part of the F-003 fix: by the time DATA_VALIDATION runs, the lead
     being validated already has its own email/phone saved - without
@@ -44,9 +64,18 @@ def test_find_duplicate_excludes_the_leads_own_id(db_session):
 
 
 def test_find_duplicate_still_finds_a_different_lead_with_the_same_contact_info(db_session):
+    """The second lead acquires the colliding email the same way the live
+    F-003 flow does - via update_fields() mid-conversation, after being
+    created with none - not via create(), which is the one place
+    dedup_email/dedup_phone (and their unique indexes, P1-2) are set. Two
+    leads both *created* with the same email is exactly what P1-2 now
+    prevents at the DB level (see test_conversation_service.py's race-
+    condition test); this test is about find_duplicate() still finding a
+    same-email lead that legitimately holds it for another reason."""
     repo = LeadRepository(db_session)
     existing = repo.create(source=LeadSource.CSV, email="jean@test.com")
-    new_lead = repo.create(source=LeadSource.WEBSITE, email="jean@test.com")
+    new_lead = repo.create(source=LeadSource.WEBSITE)
+    repo.update_fields(new_lead, email="jean@test.com")
 
     duplicate = repo.find_duplicate(email="jean@test.com", phone=None, exclude_lead_id=new_lead.id)
 

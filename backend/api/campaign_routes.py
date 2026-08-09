@@ -30,6 +30,7 @@ from api.campaign_schemas import (
     CampaignListResponse,
     CampaignSummary,
     CreateCampaignRequest,
+    UpdateCampaignRequest,
 )
 from api.dashboard_schemas import LeadSummary
 from api.dependencies import require_api_key
@@ -85,6 +86,22 @@ def get_campaign(
         leads_limit=detail.leads.limit,
         leads_offset=detail.leads.offset,
     )
+
+
+@router.patch("/{campaign_id}", response_model=CampaignSummary)
+def update_campaign(
+    campaign_id: UUID, payload: UpdateCampaignRequest, db: Session = Depends(get_db_session)
+) -> CampaignSummary:
+    campaign = _apply_transition(
+        lambda cid: CampaignService(db).update_campaign(cid, **payload.model_dump(exclude_unset=True)),
+        campaign_id,
+    )
+    return CampaignSummary.from_model(campaign)
+
+
+@router.delete("/{campaign_id}", status_code=204, response_model=None)
+def delete_campaign(campaign_id: UUID, db: Session = Depends(get_db_session)) -> None:
+    _apply_transition(CampaignService(db).delete_campaign, campaign_id)
 
 
 @router.get("/{campaign_id}/analytics", response_model=CampaignAnalyticsResponse)

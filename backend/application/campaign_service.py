@@ -181,6 +181,49 @@ class CampaignService:
         self.db.commit()
         return campaign
 
+    def update_campaign(
+        self, campaign_id: UUID, *, name: Optional[str] = None, target_rules: Optional[dict] = None
+    ) -> Campaign:
+        """Renaming is safe at any status (it's just a label - never read by
+        CampaignEngine/OutboundScheduler). Re-targeting (`target_rules`) is
+        only allowed while DRAFT: once a campaign has started, leads may
+        already be assigned under the old rules, and silently changing what
+        "matches" this campaign after the fact would make that assignment
+        history impossible to reason about - pause and create a new
+        campaign instead of re-targeting a live one."""
+        campaign = self._require_campaign(campaign_id)
+        fields: dict = {}
+        if name is not None:
+            fields["name"] = name
+        if target_rules is not None:
+            if campaign.status != CampaignStatus.DRAFT:
+                raise InvalidCampaignTransitionError(
+                    f"Campaign {campaign_id} is {campaign.status.value}, cannot change target_rules "
+                    "(only allowed while DRAFT - pause and create a new campaign instead)."
+                )
+            fields["target_rules"] = json.dumps(target_rules) if target_rules else None
+        if fields:
+            self.campaign_repo.update_fields(campaign, **fields)
+            self.db.commit()
+        return campaign
+
+    def delete_campaign(self, campaign_id: UUID) -> None:
+        """Blocked while RUNNING (pause first - see class docstring's
+        compromise: deleting mid-send would cut off a batch OutboundScheduler
+        is actively working through). DRAFT/PAUSED campaigns can be deleted;
+        their assigned leads are released (LeadRepository.release_from_campaign)
+        rather than deleted themselves - a lead's own CRM record/status is
+        never collateral damage of removing the campaign that once targeted
+        it."""
+        campaign = self._require_campaign(campaign_id)
+        if campaign.status == CampaignStatus.RUNNING:
+            raise InvalidCampaignTransitionError(
+                f"Campaign {campaign_id} is RUNNING, cannot delete - pause it first."
+            )
+        self.lead_repo.release_from_campaign(campaign_id)
+        self.campaign_repo.delete(campaign)
+        self.db.commit()
+
     def get_campaign_analytics(self, campaign_id: UUID) -> Optional[CampaignAnalytics]:
         """Priority 1 (Campaign Dashboard/Analytics).
 

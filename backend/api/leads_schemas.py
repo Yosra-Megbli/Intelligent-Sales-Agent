@@ -7,7 +7,33 @@ serialization shapes, no business logic.
 
 from __future__ import annotations
 
+from typing import Optional
+
 from pydantic import BaseModel, Field
+
+
+class UpdateLeadRequest(BaseModel):
+    """All fields optional and unset-by-default (not defaulted to None) so
+    a PATCH only ever touches the fields the caller actually included -
+    see api/leads_routes.py's use of `.model_dump(exclude_unset=True)`.
+    Limited to the same CRM-only fields application/lead_service.py's
+    `_EDITABLE_FIELDS` allows - anything the Business Rules Engine owns
+    (status, qualification_score, campaign_id...) is deliberately absent.
+    `extra="forbid"` so sending one of those gives a clear 422 instead of
+    Pydantic silently dropping the field and the request no-op'ing."""
+
+    model_config = {"extra": "forbid"}
+
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
+    region: Optional[str] = None
+    city: Optional[str] = None
+    current_supplier: Optional[str] = None
+    provider: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class ImportCsvRequest(BaseModel):

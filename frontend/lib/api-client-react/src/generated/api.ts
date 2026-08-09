@@ -32,6 +32,7 @@ import type {
   HealthStatus,
   ImportPreview,
   ImportReport,
+  Lead,
   LeadDetail,
   LeadList,
   ListActivitiesParams,
@@ -39,7 +40,9 @@ import type {
   ListHandoffsParams,
   ListLeadsParams,
   Overview,
-  StatsSummary
+  StatsSummary,
+  UpdateCampaignInput,
+  UpdateLeadInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -868,6 +871,139 @@ export function useGetCampaign<TData = Awaited<ReturnType<typeof getCampaign>>, 
 
 
 
+export const getUpdateCampaignUrl = (campaignId: string,) => {
+
+
+
+
+  return `/api/campaigns/${campaignId}`
+}
+
+/**
+ * @summary Rename a campaign, or change its target_rules while still DRAFT
+ */
+export const updateCampaign = async (campaignId: string,
+    updateCampaignInput: UpdateCampaignInput, options?: Parameters<typeof customFetch>[1]): Promise<Campaign> => {
+
+  return customFetch<Campaign>(getUpdateCampaignUrl(campaignId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateCampaignInput)
+  }
+);}
+
+
+
+
+export const getUpdateCampaignMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCampaign>>, TError,{campaignId: string;data: BodyType<UpdateCampaignInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCampaign>>, TError,{campaignId: string;data: BodyType<UpdateCampaignInput>}, TContext> => {
+
+const mutationKey = ['updateCampaign'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCampaign>>, {campaignId: string;data: BodyType<UpdateCampaignInput>}> = (props) => {
+          const {campaignId,data} = props ?? {};
+
+          return  updateCampaign(campaignId,data,requestOptions)
+        }
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof updateCampaign>>>
+    export type UpdateCampaignMutationBody = BodyType<UpdateCampaignInput>
+    export type UpdateCampaignMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Rename a campaign, or change its target_rules while still DRAFT
+ */
+export const useUpdateCampaign = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCampaign>>, TError,{campaignId: string;data: BodyType<UpdateCampaignInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCampaign>>,
+        TError,
+        {campaignId: string;data: BodyType<UpdateCampaignInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateCampaignMutationOptions(options));
+    }
+
+export const getDeleteCampaignUrl = (campaignId: string,) => {
+
+
+
+
+  return `/api/campaigns/${campaignId}`
+}
+
+/**
+ * @summary Delete a DRAFT or PAUSED campaign (blocked while RUNNING - pause first)
+ */
+export const deleteCampaign = async (campaignId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteCampaignUrl(campaignId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteCampaignMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCampaign>>, TError,{campaignId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCampaign>>, TError,{campaignId: string}, TContext> => {
+
+const mutationKey = ['deleteCampaign'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCampaign>>, {campaignId: string}> = (props) => {
+          const {campaignId} = props ?? {};
+
+          return  deleteCampaign(campaignId,requestOptions)
+        }
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCampaignMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCampaign>>>
+
+    export type DeleteCampaignMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a DRAFT or PAUSED campaign (blocked while RUNNING - pause first)
+ */
+export const useDeleteCampaign = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCampaign>>, TError,{campaignId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCampaign>>,
+        TError,
+        {campaignId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteCampaignMutationOptions(options));
+    }
+
 export const getGetCampaignAnalyticsUrl = (campaignId: string,) => {
 
 
@@ -1156,6 +1292,139 @@ export const useResumeCampaign = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getResumeCampaignMutationOptions(options));
+    }
+
+export const getUpdateLeadUrl = (leadId: string,) => {
+
+
+
+
+  return `/api/leads/${leadId}`
+}
+
+/**
+ * @summary Edit a lead's CRM fields (never status/qualification - Engine-owned)
+ */
+export const updateLead = async (leadId: string,
+    updateLeadInput: UpdateLeadInput, options?: Parameters<typeof customFetch>[1]): Promise<Lead> => {
+
+  return customFetch<Lead>(getUpdateLeadUrl(leadId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateLeadInput)
+  }
+);}
+
+
+
+
+export const getUpdateLeadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLead>>, TError,{leadId: string;data: BodyType<UpdateLeadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateLead>>, TError,{leadId: string;data: BodyType<UpdateLeadInput>}, TContext> => {
+
+const mutationKey = ['updateLead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateLead>>, {leadId: string;data: BodyType<UpdateLeadInput>}> = (props) => {
+          const {leadId,data} = props ?? {};
+
+          return  updateLead(leadId,data,requestOptions)
+        }
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateLeadMutationResult = NonNullable<Awaited<ReturnType<typeof updateLead>>>
+    export type UpdateLeadMutationBody = BodyType<UpdateLeadInput>
+    export type UpdateLeadMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Edit a lead's CRM fields (never status/qualification - Engine-owned)
+ */
+export const useUpdateLead = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateLead>>, TError,{leadId: string;data: BodyType<UpdateLeadInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateLead>>,
+        TError,
+        {leadId: string;data: BodyType<UpdateLeadInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateLeadMutationOptions(options));
+    }
+
+export const getDeleteLeadUrl = (leadId: string,) => {
+
+
+
+
+  return `/api/leads/${leadId}`
+}
+
+/**
+ * @summary Delete a lead (also removes its conversations/messages/activities)
+ */
+export const deleteLead = async (leadId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteLeadUrl(leadId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteLeadMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLead>>, TError,{leadId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteLead>>, TError,{leadId: string}, TContext> => {
+
+const mutationKey = ['deleteLead'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteLead>>, {leadId: string}> = (props) => {
+          const {leadId} = props ?? {};
+
+          return  deleteLead(leadId,requestOptions)
+        }
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteLeadMutationResult = NonNullable<Awaited<ReturnType<typeof deleteLead>>>
+
+    export type DeleteLeadMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete a lead (also removes its conversations/messages/activities)
+ */
+export const useDeleteLead = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteLead>>, TError,{leadId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteLead>>,
+        TError,
+        {leadId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteLeadMutationOptions(options));
     }
 
 export const getPreviewLeadImportUrl = () => {

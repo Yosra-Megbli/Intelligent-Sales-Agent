@@ -28,6 +28,8 @@ from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID
 
+from sqlalchemy.exc import IntegrityError
+
 from ai.extractor import Extractor
 from ai.providers.interface import LLMProvider
 from ai.rag import Rag
@@ -136,9 +138,36 @@ class ConversationService:
         external_id: Optional[str] = None,
     ) -> tuple[Lead, Conversation]:
         source = _LEAD_SOURCE_BY_CHANNEL.get(channel, LeadSource.WEBSITE)
-        lead = self.lead_repo.create(
-            source=source, first_name=first_name, last_name=last_name, email=email, phone=phone
-        )
+        email = (email or "").strip() or None
+        phone = (phone or "").strip() or None
+
+        # P1-1 (reuse existing Lead): only email/phone are reliable identity
+        # signals here - the same pair LeadRepository.find_duplicate() (and
+        # the rules engine's own DUPLICATE_LEAD check) already use, so "same
+        # lead" means the same thing everywhere. Without either one (e.g. a
+        # bare Telegram/WhatsApp first contact, which only has a channel
+        # external_id at this point) there is nothing reliable to match on -
+        # skip the lookup rather than risk merging two different people.
+        lead = self.lead_repo.find_duplicate(email=email, phone=phone) if (email or phone) else None
+        if lead is None:
+            try:
+                lead = self.lead_repo.create(
+                    source=source, first_name=first_name, last_name=last_name, email=email, phone=phone
+                )
+            except IntegrityError:
+                # P1-2 fallback: a concurrent request won the race between
+                # our find_duplicate() check above and this INSERT - the
+                # partial unique indexes on Lead (domain/models/lead.py)
+                # just rejected us. The DB is the last line of defense, not
+                # a 500: roll back our own failed insert, then re-read what
+                # the other request just committed and reuse that Lead
+                # instead. If find_duplicate() still finds nothing (e.g. the
+                # conflict was on a field we didn't search by), re-raise -
+                # that would be a real, unexplained error.
+                self.db.rollback()
+                lead = self.lead_repo.find_duplicate(email=email, phone=phone)
+                if lead is None:
+                    raise
         # Backfill Lead.telegram_chat_id from this first inbound message too
         # (not just the Conversation row) - keeps outbound/scheduler.py's
         # `_resolve_external_id` able to find it straight from the lead,

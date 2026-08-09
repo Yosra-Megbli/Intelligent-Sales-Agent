@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from domain.enums import ActivityType
@@ -29,6 +29,13 @@ class ActivityRepository:
             .limit(limit)
         )
         return list(self.db.scalars(stmt).all())
+
+    def delete_for_lead(self, lead_id: uuid.UUID) -> None:
+        """Used by application/lead_service.py before a hard Lead delete -
+        see LeadRepository.delete's docstring on why this has to happen
+        explicitly (no ON DELETE CASCADE at the DB level)."""
+        self.db.execute(delete(Activity).where(Activity.lead_id == lead_id))
+        self.db.flush()
 
     def list_recent(self, limit: int = 50) -> list[Activity]:
         """Global activity feed (all leads combined), most recent first -

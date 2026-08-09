@@ -183,3 +183,93 @@ def test_resuming_a_telegram_campaign_keeps_using_its_own_channel(db_session):
 
     assert resumed.channel == ConversationChannel.TELEGRAM
     assert resumed.sent == 2
+
+
+# --- update_campaign ------------------------------------------------------
+
+
+def test_update_campaign_renames_regardless_of_status(db_session):
+    service = CampaignService(db_session)
+    campaign = service.create_campaign(name="Old Name")
+    service.start_campaign(campaign.id)  # RUNNING
+
+    updated = service.update_campaign(campaign.id, name="New Name")
+
+    assert updated.name == "New Name"
+
+
+def test_update_campaign_changes_target_rules_while_draft(db_session):
+    service = CampaignService(db_session)
+    campaign = service.create_campaign(name="C", target_rules={"region": "Wallonie"})
+
+    updated = service.update_campaign(campaign.id, target_rules={"region": "Flandre"})
+
+    assert updated.target_rules == '{"region": "Flandre"}'
+
+
+def test_update_campaign_rejects_target_rules_change_once_started(db_session):
+    """Once RUNNING/PAUSED, leads may already be assigned under the old
+    rules - re-targeting silently would make that assignment history
+    impossible to reason about (see CampaignService.update_campaign)."""
+    service = CampaignService(db_session)
+    campaign = service.create_campaign(name="C", target_rules={"region": "Wallonie"})
+    service.start_campaign(campaign.id)
+
+    with pytest.raises(InvalidCampaignTransitionError):
+        service.update_campaign(campaign.id, target_rules={"region": "Flandre"})
+
+
+def test_update_campaign_raises_for_unknown_campaign(db_session):
+    import uuid
+
+    with pytest.raises(CampaignNotFoundError):
+        CampaignService(db_session).update_campaign(uuid.uuid4(), name="x")
+
+
+# --- delete_campaign ------------------------------------------------------
+
+
+def test_delete_campaign_removes_a_draft_campaign(db_session):
+    service = CampaignService(db_session)
+    campaign = service.create_campaign(name="Draft campaign")
+    campaign_id = campaign.id
+
+    service.delete_campaign(campaign_id)
+
+    assert service.get_campaign(campaign_id) is None
+
+
+def test_delete_campaign_is_blocked_while_running(db_session):
+    service = CampaignService(db_session)
+    campaign = service.create_campaign(name="C")
+    service.start_campaign(campaign.id)
+
+    with pytest.raises(InvalidCampaignTransitionError):
+        service.delete_campaign(campaign.id)
+
+    assert service.get_campaign(campaign.id) is not None
+
+
+def test_delete_campaign_releases_its_assigned_leads_instead_of_deleting_them(db_session):
+    """A lead's own CRM record/status must never be collateral damage of
+    removing the campaign that once targeted it - see
+    CampaignService.delete_campaign."""
+    service = CampaignService(db_session)
+    lead = _seed_lead(db_session, region="Wallonie", phone="+32491234567")
+    campaign = service.create_campaign(name="C", target_rules={"region": "Wallonie"})
+    service.start_campaign(campaign.id)  # assigns + contacts the lead, then RUNNING
+    service.pause_campaign(campaign.id)
+
+    service.delete_campaign(campaign.id)
+
+    released_lead = LeadRepository(db_session).get_by_id(lead.id)
+    assert released_lead is not None
+    assert released_lead.campaign_id is None
+    assert released_lead.status == LeadStatus.CONTACTED  # unchanged
+
+
+def test_delete_campaign_raises_for_unknown_campaign(db_session):
+    import uuid
+
+    with pytest.raises(CampaignNotFoundError):
+        CampaignService(db_session).delete_campaign(uuid.uuid4())

@@ -183,6 +183,44 @@ export interface CampaignInput {
   channel?: string;
 }
 
+/**
+ * @nullable
+ */
+export type UpdateCampaignInputTargetRules = { [key: string]: unknown } | null;
+
+export interface UpdateCampaignInput {
+  /**
+     * @minLength 1
+     * @maxLength 180
+     */
+  name?: string;
+  /** @nullable */
+  target_rules?: UpdateCampaignInputTargetRules;
+}
+
+export interface UpdateLeadInput {
+  /** @nullable */
+  first_name?: string | null;
+  /** @nullable */
+  last_name?: string | null;
+  /** @nullable */
+  email?: string | null;
+  /** @nullable */
+  phone?: string | null;
+  /** @nullable */
+  telegram_chat_id?: string | null;
+  /** @nullable */
+  region?: string | null;
+  /** @nullable */
+  city?: string | null;
+  /** @nullable */
+  current_supplier?: string | null;
+  /** @nullable */
+  provider?: string | null;
+  /** @nullable */
+  notes?: string | null;
+}
+
 export interface CsvImportInput {
   csv_text: string;
 }
