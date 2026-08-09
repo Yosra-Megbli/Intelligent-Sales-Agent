@@ -23,10 +23,27 @@ entries:
 
   - id: switching_fees
     category: faq
-    keywords: [gratuit, payant, cout, prix, frais, ca coute, coute combien]
+    keywords: [gratuit, payant, frais, frais de dossier, ca coute pour changer, coute combien pour changer]
     answer: >
       Le changement de fournisseur vers Ecofix est gratuit ; il n'y a aucun
       frais de dossier pour ouvrir un nouveau contrat.
+
+  - id: energy_pricing
+    category: faq
+    # Deliberately separate from switching_fees: "prix"/"tarif"/"kwh" here
+    # means "what does the energy itself cost", not "does switching cost
+    # anything" - conflating the two used to make Sophie answer every price
+    # question with the free-switching-fees fact instead of this one
+    # (regression: a customer asking for a kWh rate or price list got the
+    # same "switching is free" non-answer on every message, since
+    # switching_fees's old bare "prix"/"cout" keywords matched first and no
+    # tariff-specific entry existed to compete for the match).
+    keywords: [tarif, tarifs, kilowatt, kilowattheure, kwh, prix, cout, table, proposition, liste, tableau, grille tarifaire, combien coute l electricite, combien coute le gaz]
+    answer: >
+      Le tarif exact depend de votre profil de consommation et de votre
+      region : apres avoir recueilli vos informations, un conseiller Ecofix
+      vous envoie une offre personnalisee avec le detail du prix au kWh.
+      Je ne peux pas donner un tarif generique par chat.
 
   - id: contract_length
     category: faq
