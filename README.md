@@ -4,6 +4,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB?logo=react&logoColor=black)
 ![Tests](https://img.shields.io/badge/tests-583%20passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'électricité et de gaz Ecofix : elle engage la conversation, répond aux objections, collecte et valide les informations nécessaires, puis transmet les leads qualifiés à l'équipe commerciale humaine.
 
