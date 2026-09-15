@@ -1,21 +1,31 @@
 """
 DEV/DEMO ONLY — never part of production workflows.
 
-Reset script for testing/demos of the Sophie sales agent.
-Given a phone, email, or chat_id, this script clears:
-  - opt_out_at (removes opt-out block)
-  - rejection_reason (clears REQUEST_HUMAN_ONLY or other rejection)
-  - dedup keys (dedup_email, dedup_phone) so re-qualification / duplicate checks pass
-  - chat-level suppression (resets conversation.current_state from CLOSED to START,
-    clears previous_state, detour counts, and extraction failure counts)
-  - Redis cached conversation context (if Redis is accessible)
-and sets lead status = LeadStatus.NEW.
+Reset & inspection utility for testing/demos of the Sophie sales agent.
+Given a phone, email, or chat_id (or in --list mode), this script can:
+  1. Inspect all leads and their Telegram chat_ids / statuses (--list).
+  2. Clear:
+     - opt_out_at (removes opt-out block)
+     - rejection_reason (clears REQUEST_HUMAN_ONLY or other rejection)
+     - dedup keys (dedup_email, dedup_phone) so re-qualification / duplicate checks pass
+     - chat-level suppression (resets conversation.current_state from CLOSED to START,
+       clears previous_state, detour counts, and extraction failure counts)
+     - Redis cached conversation context (if Redis is accessible)
+  3. Set lead status = LeadStatus.NEW.
 
 Usage:
+  # List all leads and their Telegram chat IDs (read-only):
+  python scripts/reset_demo_lead.py --list
+
+  # Reset by Telegram chat ID:
   python scripts/reset_demo_lead.py --chat-id 123456789
+
+  # Reset by email or phone (searches lead PII, dedup keys, and message history):
   python scripts/reset_demo_lead.py --email prospect@example.com
   python scripts/reset_demo_lead.py --phone 0477123456
-  python scripts/reset_demo_lead.py --chat-id 123456789 --db-url postgresql+psycopg2://...
+
+  # Target remote Neon database explicitly:
+  python scripts/reset_demo_lead.py --list --db-url "postgresql+psycopg2://..."
 """
 
 from __future__ import annotations
@@ -41,9 +51,47 @@ from sqlalchemy.orm import Session, sessionmaker
 from domain.enums import ConversationState, LeadStatus
 from domain.models.conversation import Conversation
 from domain.models.lead import Lead
+from domain.models.message import Message
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("reset_demo_lead")
+
+
+def list_demo_leads(db: Session) -> list[dict[str, Any]]:
+    """List all leads and their linked conversations for inspection.
+
+    DEV/DEMO ONLY — read-only.
+    """
+    leads = db.query(Lead).order_by(Lead.created_at.desc()).all()
+    records = []
+    for l in leads:
+        conv_info = []
+        for c in l.conversations:
+            conv_info.append({
+                "conversation_id": str(c.id),
+                "channel": c.channel.value if hasattr(c.channel, "value") else str(c.channel),
+                "external_id": c.external_id,
+                "current_state": c.current_state.value if hasattr(c.current_state, "value") else str(c.current_state),
+                "message_count": len(c.messages),
+                "last_message_at": str(c.last_message_at) if c.last_message_at else None,
+            })
+        records.append({
+            "lead_id": str(l.id),
+            "source": l.source.value if hasattr(l.source, "value") else str(l.source),
+            "status": l.status.value if hasattr(l.status, "value") else str(l.status),
+            "rejection_reason": l.rejection_reason.value if hasattr(l.rejection_reason, "value") and l.rejection_reason else None,
+            "opt_out_at": str(l.opt_out_at) if l.opt_out_at else None,
+            "email": l.email,
+            "phone": l.phone,
+            "dedup_email": l.dedup_email,
+            "dedup_phone": l.dedup_phone,
+            "telegram_chat_id": l.telegram_chat_id,
+            "first_name": l.first_name,
+            "last_name": l.last_name,
+            "created_at": str(l.created_at) if l.created_at else None,
+            "conversations": conv_info,
+        })
+    return records
 
 
 def reset_demo_lead(
@@ -113,6 +161,17 @@ def reset_demo_lead(
             if l not in matching_leads:
                 matching_leads.append(l)
 
+        # Fallback for GDPR-purged leads: search messages exchanged for this email
+        if not matching_leads:
+            messages_with_email = (
+                db.query(Message)
+                .filter(Message.content.ilike(f"%{raw_email}%"))
+                .all()
+            )
+            for m in messages_with_email:
+                if m.conversation and m.conversation.lead and m.conversation.lead not in matching_leads:
+                    matching_leads.append(m.conversation.lead)
+
     # 3. Search by phone (checks Lead.phone and Lead.dedup_phone)
     if phone:
         raw_phone = phone.strip()
@@ -125,9 +184,25 @@ def reset_demo_lead(
             if l not in matching_leads:
                 matching_leads.append(l)
 
+        # Fallback for GDPR-purged leads: search messages exchanged for this phone
+        if not matching_leads:
+            messages_with_phone = (
+                db.query(Message)
+                .filter(Message.content.ilike(f"%{raw_phone}%"))
+                .all()
+            )
+            for m in messages_with_phone:
+                if m.conversation and m.conversation.lead and m.conversation.lead not in matching_leads:
+                    matching_leads.append(m.conversation.lead)
+
     if not matching_leads:
         ident = chat_id or email or phone
-        raise ValueError(f"No lead found matching identifier: {ident!r}")
+        raise ValueError(
+            f"No lead found matching identifier: {ident!r}.\n"
+            f"NOTE: When STOP is sent on Telegram, GDPR purges email/phone from the lead row.\n"
+            f"Use 'python scripts/reset_demo_lead.py --list' to find the exact Telegram chat_id,\n"
+            f"then run 'python scripts/reset_demo_lead.py --chat-id <CHAT_ID>'."
+        )
 
     # Initialize Redis client if not supplied
     if redis_client is None:
@@ -206,9 +281,10 @@ def reset_demo_lead(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="DEV/DEMO ONLY: Reset opted-out / suppressed lead and conversation for re-testing."
+        description="DEV/DEMO ONLY: Reset or inspect opted-out / suppressed leads and conversations."
     )
     group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--list", action="store_true", help="List all leads and their chat IDs (read-only inspection)")
     group.add_argument("--chat-id", help="Telegram chat ID / external ID to reset")
     group.add_argument("--email", help="Prospect email address to reset")
     group.add_argument("--phone", help="Prospect phone number to reset")
@@ -232,6 +308,35 @@ def main() -> None:
     session = SessionMaker()
 
     try:
+        if args.list:
+            leads = list_demo_leads(session)
+            print("=" * 80)
+            print(f"DEV/DEMO ONLY: All Leads in Database ({len(leads)} lead(s) found)")
+            print("=" * 80)
+            for idx, l in enumerate(leads, 1):
+                print(f"Lead #{idx}: {l['lead_id']}")
+                print(f"  Source            : {l['source']}")
+                print(f"  Status            : {l['status']}")
+                print(f"  Opt-out at        : {l['opt_out_at'] or 'None'}")
+                print(f"  Rejection reason  : {l['rejection_reason'] or 'None'}")
+                print(f"  Name (PII)        : {l['first_name'] or 'None'} {l['last_name'] or 'None'}")
+                print(f"  Email (PII)       : {l['email'] or 'None'}")
+                print(f"  Phone (PII)       : {l['phone'] or 'None'}")
+                print(f"  Dedup Email       : {l['dedup_email'] or 'None'}")
+                print(f"  Dedup Phone       : {l['dedup_phone'] or 'None'}")
+                print(f"  Telegram Chat ID  : {l['telegram_chat_id'] or 'None'}")
+                print(f"  Created at        : {l['created_at']}")
+                print(f"  Conversations ({len(l['conversations'])}):")
+                for c in l['conversations']:
+                    print(f"    - [{c['channel']}] id={c['conversation_id']} | chat_id/external_id={c['external_id']!r} | state={c['current_state']} | msgs={c['message_count']}")
+                print("-" * 80)
+            print("\n[INFO] RESET GUIDE:")
+            print("   When STOP is sent, GDPR purges email/phone from the lead row.")
+            print("   To reset a lead so you can re-test /start on Telegram, run:")
+            print("   python scripts/reset_demo_lead.py --chat-id <CHAT_ID>")
+            print("=" * 80)
+            return
+
         results = reset_demo_lead(
             session,
             chat_id=args.chat_id,
@@ -254,7 +359,7 @@ def main() -> None:
         print("=" * 60)
         print("SUCCESS: Reset complete. You can now send /start on Telegram!")
     except Exception as err:
-        logger.error("Reset failed: %s", err)
+        logger.error("Operation failed: %s", err)
         sys.exit(1)
     finally:
         session.close()

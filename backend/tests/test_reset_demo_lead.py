@@ -160,3 +160,21 @@ def test_reset_demo_lead_unknown_identifier_raises_value_error(db_session):
     """Trying to reset a non-existent identifier raises ValueError."""
     with pytest.raises(ValueError, match="No lead found"):
         reset_demo_lead(db_session, chat_id="000000000")
+
+
+def test_list_demo_leads(db_session):
+    """list_demo_leads returns records with conversations and chat_id."""
+    from scripts.reset_demo_lead import list_demo_leads
+
+    service = ConversationService(db_session, provider=None)
+    lead, conv = service.start_conversation(
+        channel=ConversationChannel.TELEGRAM,
+        external_id="11223344",
+        first_name="Dana",
+    )
+    records = list_demo_leads(db_session)
+    assert len(records) == 1
+    assert records[0]["lead_id"] == str(lead.id)
+    assert records[0]["telegram_chat_id"] == "11223344"
+    assert len(records[0]["conversations"]) == 1
+    assert records[0]["conversations"][0]["external_id"] == "11223344"
