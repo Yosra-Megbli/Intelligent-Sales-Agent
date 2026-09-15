@@ -65,10 +65,12 @@ def _enforce_production_secrets() -> None:
 
 @app.on_event("startup")
 def _auto_run_migrations_and_init_db() -> None:
-    # Runs table creation and applies all pending SQL migrations in order.
-    # Safe on every startup (idempotent tracking in schema_migrations).
-    # Swallows and logs connection errors so in-memory SQLite test suites
-    # never require a live database.
+    # Skip DB initialization during test suite runs (TestClient fires startup
+    # events, but unit tests use SQLite in-memory fixtures, not real Postgres)
+    import sys
+    if os.getenv("TESTING") or "pytest" in sys.modules:
+        return
+
     try:
         init_db()
         from database.migration_runner import run_migrations
