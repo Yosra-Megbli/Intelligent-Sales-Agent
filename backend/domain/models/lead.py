@@ -131,6 +131,7 @@ class Lead(Base):
     change_intent = Column(Boolean, nullable=True)
     qualification_score = Column(Integer, nullable=True)
     qualified_at = Column(DateTime, nullable=True)
+    opt_out_at = Column(DateTime, nullable=True)  # set by STOP/STOPT/ARRET handler
 
     # --- Follow-up (this is a process attached to the lead, not a CRM status) ---
     last_contact_date = Column(DateTime, nullable=True)

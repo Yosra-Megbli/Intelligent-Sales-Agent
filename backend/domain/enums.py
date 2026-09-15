@@ -118,6 +118,7 @@ class ActivityType(str, Enum):
     REJECTED = "REJECTED"
     HUMAN_HANDOFF = "HUMAN_HANDOFF"
     LEAD_IMPORTED = "LEAD_IMPORTED"
+    OPT_OUT = "OPT_OUT"  # STOP/STOPT/ARRET handler
 
 
 class CampaignStatus(str, Enum):

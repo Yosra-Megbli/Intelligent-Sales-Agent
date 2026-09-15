@@ -37,9 +37,11 @@ from ai.responder import Responder
 from conversation_engine.engine import ConversationEngine, EngineResult
 from conversation_engine.memory import ConversationMemory
 from conversation_engine.transitions import Event, EventType
+from conversation_engine.opt_out import is_opt_out
+from crm.activity_repository import ActivityRepository
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
-from domain.enums import ConversationChannel, ConversationState, LeadSource, MessageRole
+from domain.enums import ActivityType, ConversationChannel, ConversationState, LeadSource, LeadStatus, MessageRole, RejectionReason
 from domain.models.conversation import Conversation
 from domain.models.lead import Lead
 from domain.models.message import Message
@@ -122,6 +124,7 @@ class ConversationService:
         self.memory = ConversationMemory(db_session)
         self.conversation_repo = ConversationRepository(db_session)
         self.lead_repo = LeadRepository(db_session)
+        self.activity_repo = ActivityRepository(db_session)
         self.extractor = Extractor(provider) if provider is not None else None
         self.responder = Responder(provider)
         self.rag = rag if rag is not None else Rag()
@@ -282,6 +285,10 @@ class ConversationService:
     def handle_message(self, request: ConversationRequest) -> ConversationResponse:
         context = self.memory.load(request.conversation_id)
 
+        # COMPLIANCE: STOP/STOPT/ARRET = immediate opt-out (AGENTS.md golden rules).
+        if is_opt_out(request.text):
+            return self._handle_opt_out(context.conversation, request.text)
+
         event = self._extract_event(request.text, context.last_question_action)
         self.conversation_repo.add_message(context.conversation, MessageRole.USER, request.text)
 
@@ -336,6 +343,70 @@ class ConversationService:
             state=conversation.current_state.value,
             required_action=result.required_action,
             engine_result=result,
+        )
+
+    def _handle_opt_out(self, conversation: Conversation, raw_text: str) -> ConversationResponse:
+        """Immediately opt the lead out (STOP/STOPT/ARRET handler).
+
+        Actions (all within the current DB transaction):
+        1. Log the USER message so the audit trail is complete.
+        2. Remove the lead from any active campaign.
+        3. Purge PII fields (keep dedup_* suppression keys).
+        4. Set opt_out_at timestamp.
+        5. Set status REJECTED / reason REQUEST_HUMAN_ONLY.
+        6. Close the conversation.
+        7. Log OPT_OUT activity.
+        8. Return a fixed confirmation -- no LLM call.
+        """
+        from datetime import datetime
+
+        # Step 1 -- audit trail
+        self.conversation_repo.add_message(conversation, MessageRole.USER, raw_text)
+
+        lead = self.lead_repo.get_by_id(conversation.lead_id)
+
+        # Steps 2-5 -- CRM side-effects
+        lead.campaign_id = None
+        lead.first_name = None
+        lead.last_name = None
+        lead.email = None
+        lead.phone = None
+        lead.ean = None
+        lead.address = None
+        lead.current_supplier = None
+        lead.date_of_birth = None
+        lead.notes = None
+        lead.opt_out_at = datetime.utcnow()
+        lead.next_follow_up_date = None  # cancel pending follow-ups
+        lead.follow_up_category = None
+        self.db.flush()
+
+        self.lead_repo.set_status(lead, LeadStatus.REJECTED, RejectionReason.REQUEST_HUMAN_ONLY)
+
+        # Step 6 -- close conversation
+        self.conversation_repo.transition_state(conversation, ConversationState.CLOSED)
+
+        # Step 7 -- audit
+        self.activity_repo.log(lead.id, ActivityType.OPT_OUT, details='opt-out via STOP/STOPT/ARRET')
+
+        # Step 8 -- fixed confirmation text (no LLM: must ALWAYS reply)
+        confirmation = "Vous avez ete desabonne(e). Vos donnees ont ete supprimees. Vous ne recevrez plus de messages de notre part."
+
+
+
+        self.conversation_repo.add_message(conversation, MessageRole.ASSISTANT, confirmation)
+
+        from conversation_engine.engine import EngineResult
+        from domain.enums import ConversationState as CS
+        return ConversationResponse(
+            response_text=confirmation,
+            state=ConversationState.CLOSED.value,
+            required_action=None,
+            engine_result=EngineResult(
+                previous_state=conversation.current_state,
+                next_state=CS.CLOSED,
+                required_action=None,
+            ),
         )
 
     def _extract_event(self, raw_text: str, last_question_action: Optional[str]) -> Event:

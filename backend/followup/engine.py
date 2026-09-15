@@ -139,6 +139,10 @@ class FollowUpEngine:
                 # through another path and the conversation moved on.
                 continue
 
+            # COMPLIANCE: never follow up with opted-out leads.
+            if lead.opt_out_at is not None:
+                continue
+
             if (lead.follow_up_attempts or 0) >= MAX_FOLLOW_UP_ATTEMPTS:
                 results.append(self._give_up(lead, conversation))
                 continue
