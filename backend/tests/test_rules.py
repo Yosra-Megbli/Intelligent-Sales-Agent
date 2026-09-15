@@ -116,7 +116,28 @@ def test_is_adult():
 
 def test_region_coverage():
     assert rules.is_region_covered("Wallonie") is True
+    assert rules.is_region_covered("Flandre") is True
+    assert rules.is_region_covered("Bruxelles") is False  # Ecofix does not serve Brussels (AGENTS.md rule #4)
     assert rules.is_region_covered("Paris") is False
+
+
+def test_decide_validation_brussels_rejected_out_of_coverage(db_session):
+    lead = _lead(
+        db_session,
+        customer_type=CustomerType.PARTICULIER,
+        region="Bruxelles",
+        city="Ixelles",
+        current_supplier="Total Energies",
+        first_name="Claire",
+        last_name="Dupont",
+        email="claire@test.be",
+        phone="0477112233",
+        date_of_birth="15/05/1988",
+        ean="541448911001234567",
+    )
+    action = rules.decide_validation(lead)
+    assert action.type == ActionType.REJECT
+    assert action.reason.value == "OUT_OF_COVERAGE"
 
 
 def test_decide_validation_out_of_coverage_takes_priority(db_session):
@@ -289,3 +310,4 @@ def test_rules_module_never_touches_the_database():
             assert node.func.attr not in forbidden_call_names, (
                 f"rules.py must stay pure, found a call to '.{node.func.attr}()'"
             )
+

@@ -21,7 +21,6 @@ coverage:
   allowed_regions:
     - Wallonie
     - Flandre
-    - Bruxelles
 
 rejection_reasons:
   - NO_INTENT
@@ -30,3 +29,4 @@ rejection_reasons:
   - INVALID_CUSTOMER
   - DUPLICATE_LEAD
   - REQUEST_HUMAN_ONLY
+

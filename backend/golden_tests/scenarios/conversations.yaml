@@ -53,9 +53,9 @@ scenarios:
         expected_state_after: COLLECT_LOCATION
         expected_action_after: ASK_LOCATION
 
-      - input: "J'habite أ  Bruxelles"
+      - input: "J'habite à Namur en Wallonie"
         expected_event_type: PROVIDE_INFORMATION
-        expected_entities: {region: "Bruxelles", city: "Bruxelles"}
+        expected_entities: {region: "Wallonie", city: "Namur"}
         expected_state_after: COLLECT_SUPPLIER
         expected_action_after: ASK_SUPPLIER
 
@@ -178,7 +178,7 @@ scenarios:
 
   - id: conv_out_of_coverage_rejection
     category: full_conversation
-    description: "Customer outside Wallonie/Flandre/Bruxelles is rejected at DATA_VALIDATION, not silently stuck."
+    description: "Customer outside Wallonie/Flandre is rejected at DATA_VALIDATION, not silently stuck."
     turns:
       - input: "Bonjour"
         expected_event_type: CUSTOMER_MESSAGE
@@ -564,3 +564,57 @@ scenarios:
         expected_state_after: REJECTED
         expected_action_after: SEND_REJECTION
         notes: "Age < 18 fails is_adult() check in decide_validation() -> REJECT(INVALID_CUSTOMER)."
+  - id: conv_brussels_out_of_coverage_rejection
+    category: full_conversation
+    description: "Customer explicitly states they live in Brussels (Ixelles, Bruxelles); Ecofix does not serve Brussels, so lead is rejected with OUT_OF_COVERAGE at DATA_VALIDATION."
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je veux changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+        expected_action_after: ASK_CUSTOMER_TYPE
+      - input: "Particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+        expected_action_after: ASK_LOCATION
+      - input: "J'habite à Ixelles, Bruxelles"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {city: "Ixelles", region: "Bruxelles"}
+        expected_state_after: COLLECT_SUPPLIER
+        expected_action_after: ASK_SUPPLIER
+        notes: "Extractor captures region as Bruxelles without judging eligibility; coverage is checked at DATA_VALIDATION."
+      - input: "Total Energies"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {current_supplier: "Total Energies"}
+        expected_state_after: COLLECT_CONTACT
+        expected_action_after: ASK_CONTACT
+      - input: "Claire Dupont, claire.dupont@test.be, 0477112233, 15/05/1988"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities:
+          first_name: "Claire"
+          last_name: "Dupont"
+          email: "claire.dupont@test.be"
+          phone: "0477112233"
+          date_of_birth: "15/05/1988"
+        expected_state_after: COLLECT_EAN
+        expected_action_after: ASK_EAN
+      - input: "541448911001234567"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {ean: "541448911001234567"}
+        expected_state_after: DATA_VALIDATION
+      - system_event: CUSTOMER_MESSAGE
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: REJECTED
+        expected_action_after: SEND_REJECTION
+        notes: "Bruxelles is not in allowed_regions -> OUT_OF_COVERAGE rejection at DATA_VALIDATION."
+

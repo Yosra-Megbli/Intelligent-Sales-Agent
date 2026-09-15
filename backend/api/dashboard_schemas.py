@@ -28,7 +28,7 @@ class LeadSummary(BaseModel):
     customer_type: Optional[str]
     region: Optional[str]
     city: Optional[str]
-    date_of_birth: Optional[datetime | str] = None
+    date_of_birth: Optional[str] = None
     current_supplier: Optional[str]
     provider: Optional[str]
     notes: Optional[str]
@@ -227,4 +227,5 @@ class OverviewResponse(BaseModel):
     rejected: int
     human_handoff: int
     conversion_rate: float
+
 
