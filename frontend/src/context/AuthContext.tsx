@@ -50,7 +50,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const trimmed = key.trim();
     if (!trimmed) return false;
 
-    setIsLoading(true);
     try {
       const valid = await apiClient.verifyApiKey(trimmed);
       if (valid) {
@@ -60,14 +59,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast.success(t("toast.authSuccess"));
         return true;
       } else {
-        toast.error(t("auth.invalidKey"));
         return false;
       }
     } catch {
-      toast.error(t("auth.networkError"));
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
 
