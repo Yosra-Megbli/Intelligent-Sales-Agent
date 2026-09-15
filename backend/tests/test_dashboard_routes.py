@@ -405,3 +405,56 @@ def test_dashboard_activities_requires_api_key_once_configured(client, monkeypat
 
     authenticated = client.get("/api/dashboard/activities", headers={"X-API-Key": "s3cret"})
     assert authenticated.status_code == 200
+
+
+# --- GET /api/dashboard/conversations & /compliance -------------------------------
+
+
+def test_list_and_get_conversations(client):
+    lead_id = _seed_lead(client, first_name="Marc", last_name="Dubois")
+    db = client.session_factory()
+    conv_repo = ConversationRepository(db)
+    conv = conv_repo.create(lead_id=lead_id, channel=ConversationChannel.TELEGRAM, language="fr")
+    conv_repo.add_message(conv, "ASSISTANT", "Bonjour, je suis Sophie.")
+    db.commit()
+    conv_id = conv.id
+    db.close()
+
+    response = client.get("/api/dashboard/conversations")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert data["items"][0]["lead_name"] == "Marc Dubois"
+    assert data["items"][0]["channel"] == "TELEGRAM"
+    assert len(data["items"][0]["messages"]) == 1
+
+    detail_resp = client.get(f"/api/dashboard/conversations/{conv_id}")
+    assert detail_resp.status_code == 200
+    assert detail_resp.json()["id"] == str(conv_id)
+    assert detail_resp.json()["messages"][0]["content"] == "Bonjour, je suis Sophie."
+
+    # 404 for non-existent
+    import uuid
+    not_found = client.get(f"/api/dashboard/conversations/{uuid.uuid4()}")
+    assert not_found.status_code == 404
+
+
+def test_get_compliance_overview(client):
+    lead_id = _seed_lead(client, first_name="Sarah", last_name="Lemaire")
+    db = client.session_factory()
+    activity_repo = ActivityRepository(db)
+    activity_repo.log(lead_id, ActivityType.OPT_OUT, details="opt-out via STOP")
+    db.commit()
+    db.close()
+
+    response = client.get("/api/dashboard/compliance")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["guard_status"] == "ACTIF"
+    assert data["guard_tests_count"] == 673
+    assert data["retention_months"] == 12
+    assert data["auto_purge_enabled"] is True
+    assert len(data["opt_out_events"]) >= 1
+    assert data["opt_out_events"][0]["details"] == "opt-out via STOP"
+    assert data["opt_out_events"][0]["lead_name"] == "Sarah Lemaire"
+

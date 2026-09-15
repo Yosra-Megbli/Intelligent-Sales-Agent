@@ -1,4 +1,4 @@
-﻿"""
+"""
 Request/response schemas for the Dashboard HTTP API (Phase 7).
 
 Same discipline as `api/schemas.py`: pure serialization shapes, no business
@@ -29,7 +29,12 @@ class LeadSummary(BaseModel):
     region: Optional[str]
     city: Optional[str]
     date_of_birth: Optional[str] = None
+    address: Optional[str] = None
     current_supplier: Optional[str]
+    ean: Optional[str] = None
+    consumption: Optional[str] = None
+    change_intent: Optional[bool] = None
+    opt_out_at: Optional[datetime] = None
     provider: Optional[str]
     notes: Optional[str]
     qualification_score: Optional[int]
@@ -66,7 +71,12 @@ class LeadSummary(BaseModel):
             region=lead.region,
             city=lead.city,
             date_of_birth=lead.date_of_birth,
+            address=lead.address,
             current_supplier=lead.current_supplier,
+            ean=lead.ean,
+            consumption=lead.consumption,
+            change_intent=lead.change_intent,
+            opt_out_at=lead.opt_out_at,
             provider=lead.provider,
             notes=lead.notes,
             qualification_score=lead.qualification_score,
@@ -83,6 +93,7 @@ class LeadSummary(BaseModel):
 class LeadListResponse(BaseModel):
     items: list[LeadSummary]
     total: int
+
     limit: int
     offset: int
 
@@ -227,5 +238,75 @@ class OverviewResponse(BaseModel):
     rejected: int
     human_handoff: int
     conversion_rate: float
+
+
+class ConversationDetailItemResponse(BaseModel):
+    id: UUID
+    lead_id: UUID
+    lead_name: str
+    lead_phone: Optional[str]
+    lead_email: Optional[str]
+    channel: str
+    language: str
+    current_state: str
+    started_at: datetime
+    last_message_at: datetime
+    messages: list[MessageSummary]
+    last_message_preview: Optional[str] = None
+    message_count: int = 0
+
+    @classmethod
+    def from_item(cls, item) -> "ConversationDetailItemResponse":
+        c = item.conversation
+        lead = item.lead
+        name = " ".join(filter(None, [lead.first_name, lead.last_name])).strip() or lead.phone or lead.email or "Prospect"
+        msgs = [MessageSummary.from_model(m) for m in c.messages]
+        preview = msgs[-1].content if msgs else None
+        return cls(
+            id=c.id,
+            lead_id=lead.id,
+            lead_name=name,
+            lead_phone=lead.phone,
+            lead_email=lead.email,
+            channel=c.channel.value,
+            language=c.language,
+            current_state=c.current_state.value,
+            started_at=c.started_at,
+            last_message_at=c.last_message_at,
+            messages=msgs,
+            last_message_preview=preview,
+            message_count=len(msgs),
+        )
+
+
+class ConversationListResponse(BaseModel):
+    items: list[ConversationDetailItemResponse]
+    total: int
+    limit: int
+    offset: int
+
+
+class OptOutJournalEntry(BaseModel):
+    id: UUID
+    lead_id: UUID
+    lead_name: str
+    channel: str
+    timestamp: datetime
+    details: Optional[str]
+    confirmation_sent: bool = True
+
+
+class ComplianceOverviewResponse(BaseModel):
+    guard_status: str
+    guard_tests_count: int
+    guard_last_run: datetime
+    retention_months: int
+    auto_purge_enabled: bool
+    suppression_list_count: int
+    groq_dpa_signed: bool
+    scc_status: str
+    anonymization_before_llm: bool
+    opt_out_events: list[OptOutJournalEntry]
+
 
 

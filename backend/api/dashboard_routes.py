@@ -33,21 +33,26 @@ from api.dashboard_schemas import (
     ActivityFeedListResponse,
     ActivityFeedEntryResponse,
     ActivitySummary,
+    ComplianceOverviewResponse,
+    ConversationDetailItemResponse,
+    ConversationListResponse,
     ConversationSummary,
     HandoffEntryResponse,
     HandoffListResponse,
     LeadDetailResponse,
     LeadListResponse,
     LeadSummary,
+    OptOutJournalEntry,
     OverviewResponse,
     StatsSummaryResponse,
 )
 from api.dependencies import require_api_key
 from api.routes import get_db_session
 from application.dashboard_service import DashboardService
-from domain.enums import LeadSource, LeadStatus
+from domain.enums import ConversationChannel, ConversationState, LeadSource, LeadStatus
 
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"], dependencies=[Depends(require_api_key)])
+
 
 
 @router.get("/leads", response_model=LeadListResponse)
@@ -129,3 +134,70 @@ def list_activities(
     `DashboardService`, never a repository."""
     entries = DashboardService(db).list_recent_activities(limit=limit)
     return ActivityFeedListResponse(items=[ActivityFeedEntryResponse.from_service(e) for e in entries])
+
+
+@router.get("/conversations", response_model=ConversationListResponse)
+def list_conversations(
+    db: Session = Depends(get_db_session),
+    state: Optional[ConversationState] = None,
+    channel: Optional[ConversationChannel] = None,
+    search: Optional[str] = None,
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+) -> ConversationListResponse:
+    """List conversations with replay metadata, filterable by state/channel/search."""
+    page = DashboardService(db).list_conversations(
+        state=state, channel=channel, search=search, limit=limit, offset=offset
+    )
+    return ConversationListResponse(
+        items=[ConversationDetailItemResponse.from_item(item) for item in page.items],
+        total=page.total,
+        limit=page.limit,
+        offset=page.offset,
+    )
+
+
+@router.get("/conversations/{conversation_id}", response_model=ConversationDetailItemResponse)
+def get_conversation(
+    conversation_id: UUID, db: Session = Depends(get_db_session)
+) -> ConversationDetailItemResponse:
+    """Get single conversation detail with all messages and lead context."""
+    item = DashboardService(db).get_conversation(conversation_id)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return ConversationDetailItemResponse.from_item(item)
+
+
+@router.get("/compliance", response_model=ComplianceOverviewResponse)
+def get_compliance_overview(db: Session = Depends(get_db_session)) -> ComplianceOverviewResponse:
+    """Compliance Center statistics and opt-out journal."""
+    overview = DashboardService(db).get_compliance_overview()
+    journal = []
+    for e in overview.opt_out_events:
+        lead = e.lead
+        name = " ".join(filter(None, [lead.first_name, lead.last_name])).strip() or "Prospect (RGPD)"
+        channel_name = lead.source.value if lead.source else "TELEGRAM"
+        journal.append(
+            OptOutJournalEntry(
+                id=e.activity.id,
+                lead_id=lead.id,
+                lead_name=name,
+                channel=channel_name,
+                timestamp=e.activity.created_at,
+                details=e.activity.details,
+                confirmation_sent=True,
+            )
+        )
+    return ComplianceOverviewResponse(
+        guard_status=overview.guard_status,
+        guard_tests_count=overview.guard_tests_count,
+        guard_last_run=overview.guard_last_run,
+        retention_months=overview.retention_months,
+        auto_purge_enabled=overview.auto_purge_enabled,
+        suppression_list_count=overview.suppression_list_count,
+        groq_dpa_signed=overview.groq_dpa_signed,
+        scc_status=overview.scc_status,
+        anonymization_before_llm=overview.anonymization_before_llm,
+        opt_out_events=journal,
+    )
+

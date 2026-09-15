@@ -243,3 +243,46 @@ class ConversationRepository:
             self.db.execute(delete(Message).where(Message.conversation_id.in_(conversation_ids)))
         self.db.execute(delete(Conversation).where(Conversation.lead_id == lead_id))
         self.db.flush()
+
+    def list_all(
+        self,
+        *,
+        state: Optional[ConversationState] = None,
+        channel: Optional[ConversationChannel] = None,
+        search: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[Conversation], int]:
+        """All conversations across leads, ordered by last_message_at desc.
+        Eager loads lead and messages for dashboard replay."""
+        stmt = select(Conversation).join(Lead, Lead.id == Conversation.lead_id)
+        if state:
+            stmt = stmt.where(Conversation.current_state == state)
+        if channel:
+            stmt = stmt.where(Conversation.channel == channel)
+        if search:
+            pattern = f"%{search}%"
+            stmt = stmt.where(
+                (Lead.first_name.ilike(pattern))
+                | (Lead.last_name.ilike(pattern))
+                | (Lead.email.ilike(pattern))
+                | (Lead.phone.ilike(pattern))
+            )
+        total = self.db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+        stmt = (
+            stmt.options(joinedload(Conversation.lead), joinedload(Conversation.messages))
+            .order_by(Conversation.last_message_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt).unique().all()), total
+
+    def get_by_id_with_relations(self, conversation_id: uuid.UUID) -> Optional[Conversation]:
+        """Load single conversation with lead and messages eager-loaded."""
+        stmt = (
+            select(Conversation)
+            .where(Conversation.id == conversation_id)
+            .options(joinedload(Conversation.lead), joinedload(Conversation.messages))
+        )
+        return self.db.scalars(stmt).unique().first()
+

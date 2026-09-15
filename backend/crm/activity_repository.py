@@ -49,3 +49,16 @@ class ActivityRepository:
             .limit(limit)
         )
         return list(self.db.scalars(stmt).all())
+
+    def list_by_type(self, type_: ActivityType, limit: int = 50, offset: int = 0) -> tuple[list[Activity], int]:
+        """List activities filtered by ActivityType, with joined lead."""
+        stmt = select(Activity).where(Activity.type == type_)
+        total = self.db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+        stmt = (
+            stmt.options(joinedload(Activity.lead))
+            .order_by(Activity.created_at.desc(), Activity.seq.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        return list(self.db.scalars(stmt).all()), total
+

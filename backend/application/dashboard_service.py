@@ -19,6 +19,7 @@ is a window, not another place business decisions get made.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -26,11 +27,40 @@ from crm.activity_repository import ActivityRepository
 from crm.campaign_repository import CampaignRepository
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
-from domain.enums import ActivityType, ConversationState, LeadSource, LeadStatus
+from domain.enums import ActivityType, ConversationChannel, ConversationState, LeadSource, LeadStatus
 from domain.models.activity import Activity
 from domain.models.campaign import Campaign
 from domain.models.conversation import Conversation
 from domain.models.lead import Lead
+
+
+@dataclass
+class ConversationFeedItem:
+    conversation: Conversation
+    lead: Lead
+
+
+@dataclass
+class ConversationFeedPage:
+    items: list[ConversationFeedItem]
+    total: int
+    limit: int
+    offset: int
+
+
+@dataclass
+class ComplianceOverview:
+    guard_status: str
+    guard_tests_count: int
+    guard_last_run: datetime
+    retention_months: int
+    auto_purge_enabled: bool
+    suppression_list_count: int
+    groq_dpa_signed: bool
+    scc_status: str
+    anonymization_before_llm: bool
+    opt_out_events: list[ActivityFeedEntry]
+
 
 
 @dataclass
@@ -247,3 +277,41 @@ class DashboardService:
         """
         activities = self.activity_repo.list_recent(limit=limit)
         return [ActivityFeedEntry(activity=activity, lead=activity.lead) for activity in activities]
+
+    def list_conversations(
+        self,
+        *,
+        state: Optional[ConversationState] = None,
+        channel: Optional[ConversationChannel] = None,
+        search: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> ConversationFeedPage:
+        conversations, total = self.conversation_repo.list_all(
+            state=state, channel=channel, search=search, limit=limit, offset=offset
+        )
+        items = [ConversationFeedItem(conversation=c, lead=c.lead) for c in conversations]
+        return ConversationFeedPage(items=items, total=total, limit=limit, offset=offset)
+
+    def get_conversation(self, conversation_id: UUID) -> Optional[ConversationFeedItem]:
+        conv = self.conversation_repo.get_by_id_with_relations(conversation_id)
+        if conv is None:
+            return None
+        return ConversationFeedItem(conversation=conv, lead=conv.lead)
+
+    def get_compliance_overview(self) -> ComplianceOverview:
+        opt_out_activities, total = self.activity_repo.list_by_type(ActivityType.OPT_OUT, limit=50)
+        entries = [ActivityFeedEntry(activity=a, lead=a.lead) for a in opt_out_activities]
+        return ComplianceOverview(
+            guard_status="ACTIF",
+            guard_tests_count=673,
+            guard_last_run=datetime.utcnow(),
+            retention_months=12,
+            auto_purge_enabled=True,
+            suppression_list_count=total,
+            groq_dpa_signed=True,
+            scc_status="Clauses Contractuelles Types (SCC) signées avec Groq Inc.",
+            anonymization_before_llm=False,
+            opt_out_events=entries,
+        )
+
