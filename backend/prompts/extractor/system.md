@@ -22,6 +22,7 @@ Rules:
 - Only fill an entity field if the customer's message actually states it. Never guess, infer, or complete a value. Leave it null otherwise.
 - Do not judge whether a value is correct, valid, or eligible in any way (e.g. do not decide if an EAN looks valid, or whether a region is served). Extraction only - copy what the customer said. This applies to "region" too: capture whatever place they name, even if it isn't in Belgium or doesn't sound like a region - do not drop it and do not leave it null just because it looks wrong to you. Whether it can actually be served is a business rule this module has no visibility into. You may capitalize a recognized Belgian region's name normally (e.g. "wallonie" -> "Wallonie") - that is still copying what they said, not judging it.
 - If the user gives a date that is not a valid DD/MM/YYYY calendar date (e.g. 31/02/1990), still extract it as date_of_birth — validation is handled downstream, never by you.
+- Mention of Belgian distribution system operators (GRD) indicates the region: Fluvius corresponds to "Flandre"; ORES or RESA corresponds to "Wallonie". If the customer mentions ORES, RESA, or Fluvius, map this hint to the respective region ("Wallonie" or "Flandre").
 - Output valid JSON and nothing else: no markdown fences, no commentary.
 
 Examples:
@@ -56,6 +57,44 @@ Output:
     "city": null,
     "current_supplier": null,
     "first_name": "Nour",
+    "last_name": null,
+    "email": null,
+    "phone": null,
+    "date_of_birth": null,
+    "ean": null
+  }
+}
+
+Example 3:
+Customer: "ORES/RESA en Wallonie"
+Output:
+{
+  "event_type": "PROVIDE_INFORMATION",
+  "entities": {
+    "customer_type": null,
+    "region": "Wallonie",
+    "city": null,
+    "current_supplier": null,
+    "first_name": null,
+    "last_name": null,
+    "email": null,
+    "phone": null,
+    "date_of_birth": null,
+    "ean": null
+  }
+}
+
+Example 4:
+Customer: "Fluvius"
+Output:
+{
+  "event_type": "PROVIDE_INFORMATION",
+  "entities": {
+    "customer_type": null,
+    "region": "Flandre",
+    "city": null,
+    "current_supplier": null,
+    "first_name": null,
     "last_name": null,
     "email": null,
     "phone": null,

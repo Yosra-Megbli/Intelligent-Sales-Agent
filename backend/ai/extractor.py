@@ -115,8 +115,28 @@ def _normalize_entities(raw_entities: Any) -> dict[str, Any]:
             value = value.lower()
         if key in ("ean", "phone", "date_of_birth"):
             value = value.replace(" ", "")
+        if key == "region":
+            val_lower = value.lower()
+            if "fluvius" in val_lower and "flandre" not in val_lower:
+                value = "Flandre"
+            elif ("ores" in val_lower or "resa" in val_lower) and "wallonie" not in val_lower:
+                value = "Wallonie"
 
         entities[key] = value
+
+    # If region is missing, check if GRD hints ended up in current_supplier or city
+    if not entities.get("region"):
+        supp = (entities.get("current_supplier") or "").lower()
+        cit = (entities.get("city") or "").lower()
+        for candidate, orig_key in [(supp, "current_supplier"), (cit, "city")]:
+            if "fluvius" in candidate:
+                entities["region"] = "Flandre"
+                entities.pop(orig_key, None)
+                break
+            elif "ores" in candidate or "resa" in candidate:
+                entities["region"] = "Wallonie"
+                entities.pop(orig_key, None)
+                break
 
     return entities
 

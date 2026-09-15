@@ -169,6 +169,26 @@ def test_strips_spaces_from_ean_and_phone():
     assert event.entities == {"ean": "541234567890123456", "phone": "0488112233"}
 
 
+def test_normalizes_grd_hints_to_belgian_regions():
+    # Direct region value containing GRD name
+    ext1, _ = make_extractor({"event_type": "PROVIDE_INFORMATION", "entities": {"region": "ORES/RESA"}})
+    assert ext1.extract("ORES/RESA").entities["region"] == "Wallonie"
+
+    ext2, _ = make_extractor({"event_type": "PROVIDE_INFORMATION", "entities": {"region": "Fluvius"}})
+    assert ext2.extract("Fluvius").entities["region"] == "Flandre"
+
+    # Misplaced GRD in supplier or city gets moved to region
+    ext3, _ = make_extractor({"event_type": "PROVIDE_INFORMATION", "entities": {"current_supplier": "ORES"}})
+    ev3 = ext3.extract("ORES")
+    assert ev3.entities.get("region") == "Wallonie"
+    assert "current_supplier" not in ev3.entities
+
+    ext4, _ = make_extractor({"event_type": "PROVIDE_INFORMATION", "entities": {"city": "Fluvius"}})
+    ev4 = ext4.extract("Fluvius")
+    assert ev4.entities.get("region") == "Flandre"
+    assert "city" not in ev4.entities
+
+
 # --- context / prompt wiring ------------------------------------------------------
 
 
