@@ -47,6 +47,8 @@ def clean_security_env(monkeypatch):
     monkeypatch.delenv("API_KEY", raising=False)
     monkeypatch.delenv("TELEGRAM_WEBHOOK_SECRET", raising=False)
     monkeypatch.delenv("TWILIO_AUTH_TOKEN", raising=False)
+    monkeypatch.delenv("WEBHOOK_SECRET", raising=False)
+    monkeypatch.delenv("CORS_ORIGINS", raising=False)
     monkeypatch.delenv("ENVIRONMENT", raising=False)
 
 
@@ -115,11 +117,79 @@ def _start_conversation(client) -> str:
     return response.json()["conversation_id"]
 
 
-def test_health_endpoint():
+def test_health_endpoint_healthy(monkeypatch):
+    class FakeConn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def execute(self, stmt):
+            return 1
+
+    class FakeRedis:
+        def ping(self):
+            return True
+
+    monkeypatch.setattr("database.postgres.engine.connect", lambda: FakeConn())
+    monkeypatch.setattr("database.redis.get_redis", lambda: FakeRedis())
+
     with TestClient(app) as test_client:
         response = test_client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["database"] == "ok"
+    assert data["redis"] == "ok"
+    assert data["version"] == "0.1.0"
+
+
+def test_health_endpoint_database_unreachable(monkeypatch):
+    def failing_connect():
+        raise ConnectionError("Database connection lost")
+
+    class FakeRedis:
+        def ping(self):
+            return True
+
+    monkeypatch.setattr("database.postgres.engine.connect", failing_connect)
+    monkeypatch.setattr("database.redis.get_redis", lambda: FakeRedis())
+
+    with TestClient(app) as test_client:
+        response = test_client.get("/health")
+    assert response.status_code == 503
+    data = response.json()
+    assert data["status"] == "degraded"
+    assert data["database"] == "unreachable"
+    assert data["redis"] == "ok"
+
+
+def test_health_endpoint_redis_unreachable(monkeypatch):
+    class FakeConn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def execute(self, stmt):
+            return 1
+
+    class FakeRedis:
+        def ping(self):
+            return False
+
+    monkeypatch.setattr("database.postgres.engine.connect", lambda: FakeConn())
+    monkeypatch.setattr("database.redis.get_redis", lambda: FakeRedis())
+
+    with TestClient(app) as test_client:
+        response = test_client.get("/health")
+    assert response.status_code == 503
+    data = response.json()
+    assert data["status"] == "degraded"
+    assert data["database"] == "ok"
+    assert data["redis"] == "unreachable" 
 
 
 def test_start_conversation_returns_ids(client):

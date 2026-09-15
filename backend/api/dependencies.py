@@ -149,7 +149,7 @@ def verify_telegram_secret(
     own frontend). Same degrade-with-a-warning default as `require_api_key`
     when `TELEGRAM_WEBHOOK_SECRET` isn't configured.
     """
-    configured_secret = os.getenv("TELEGRAM_WEBHOOK_SECRET")
+    configured_secret = os.getenv("TELEGRAM_WEBHOOK_SECRET") or os.getenv("WEBHOOK_SECRET")
     if not configured_secret:
         logger.warning(
             "TELEGRAM_WEBHOOK_SECRET not configured - the Telegram webhook is running WITHOUT verifying the caller."

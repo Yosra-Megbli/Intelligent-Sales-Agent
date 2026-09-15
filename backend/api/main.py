@@ -10,17 +10,19 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
 from api.campaign_routes import router as campaign_router
 from api.dashboard_routes import router as dashboard_router
 from api.leads_routes import router as leads_router
 from api.routes import router
 from api.voice_routes import router as voice_router
-from database.postgres import init_db
+from database.postgres import engine, init_db
+from database.redis import get_redis
 
 app = FastAPI(title="Ecofix Sophie API", version="0.1.0")
 
@@ -43,7 +45,11 @@ def _fail_fast_if_misconfigured_for_production() -> None:
     """
     if os.getenv("ENVIRONMENT", "development").strip().lower() != "production":
         return
-    missing = [name for name in ("API_KEY", "TELEGRAM_WEBHOOK_SECRET") if not os.getenv(name)]
+    missing = []
+    if not os.getenv("API_KEY"):
+        missing.append("API_KEY")
+    if not (os.getenv("TELEGRAM_WEBHOOK_SECRET") or os.getenv("WEBHOOK_SECRET")):
+        missing.append("TELEGRAM_WEBHOOK_SECRET")
     if missing:
         raise RuntimeError(
             "ENVIRONMENT=production but required secret(s) are not set: "
@@ -58,35 +64,27 @@ def _enforce_production_secrets() -> None:
 
 
 @app.on_event("startup")
-def _create_tables_if_missing() -> None:
-    # Nothing else in this codebase ever called init_db(): there is no
-    # Alembic migrations folder despite alembic being in requirements.txt,
-    # and the only caller was a leftover local-machine script
-    # (task_backend_setup.py, hardcoded to one developer's Windows path)
-    # that was never part of the documented "Pour lancer" steps. Without
-    # this, a fresh `docker-compose up` + `uvicorn --reload` connects to an
-    # empty database and every request fails on the first query. create_all
-    # only creates tables that don't already exist, so this is safe to run
-    # on every startup - a real production deployment should still replace
-    # this with proper Alembic migrations (see database/postgres.py).
-    #
-    # Swallow (and just log) connection errors rather than crash the app on
-    # startup: FastAPI's TestClient used as a context manager
-    # (`with TestClient(app) as client`) fires this same startup event, and
-    # the test suite talks to its own SQLite fixture, never the real
-    # Postgres `engine` this module imports - it should never need a real
-    # database available to run.
+def _auto_run_migrations_and_init_db() -> None:
+    # Runs table creation and applies all pending SQL migrations in order.
+    # Safe on every startup (idempotent tracking in schema_migrations).
+    # Swallows and logs connection errors so in-memory SQLite test suites
+    # never require a live database.
     try:
         init_db()
-    except Exception as exc:  # noqa: BLE001 - see note above
-        logging.getLogger(__name__).warning("init_db() skipped at startup: %s", exc)
+        from database.migration_runner import run_migrations
+        applied = run_migrations()
+        if applied:
+            logging.getLogger(__name__).info("Applied database migrations at startup: %s", ", ".join(applied))
+    except Exception as exc:  # noqa: BLE001
+        logging.getLogger(__name__).warning("init_db / run_migrations skipped at startup: %s", exc)
 
 # CORS: safe-by-default (no origins allowed) unless CORS_ALLOWED_ORIGINS is
 # explicitly set, e.g. "https://ecofix.be,https://app.ecofix.be". An empty
 # list here means the browser blocks cross-origin calls entirely - a
 # same-origin deployment (or server-to-server calls, which aren't subject to
 # CORS at all) works without setting anything.
-_allowed_origins = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
+_allowed_origins_raw = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("CORS_ORIGINS") or ""
+_allowed_origins = [origin.strip() for origin in _allowed_origins_raw.split(",") if origin.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
@@ -136,5 +134,35 @@ if _DASHBOARD_DIR.is_dir():
 
 
 @app.get("/health")
-def health() -> dict:
-    return {"status": "ok"}
+def health() -> JSONResponse:
+    """Healthcheck endpoint verifying DB and Redis connectivity."""
+    import database.postgres as db_mod
+    import database.redis as redis_mod
+
+    db_status = "ok"
+    redis_status = "ok"
+
+    try:
+        with db_mod.engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Health check DB probe failed: %s", exc)
+        db_status = "unreachable"
+
+    try:
+        r = redis_mod.get_redis()
+        if not r.ping():
+            redis_status = "unreachable"
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Health check Redis probe failed: %s", exc)
+        redis_status = "unreachable"
+
+    is_healthy = (db_status == "ok" and redis_status == "ok")
+    payload = {
+        "status": "ok" if is_healthy else "degraded",
+        "database": db_status,
+        "redis": redis_status,
+        "version": "0.1.0",
+    }
+    status_code = status.HTTP_200_OK if is_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+    return JSONResponse(status_code=status_code, content=payload)

@@ -1,4 +1,4 @@
-"""
+﻿"""
 PostgreSQL connection layer.
 
 PostgreSQL is used from day one (not SQLite) because the project needs
@@ -19,9 +19,25 @@ from sqlalchemy.types import TypeDecorator
 
 load_dotenv()
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg2://ecofix:ecofix@localhost:5432/ecofix_sophie",
+
+def normalize_database_url(url: str) -> str:
+    """Normalize DATABASE_URL for SQLAlchemy and psycopg2.
+
+    Neon and cloud providers often provide 'postgres://' or 'postgresql://' connection strings,
+    which need to use 'postgresql+psycopg2://' so SQLAlchemy loads the psycopg2 driver reliably.
+    """
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+psycopg2://", 1)
+    if url.startswith("postgresql://") and not url.startswith("postgresql+psycopg2://"):
+        return url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    return url
+
+
+DATABASE_URL = normalize_database_url(
+    os.getenv(
+        "DATABASE_URL",
+        "postgresql+psycopg2://ecofix:ecofix@localhost:5432/ecofix_sophie",
+    )
 )
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)
@@ -90,7 +106,7 @@ def session_scope() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """Create all tables. In production this is replaced by Alembic migrations."""
+    """Create all tables. In production this is supplemented by migration_runner."""
     from domain import models  # noqa: F401  (ensures models are registered on Base)
 
     Base.metadata.create_all(bind=engine)
