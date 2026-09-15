@@ -1,4 +1,4 @@
-"""
+﻿"""
 Integration tests for ConversationEngine.process_turn().
 
 Redis is mocked out here (patched to an in-memory dict) so these tests run
@@ -106,6 +106,7 @@ def test_full_happy_path_reaches_handoff(db_session):
                 "last_name": "Dupont",
                 "email": "jean@test.com",
                 "phone": "0488112233",
+                "date_of_birth": "15/05/1990",
             },
         ),
     )
@@ -175,6 +176,7 @@ def test_invalid_ean_asks_for_correction_without_losing_other_data(db_session):
     lead.last_name = "Dupont"
     lead.email = "jean@test.com"
     lead.phone = "0488112233"
+    lead.date_of_birth = "15/05/1990"
     lead.ean = "12345"  # invalid on purpose
     db_session.commit()
 
@@ -261,6 +263,7 @@ def test_lead_own_saved_contact_info_never_flags_itself_as_duplicate(db_session)
     lead.first_name = "Jean"
     lead.last_name = "Dupont"
     lead.phone = "0488112233"
+    lead.date_of_birth = "15/05/1990"
     lead.ean = "541234567890123456"
     db_session.commit()
 
@@ -424,3 +427,4 @@ def test_engine_without_provider_never_calls_disambiguation(db_session):
     # so INTENT_CONFIRMATION's default branch just asks for clarification.
     assert result.next_state == ConversationState.INTENT_CONFIRMATION
     assert result.required_action == "ASK_CLARIFICATION"
+

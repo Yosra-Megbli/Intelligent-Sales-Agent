@@ -1,3 +1,5 @@
+﻿from datetime import date
+
 from crm.lead_repository import LeadRepository
 from conversation_engine import rules
 from conversation_engine.actions import ActionType
@@ -46,6 +48,11 @@ def test_next_qualification_action_follows_fixed_order(db_session):
     lead.last_name = "Dupont"
     lead.email = "jean@test.com"
     lead.phone = "0488112233"
+    # date_of_birth still missing -> contact still incomplete
+    action = rules.next_qualification_action(lead)
+    assert action.field == "contact"
+
+    lead.date_of_birth = "15/05/1990"
     action = rules.next_qualification_action(lead)
     assert action.field == "ean"
 
@@ -83,6 +90,30 @@ def test_validate_phone():
     assert rules.validate_phone(None) is False
 
 
+def test_validate_date_of_birth():
+    assert rules.validate_date_of_birth("15/05/1990") is True
+    assert rules.validate_date_of_birth("01/01/2000") is True
+    assert rules.validate_date_of_birth("31/02/1990") is False  # invalid calendar date
+    assert rules.validate_date_of_birth("1990-05-15") is False  # not DD/MM/YYYY
+    assert rules.validate_date_of_birth("15/5/1990") is False   # not strict 2-digit month
+    assert rules.validate_date_of_birth("abc") is False
+    assert rules.validate_date_of_birth(None) is False
+
+
+def test_is_adult():
+    ref = date(2026, 9, 15)
+    # 26 years old -> adult
+    assert rules.is_adult("15/05/2000", min_age=18, reference_date=ref) is True
+    # Exactly 18 years old today (born 15/09/2008) -> adult
+    assert rules.is_adult("15/09/2008", min_age=18, reference_date=ref) is True
+    # Turns 18 tomorrow (born 16/09/2008) -> underage
+    assert rules.is_adult("16/09/2008", min_age=18, reference_date=ref) is False
+    # 11 years old -> underage
+    assert rules.is_adult("15/05/2015", min_age=18, reference_date=ref) is False
+    # Invalid date -> not adult
+    assert rules.is_adult("invalid", min_age=18, reference_date=ref) is False
+
+
 def test_region_coverage():
     assert rules.is_region_covered("Wallonie") is True
     assert rules.is_region_covered("Paris") is False
@@ -99,6 +130,7 @@ def test_decide_validation_out_of_coverage_takes_priority(db_session):
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="541234567890123456",
     )
     action = rules.decide_validation(lead)
@@ -107,11 +139,6 @@ def test_decide_validation_out_of_coverage_takes_priority(db_session):
 
 
 def test_decide_validation_rejects_duplicate_regression_f003(db_session):
-    """Regression test for F-003 (BAT SC-021):
-    LeadRepository.find_duplicate() existed but decide_validation() had no
-    way to act on it at all - this proves the Action side of the fix. The
-    end-to-end proof that the repository actually gets queried in the live
-    flow lives in test_conversation_engine.py."""
     lead = _lead(
         db_session,
         customer_type=CustomerType.PARTICULIER,
@@ -122,6 +149,7 @@ def test_decide_validation_rejects_duplicate_regression_f003(db_session):
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="541234567890123456",
     )
     action = rules.decide_validation(lead, is_duplicate=True)
@@ -130,10 +158,6 @@ def test_decide_validation_rejects_duplicate_regression_f003(db_session):
 
 
 def test_decide_validation_out_of_coverage_still_takes_priority_over_duplicate(db_session):
-    """Priority order is explicit in decide_validation()'s docstring:
-    coverage before duplicate before per-field corrections. A lead that is
-    both out of coverage AND a duplicate should still be told they're out of
-    coverage - that's the more fundamental "we can't serve you" fact."""
     lead = _lead(
         db_session,
         customer_type=CustomerType.PARTICULIER,
@@ -144,6 +168,7 @@ def test_decide_validation_out_of_coverage_still_takes_priority_over_duplicate(d
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="541234567890123456",
     )
     action = rules.decide_validation(lead, is_duplicate=True)
@@ -152,8 +177,6 @@ def test_decide_validation_out_of_coverage_still_takes_priority_over_duplicate(d
 
 
 def test_decide_validation_not_a_duplicate_by_default(db_session):
-    """is_duplicate defaults to False so every pre-existing caller/test that
-    doesn't know about it keeps working exactly as before."""
     lead = _lead(
         db_session,
         customer_type=CustomerType.PARTICULIER,
@@ -164,10 +187,49 @@ def test_decide_validation_not_a_duplicate_by_default(db_session):
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="541234567890123456",
     )
     action = rules.decide_validation(lead)
     assert action.type == ActionType.QUALIFY
+
+
+def test_decide_validation_invalid_date_of_birth_routes_back_to_contact(db_session):
+    lead = _lead(
+        db_session,
+        customer_type=CustomerType.PARTICULIER,
+        region=Region.WALLONIE,
+        city="Namur",
+        current_supplier="Engie",
+        first_name="Jean",
+        last_name="Dupont",
+        email="jean@test.com",
+        phone="0488112233",
+        date_of_birth="31/02/1990",
+        ean="541234567890123456",
+    )
+    action = rules.decide_validation(lead)
+    assert action.type == ActionType.CORRECT_FIELD
+    assert action.field == "contact"
+
+
+def test_decide_validation_underage_rejects_as_invalid_customer(db_session):
+    lead = _lead(
+        db_session,
+        customer_type=CustomerType.PARTICULIER,
+        region=Region.WALLONIE,
+        city="Namur",
+        current_supplier="Engie",
+        first_name="Jean",
+        last_name="Dupont",
+        email="jean@test.com",
+        phone="0488112233",
+        date_of_birth="15/05/2015",
+        ean="541234567890123456",
+    )
+    action = rules.decide_validation(lead)
+    assert action.type == ActionType.REJECT
+    assert action.reason.value == "INVALID_CUSTOMER"
 
 
 def test_decide_validation_invalid_ean_routes_back_to_ean(db_session):
@@ -181,6 +243,7 @@ def test_decide_validation_invalid_ean_routes_back_to_ean(db_session):
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="12345",
     )
     action = rules.decide_validation(lead)
@@ -199,6 +262,7 @@ def test_decide_validation_all_valid(db_session):
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="541234567890123456",
     )
     action = rules.decide_validation(lead)
@@ -206,11 +270,6 @@ def test_decide_validation_all_valid(db_session):
 
 
 def test_rules_module_never_touches_the_database():
-    """Purity guarantee required by the architecture review: rules.py must
-    not import repositories or perform persistence calls. Checked via AST so
-    the module's own explanatory comments/docstrings don't trigger false
-    positives.
-    """
     import ast
     import inspect
 

@@ -1,4 +1,4 @@
-from crm.lead_repository import LeadRepository
+﻿from crm.lead_repository import LeadRepository
 from conversation_engine import state_machine
 from conversation_engine.transitions import Event, EventType
 from domain.enums import ConversationChannel, ConversationState, CustomerType, LeadSource, Region, RejectionReason
@@ -134,6 +134,7 @@ def test_data_validation_success_moves_to_qualified(db_session):
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="541234567890123456",
     )
     decision = state_machine.decide(
@@ -153,6 +154,7 @@ def test_data_validation_invalid_ean_routes_back_to_collect_ean(db_session):
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="12345",
     )
     decision = state_machine.decide(
@@ -173,6 +175,7 @@ def test_data_validation_out_of_coverage_rejects(db_session):
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="541234567890123456",
     )
     decision = state_machine.decide(
@@ -197,6 +200,7 @@ def test_data_validation_rejects_duplicate_when_flagged_regression_f003(db_sessi
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="541234567890123456",
     )
     decision = state_machine.decide(
@@ -217,6 +221,7 @@ def test_data_validation_is_duplicate_defaults_to_false(db_session):
         last_name="Dupont",
         email="jean@test.com",
         phone="0488112233",
+        date_of_birth="15/05/1990",
         ean="541234567890123456",
     )
     decision = state_machine.decide(
@@ -359,3 +364,4 @@ def test_waiting_customer_sends_follow_up_on_scheduler_event(db_session):
     )
     assert decision.next_state == ConversationState.WAITING_CUSTOMER
     assert decision.required_action == "SEND_FOLLOW_UP"
+

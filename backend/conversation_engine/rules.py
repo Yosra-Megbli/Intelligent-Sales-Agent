@@ -1,4 +1,4 @@
-"""
+﻿"""
 Qualification Rules Engine.
 
 This is "the real brain" the design docs kept referring to: it reads the
@@ -25,6 +25,7 @@ calls anything here itself, and nothing here imports an LLM client.
 from __future__ import annotations
 
 import re
+from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
@@ -63,7 +64,7 @@ FIELD_GROUP_TO_LEAD_ATTRS: dict[str, tuple[str, ...]] = {
     # forever waiting for a region value that was never coming.
     "location": ("city",),
     "current_supplier": ("current_supplier",),
-    "contact": ("first_name", "last_name", "email", "phone"),
+    "contact": ("first_name", "last_name", "email", "phone", "date_of_birth"),
     "ean": ("ean",),
 }
 
@@ -74,6 +75,9 @@ _EAN_LENGTH: int = _VALIDATION_CONFIG["ean"]["length"]
 _EAN_NUMERIC_ONLY: bool = _VALIDATION_CONFIG["ean"]["numeric_only"]
 _EMAIL_MUST_CONTAIN: str = _VALIDATION_CONFIG["email"]["must_contain"]
 _PHONE_PATTERN: str = _VALIDATION_CONFIG["phone"]["pattern"]
+
+_DOB_CONFIG = _QUALIFICATION_CONFIG.get("date_of_birth") or _VALIDATION_CONFIG.get("date_of_birth", {})
+_DOB_MIN_AGE: int = int(_DOB_CONFIG.get("min_age", 18))
 
 
 def is_field_group_complete(lead: Lead, field_group: str) -> bool:
@@ -113,6 +117,45 @@ def validate_phone(phone: Optional[str]) -> bool:
     return bool(phone) and re.match(_PHONE_PATTERN, phone) is not None
 
 
+def parse_date_of_birth(dob: Optional[str | datetime | date]) -> Optional[date]:
+    """Parse date of birth strictly in DD/MM/YYYY format."""
+    if not dob:
+        return None
+    if isinstance(dob, datetime):
+        return dob.date()
+    if isinstance(dob, date):
+        return dob
+    if not isinstance(dob, str):
+        return None
+    dob = dob.strip()
+    if not re.match(r"^\d{2}/\d{2}/\d{4}$", dob):
+        return None
+    try:
+        return datetime.strptime(dob, "%d/%m/%Y").date()
+    except ValueError:
+        return None
+
+
+def validate_date_of_birth(dob: Optional[str | datetime | date]) -> bool:
+    """Validate format strictly as DD/MM/YYYY."""
+    return parse_date_of_birth(dob) is not None
+
+
+def is_adult(
+    dob: Optional[str | datetime | date],
+    min_age: int = _DOB_MIN_AGE,
+    *,
+    reference_date: Optional[date] = None,
+) -> bool:
+    """True if age is at least min_age years old."""
+    parsed = parse_date_of_birth(dob)
+    if not parsed:
+        return False
+    today = reference_date or date.today()
+    age = today.year - parsed.year - ((today.month, today.day) < (parsed.month, parsed.day))
+    return age >= min_age
+
+
 def is_region_covered(region: Optional[str]) -> bool:
     return region in ALLOWED_REGIONS
 
@@ -144,8 +187,13 @@ def decide_validation(lead: Lead, *, is_duplicate: bool = False) -> Action:
     if not validate_phone(lead.phone):
         return Action(type=ActionType.CORRECT_FIELD, field="contact")
 
+    if not validate_date_of_birth(lead.date_of_birth):
+        return Action(type=ActionType.CORRECT_FIELD, field="contact")
+
+    if not is_adult(lead.date_of_birth):
+        return Action(type=ActionType.REJECT, reason=RejectionReason.INVALID_CUSTOMER)
+
     if not validate_ean(lead.ean):
         return Action(type=ActionType.CORRECT_FIELD, field="ean")
 
     return Action(type=ActionType.QUALIFY)
-

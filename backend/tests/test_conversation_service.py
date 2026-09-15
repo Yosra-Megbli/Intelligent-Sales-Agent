@@ -1,4 +1,4 @@
-"""
+﻿"""
 Integration tests for ConversationService.handle_message() (Application
 layer, Phase 4A).
 
@@ -174,6 +174,7 @@ def test_ask_ean_state_threads_ean_as_expected_field(db_session):
                 "last_name": "Dupont",
                 "email": "jean@test.com",
                 "phone": "0470123456",
+                "date_of_birth": "15/05/1990",
             },
         }
     )
@@ -228,6 +229,7 @@ def test_reaching_qualified_also_notifies_sales_team_in_the_same_turn(db_session
                 "last_name": "Dupont",
                 "email": "jean@test.com",
                 "phone": "0470123456",
+                "date_of_birth": "15/05/1990",
             },
         }
     )
@@ -325,3 +327,4 @@ def test_extraction_failure_falls_back_to_clarification_not_a_crash(db_session):
     # for clarification instead of crashing the turn.
     assert reply.engine_result.required_action == "ASK_CLARIFICATION"
     assert reply.response_text == "Pouvez-vous reformuler ?"
+

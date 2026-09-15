@@ -1,4 +1,4 @@
-# Golden Dataset — full, multi-turn conversation scenarios.
+﻿# Golden Dataset â€” full, multi-turn conversation scenarios.
 #
 # Each scenario replays a realistic sequence of customer messages through
 # ConversationEngine.process_turn() (conversation_engine/engine.py) and
@@ -36,7 +36,7 @@ scenarios:
         expected_entities: {}
         expected_state_after: GREETING
 
-      - input: "Je voudrais changer de fournisseur d'électricité"
+      - input: "Je voudrais changer de fournisseur d'أ©lectricitأ©"
         expected_event_type: PROVIDE_INFORMATION
         expected_entities: {}
         expected_state_after: INTENT_CONFIRMATION
@@ -53,7 +53,7 @@ scenarios:
         expected_state_after: COLLECT_LOCATION
         expected_action_after: ASK_LOCATION
 
-      - input: "J'habite à Bruxelles"
+      - input: "J'habite أ  Bruxelles"
         expected_event_type: PROVIDE_INFORMATION
         expected_entities: {region: "Bruxelles", city: "Bruxelles"}
         expected_state_after: COLLECT_SUPPLIER
@@ -65,13 +65,14 @@ scenarios:
         expected_state_after: COLLECT_CONTACT
         expected_action_after: ASK_CONTACT
 
-      - input: "Marie Dubois, marie.dubois@gmail.com, 0488112233"
+      - input: "Marie Dubois, marie.dubois@gmail.com, 0488112233, 15/05/1985"
         expected_event_type: PROVIDE_INFORMATION
         expected_entities:
           first_name: "Marie"
           last_name: "Dubois"
           email: "marie.dubois@gmail.com"
           phone: "0488112233"
+          date_of_birth: "15/05/1985"
         expected_state_after: COLLECT_EAN
         expected_action_after: ASK_EAN
 
@@ -164,7 +165,7 @@ scenarios:
         expected_event_type: PROVIDE_INFORMATION
         expected_entities: {customer_type: "particulier"}
         expected_state_after: COLLECT_LOCATION
-      - input: "En fait c'est trop cher, je ne suis pas sûr de vouloir continuer."
+      - input: "En fait c'est trop cher, je ne suis pas sأ»r de vouloir continuer."
         expected_event_type: OBJECTION
         expected_entities: {}
         expected_state_after: OBJECTION
@@ -204,9 +205,9 @@ scenarios:
         expected_event_type: PROVIDE_INFORMATION
         expected_entities: {current_supplier: "EDF"}
         expected_state_after: COLLECT_CONTACT
-      - input: "Paul Martin, paul.martin@test.fr, 0611223344"
+      - input: "Paul Martin, paul.martin@test.fr, 0611223344, 20/10/1980"
         expected_event_type: PROVIDE_INFORMATION
-        expected_entities: {first_name: "Paul", last_name: "Martin", email: "paul.martin@test.fr", phone: "0611223344"}
+        expected_entities: {first_name: "Paul", last_name: "Martin", email: "paul.martin@test.fr", phone: "0611223344", date_of_birth: "20/10/1980"}
         expected_state_after: COLLECT_EAN
         notes: "Phone doesn't match the BE pattern either, but that's DATA_VALIDATION's job to catch, not extraction."
       - input: "123456789012345678"
@@ -273,12 +274,12 @@ scenarios:
         expected_event_type: PROVIDE_INFORMATION
         expected_entities: {customer_type: "particulier"}
         expected_state_after: COLLECT_LOCATION
-      - input: "Écoutez, je préfère parler directement à quelqu'un."
+      - input: "أ‰coutez, je prأ©fأ¨re parler directement أ  quelqu'un."
         expected_event_type: REQUEST_HUMAN
         expected_entities: {}
         expected_state_after: HANDOFF
         expected_action_after: NOTIFY_HUMAN
-      - input: "Vous êtes toujours là ?"
+      - input: "Vous أھtes toujours lأ  ?"
         expected_event_type: CUSTOMER_MESSAGE
         expected_entities: {}
         expected_state_after: HANDOFF
@@ -313,13 +314,14 @@ scenarios:
         expected_event_type: PROVIDE_INFORMATION
         expected_entities: {current_supplier: "Total Energies"}
         expected_state_after: COLLECT_CONTACT
-      - input: "Sophie Leroy, sophie.leroy@test.com, 0499001122"
+      - input: "Sophie Leroy, sophie.leroy@test.com, 0499001122, 12/03/1992"
         expected_event_type: PROVIDE_INFORMATION
         expected_entities:
           first_name: "Sophie"
           last_name: "Leroy"
           email: "sophie.leroy@test.com"
           phone: "0499001122"
+          date_of_birth: "12/03/1992"
         expected_state_after: COLLECT_EAN
       - input: "541234"
         expected_event_type: PROVIDE_INFORMATION
@@ -386,7 +388,7 @@ scenarios:
           losing their qualification progress. Worth a fix in
           conversation_repository.transition_state or the global-override
           ordering in state_machine.py.
-      - input: "En fait je ne suis pas sûr, c'est peut-être trop cher."
+      - input: "En fait je ne suis pas sأ»r, c'est peut-أھtre trop cher."
         expected_event_type: OBJECTION
         expected_entities: {}
         expected_state_after: OBJECTION
@@ -423,21 +425,22 @@ scenarios:
         expected_event_type: PROVIDE_INFORMATION
         expected_entities: {customer_type: "particulier"}
         expected_state_after: COLLECT_LOCATION
-      - input: "Liège, Wallonie"
+      - input: "Liأ¨ge, Wallonie"
         expected_event_type: PROVIDE_INFORMATION
-        expected_entities: {city: "Liège", region: "Wallonie"}
+        expected_entities: {city: "Liأ¨ge", region: "Wallonie"}
         expected_state_after: COLLECT_SUPPLIER
       - input: "Engie"
         expected_event_type: PROVIDE_INFORMATION
         expected_entities: {current_supplier: "Engie"}
         expected_state_after: COLLECT_CONTACT
-      - input: "Alex Dupont, existing.customer@test.com, 0470000000"
+      - input: "Alex Dupont, existing.customer@test.com, 0470000000, 01/01/1988"
         expected_event_type: PROVIDE_INFORMATION
         expected_entities:
           first_name: "Alex"
           last_name: "Dupont"
           email: "existing.customer@test.com"
           phone: "0470000000"
+          date_of_birth: "01/01/1988"
         expected_state_after: COLLECT_EAN
         notes: "Same email+phone as the pre-existing lead created in `setup`."
       - input: "541448911001234567"
@@ -450,3 +453,114 @@ scenarios:
         expected_state_after: REJECTED
         expected_action_after: SEND_REJECTION
         notes: "duplicate check runs before email/phone/EAN format checks, per rules.decide_validation()."
+
+  - id: conv_invalid_date_of_birth_then_corrected
+    category: full_conversation
+    description: "Customer provides an invalid date of birth format; Sophie asks for a correction, then customer provides valid adult date of birth."
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je voudrais changer de fournisseur d'énergie"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui, je confirme"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+        expected_action_after: ASK_CUSTOMER_TYPE
+      - input: "Je suis un particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+        expected_action_after: ASK_LOCATION
+      - input: "J'habite à Namur en Wallonie"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {region: "Wallonie", city: "Namur"}
+        expected_state_after: COLLECT_SUPPLIER
+        expected_action_after: ASK_SUPPLIER
+      - input: "Mon fournisseur est Engie"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {current_supplier: "Engie"}
+        expected_state_after: COLLECT_CONTACT
+        expected_action_after: ASK_CONTACT
+      - input: "Jean Valjean, jean.valjean@test.com, 0488112233, 31/02/1990"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities:
+          first_name: "Jean"
+          last_name: "Valjean"
+          email: "jean.valjean@test.com"
+          phone: "0488112233"
+          date_of_birth: "31/02/1990"
+        expected_state_after: COLLECT_EAN
+        expected_action_after: ASK_EAN
+      - input: "Mon EAN est 541448911001234567"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {ean: "541448911001234567"}
+        expected_state_after: DATA_VALIDATION
+      - system_event: CUSTOMER_MESSAGE
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: COLLECT_CONTACT
+        expected_action_after: ASK_CONTACT_CORRECTION
+        notes: "validate_date_of_birth() fails on invalid date (31/02) -> CORRECT_FIELD(contact), routes back to COLLECT_CONTACT."
+      - input: "Pardon, ma date de naissance est le 15/05/1990"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {date_of_birth: "15/05/1990"}
+        expected_state_after: DATA_VALIDATION
+      - system_event: CUSTOMER_MESSAGE
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: QUALIFIED
+        expected_action_after: SEND_QUALIFIED_CONFIRMATION
+
+  - id: conv_underage_rejection
+    category: full_conversation
+    description: "Customer provides a date of birth indicating age under 18; Sophie deterministically rejects with INVALID_CUSTOMER."
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Je souhaite changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+      - input: "Particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+      - input: "Liège, Wallonie"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {city: "Liège", region: "Wallonie"}
+        expected_state_after: COLLECT_SUPPLIER
+      - input: "Luminus"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {current_supplier: "Luminus"}
+        expected_state_after: COLLECT_CONTACT
+      - input: "Lucas Petit, lucas.petit@test.com, 0488112233, 15/05/2015"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities:
+          first_name: "Lucas"
+          last_name: "Petit"
+          email: "lucas.petit@test.com"
+          phone: "0488112233"
+          date_of_birth: "15/05/2015"
+        expected_state_after: COLLECT_EAN
+        expected_action_after: ASK_EAN
+      - input: "541448911001234567"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {ean: "541448911001234567"}
+        expected_state_after: DATA_VALIDATION
+      - system_event: CUSTOMER_MESSAGE
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: REJECTED
+        expected_action_after: SEND_REJECTION
+        notes: "Age < 18 fails is_adult() check in decide_validation() -> REJECT(INVALID_CUSTOMER)."

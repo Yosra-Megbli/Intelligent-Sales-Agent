@@ -62,6 +62,7 @@ _ENTITY_KEYS = (
     "email",
     "phone",
     "ean",
+    "date_of_birth",
 )
 _CUSTOMER_TYPE_VALUES = {"particulier", "professionnel"}
 # Bug fix (F-002, BAT SC-013): "region" used to be restricted to this exact
@@ -112,7 +113,7 @@ def _normalize_entities(raw_entities: Any) -> dict[str, Any]:
             continue
         if key == "customer_type":
             value = value.lower()
-        if key in ("ean", "phone"):
+        if key in ("ean", "phone", "date_of_birth"):
             value = value.replace(" ", "")
 
         entities[key] = value
@@ -160,3 +161,4 @@ class Extractor:
             return Event(type=EventType.EXTRACTION_FAILED, raw_answer_text=raw_text)
 
         return _parse_response(response.content, raw_text)
+

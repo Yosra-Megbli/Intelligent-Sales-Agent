@@ -1,4 +1,4 @@
-"""
+﻿"""
 Request/response schemas for the Dashboard HTTP API (Phase 7).
 
 Same discipline as `api/schemas.py`: pure serialization shapes, no business
@@ -28,7 +28,7 @@ class LeadSummary(BaseModel):
     customer_type: Optional[str]
     region: Optional[str]
     city: Optional[str]
-    date_of_birth: Optional[datetime]
+    date_of_birth: Optional[datetime | str] = None
     current_supplier: Optional[str]
     provider: Optional[str]
     notes: Optional[str]
@@ -199,7 +199,7 @@ class ActivityFeedEntryResponse(BaseModel):
     @classmethod
     def from_service(cls, entry) -> "ActivityFeedEntryResponse":
         lead = entry.lead
-        name = " ".join(filter(None, [lead.first_name, lead.last_name])).strip() or lead.phone or lead.email or "—"
+        name = " ".join(filter(None, [lead.first_name, lead.last_name])).strip() or lead.phone or lead.email or "â€”"
         return cls(
             id=entry.activity.id,
             type=entry.activity.type.value,
@@ -227,3 +227,4 @@ class OverviewResponse(BaseModel):
     rejected: int
     human_handoff: int
     conversion_rate: float
+

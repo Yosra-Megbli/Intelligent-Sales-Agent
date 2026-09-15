@@ -1,4 +1,4 @@
-# Qualification Rules — Sophie (Ecofix Energy)
+﻿# Qualification Rules – Sophie (Ecofix Energy)
 #
 # This file is the single source of truth for what data is required to
 # qualify a lead, and in what order it should be collected. Changing the
@@ -9,8 +9,13 @@ required_fields_order:
   - customer_type      # particulier / professionnel
   - location            # region + city
   - current_supplier
-  - contact              # first_name, last_name, email, phone
+  - contact              # first_name, last_name, email, phone, date_of_birth
   - ean                  # asked last on purpose: sensitive data, after trust
+
+date_of_birth:
+  required: true
+  format: "DD/MM/YYYY"
+  min_age: 18
 
 coverage:
   allowed_regions:

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Lead model - the CRM's source of truth for a prospect.
 
 IMPORTANT (architecture rule): this model only stores data. It never decides
@@ -113,10 +113,10 @@ class Lead(Base):
     ean = Column(String(18), nullable=True)
     consumption = Column(String(64), nullable=True)  # kept as free text at MVP stage
 
-    # Required by cahier de charges §5 (qualification data) for contract
+    # Required by cahier de charges آ§5 (qualification data) for contract
     # generation later - not currently read or validated by
     # conversation_engine/business_rules; collected and stored only.
-    date_of_birth = Column(DateTime, nullable=True)
+    date_of_birth = Column(String(64), nullable=True)
 
     # --- CRM import bookkeeping (added for CSV Import, Feature 1) ---
     # `provider` is who supplied/referred this lead (e.g. a marketing partner
@@ -188,3 +188,4 @@ class Lead(Base):
 
     def __repr__(self) -> str:  # pragma: no cover - debug helper only
         return f"<Lead {self.id} status={self.status} email={self.email}>"
+

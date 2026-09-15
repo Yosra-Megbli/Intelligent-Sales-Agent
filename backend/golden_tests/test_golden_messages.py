@@ -9,7 +9,7 @@ JSON parsing / entity whitelist / customer_type lowercasing / EAN-phone
 space-stripping logic against real-shaped scenario data, instead of only
 the handful of synthetic payloads in tests/test_extractor.py).
 
-This suite can NEVER catch the LLM misclassifying "combien coûte ?" as an
+This suite can NEVER catch the LLM misclassifying "combien coأ»te ?" as an
 OBJECTION - by construction, the provider is told the right answer. That
 question belongs to run_real_llm_eval.py.
 """
@@ -47,6 +47,7 @@ _VALID_ENTITY_KEYS = {
     "email",
     "phone",
     "ean",
+    "date_of_birth",
 }
 
 
@@ -82,3 +83,4 @@ def test_extractor_preserves_a_correct_llm_output(scenario):
     assert event.type.value == scenario.expected_event_type, scenario.id
     assert event.entities == scenario.expected_entities, scenario.id
     assert event.raw_answer_text == scenario.input, scenario.id
+
