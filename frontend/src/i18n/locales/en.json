@@ -16,6 +16,24 @@
     "changeKey": "Change Key",
     "logout": "Sign Out"
   },
+  "login": {
+    "brandTagline": "AI sales agent for Belgian energy contracts",
+    "badgeAiAct": "AI Act Compliant",
+    "badgeGdpr": "GDPR by design",
+    "badgeHosting": "Hosted EU-ready",
+    "title": "Sign In",
+    "subtitle": "Access the Sophie sales supervision console.",
+    "labelApiKey": "API Authentication Key (X-API-Key)",
+    "placeholderApiKey": "Enter your secret key...",
+    "submit": "Access Console",
+    "submitting": "Verifying...",
+    "errorInvalid": "Invalid API key or unauthorized by server.",
+    "errorNetwork": "Unable to reach the server. Please check your connection.",
+    "or": "or",
+    "useDemoKey": "Use demonstration key",
+    "helpLink": "Need help?",
+    "supportContact": "support@ecofix.be"
+  },
   "nav": {
     "overview": "Overview",
     "leads": "Leads & CRM",

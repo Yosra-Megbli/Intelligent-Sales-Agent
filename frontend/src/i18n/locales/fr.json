@@ -16,6 +16,24 @@
     "changeKey": "Changer de clé",
     "logout": "Déconnexion"
   },
+  "login": {
+    "brandTagline": "Agent commercial IA pour contrats d'énergie belges",
+    "badgeAiAct": "Conforme AI Act",
+    "badgeGdpr": "RGPD by design",
+    "badgeHosting": "Hébergé UE-ready",
+    "title": "Connexion",
+    "subtitle": "Accédez à la console de supervision commerciale Sophie.",
+    "labelApiKey": "Clé d'authentification API (X-API-Key)",
+    "placeholderApiKey": "Entrez votre clé secrète...",
+    "submit": "Accéder à la console",
+    "submitting": "Vérification en cours...",
+    "errorInvalid": "Clé API non valide ou non autorisée par le serveur.",
+    "errorNetwork": "Impossible de joindre le serveur. Vérifiez votre connexion.",
+    "or": "ou",
+    "useDemoKey": "Utiliser la clé de démonstration",
+    "helpLink": "Besoin d'aide ?",
+    "supportContact": "support@ecofix.be"
+  },
   "nav": {
     "overview": "Vue d'ensemble",
     "leads": "Prospects & CRM",

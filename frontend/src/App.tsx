@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AppShell } from "@/components/layout/AppShell";
-import { ApiKeyModal } from "@/components/auth/ApiKeyModal";
+import { LoginScreen } from "@/components/auth/LoginScreen";
 import { OverviewPage } from "@/pages/OverviewPage";
 import { LeadsPage } from "@/pages/LeadsPage";
 import {
@@ -41,7 +41,7 @@ const DashboardContent: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <ApiKeyModal />;
+    return <LoginScreen />;
   }
 
   return (

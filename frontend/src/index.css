@@ -15,6 +15,10 @@
     
     --brand-green: oklch(60% 0.14 160);
     --brand-hover: oklch(54% 0.15 160);
+    --brand-active: oklch(48% 0.14 160);
+    --color-brand-hover: oklch(54% 0.15 160);
+    --color-brand-active: oklch(48% 0.14 160);
+    --color-danger-soft: oklch(96% 0.04 25);
     --brand-soft: oklch(95% 0.04 160);
     --brand-soft-border: oklch(88% 0.07 160);
     
@@ -50,6 +54,10 @@
     
     --brand-green: oklch(64% 0.15 160);
     --brand-hover: oklch(69% 0.16 160);
+    --brand-active: oklch(58% 0.14 160);
+    --color-brand-hover: oklch(69% 0.16 160);
+    --color-brand-active: oklch(58% 0.14 160);
+    --color-danger-soft: oklch(28% 0.06 25);
     --brand-soft: oklch(26% 0.06 160);
     --brand-soft-border: oklch(36% 0.09 160);
     

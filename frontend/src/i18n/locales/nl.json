@@ -16,6 +16,24 @@
     "changeKey": "Sleutel wijzigen",
     "logout": "Afmelden"
   },
+  "login": {
+    "brandTagline": "AI-verkoopagent voor Belgische energiecontracten",
+    "badgeAiAct": "Conform AI Act",
+    "badgeGdpr": "AVG by design",
+    "badgeHosting": "Gehost EU-ready",
+    "title": "Aanmelden",
+    "subtitle": "Krijg toegang tot de Sophie commerciële supervisieconsole.",
+    "labelApiKey": "API-authenticatiesleutel (X-API-Key)",
+    "placeholderApiKey": "Voer uw geheime sleutel in...",
+    "submit": "Toegang tot console",
+    "submitting": "Bezig met verifiëren...",
+    "errorInvalid": "Ongeldige API-sleutel of toegang geweigerd door de server.",
+    "errorNetwork": "Kan de server niet bereiken. Controleer uw verbinding.",
+    "or": "of",
+    "useDemoKey": "Gebruik demonstratiesleutel",
+    "helpLink": "Hulp nodig?",
+    "supportContact": "support@ecofix.be"
+  },
   "nav": {
     "overview": "Overzicht",
     "leads": "Prospects & CRM",
