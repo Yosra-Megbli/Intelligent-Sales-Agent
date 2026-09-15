@@ -6,13 +6,11 @@ import { LoginScreen } from "@/components/auth/LoginScreen";
 import { OverviewPage } from "@/pages/OverviewPage";
 import { LeadsPage } from "@/pages/LeadsPage";
 import { ConversationsPage } from "@/pages/ConversationsPage";
-import {
-  HandoffsPage,
-  CampaignsPage,
-  ChatSimulatorPage,
-  CompliancePage,
-} from "@/pages/Placeholders";
+import { CampaignsPage } from "@/pages/CampaignsPage";
+import { CompliancePage } from "@/pages/CompliancePage";
+import { HandoffsPage } from "@/pages/Placeholders";
 import { Toaster } from "sonner";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient({
