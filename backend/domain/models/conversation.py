@@ -57,6 +57,11 @@ class Conversation(Base):
     # or on state change. Triggers single-field fallback when >= 2.
     consecutive_extraction_failures = Column(Integer, nullable=False, default=0)
 
+    # How many times the same required_action has fired consecutively in the same
+    # state without the field group completing. Resets on state change or
+    # group completion. Triggers single-field escalation when >= 2.
+    consecutive_same_state_ask = Column(Integer, nullable=False, default=0)
+
     started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     last_message_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 

@@ -55,6 +55,8 @@ FIELD_GROUP_TO_STATE: dict[str, ConversationState] = {
     "ean": ConversationState.COLLECT_EAN,
 }
 
+STATE_TO_FIELD_GROUP: dict[ConversationState, str] = {v: k for k, v in FIELD_GROUP_TO_STATE.items()}
+
 _ASK_ACTION_BY_STATE = {
     ConversationState.COLLECT_CUSTOMER_TYPE: "ASK_CUSTOMER_TYPE",
     ConversationState.COLLECT_LOCATION: "ASK_LOCATION",
@@ -85,16 +87,26 @@ def _resolve_qualification_action(
     if action.type == ActionType.ASK_FIELD:
         next_state = FIELD_GROUP_TO_STATE[action.field]
         required_action = _ASK_ACTION_BY_STATE[next_state]
-        if action.field == "location" and getattr(lead, "region", None) and not getattr(lead, "city", None):
-            required_action = "ASK_CITY_ONLY"
+
+        same_state_ask = (getattr(conversation, "consecutive_same_state_ask", 0) or 0) if conversation else 0
+        failure_count = (getattr(conversation, "consecutive_extraction_failures", 0) or 0) if conversation else 0
+        reask_count = max(same_state_ask, failure_count)
+
+        if action.field == "location":
+            if getattr(lead, "region", None) and not getattr(lead, "city", None):
+                required_action = "ASK_CITY_ONLY"
+            elif reask_count >= 2:
+                if not getattr(lead, "region", None):
+                    required_action = "ASK_REGION_ONLY"
+                else:
+                    required_action = "ASK_CITY_ONLY"
         elif action.field == "contact":
             contact_fields = ("first_name", "last_name", "email", "phone", "date_of_birth")
             present = [f for f in contact_fields if getattr(lead, f, None) not in (None, "")]
             missing = [f for f in contact_fields if getattr(lead, f, None) in (None, "")]
-            failure_count = getattr(conversation, "consecutive_extraction_failures", 0) if conversation else 0
 
-            # When consecutive zero-extraction attempts occur, break down into single-field asks:
-            if failure_count >= 2 and missing:
+            # When consecutive zero-extraction attempts or repeated same-state asks occur, break down into single-field asks:
+            if reask_count >= 2 and missing:
                 if "first_name" in missing or "last_name" in missing:
                     required_action = "ASK_NAME_ONLY"
                 elif "email" in missing:

@@ -440,3 +440,34 @@ def test_collect_contact_progressive_fallback_actions(db_session):
     assert decision.required_action == "ASK_DOB_ONLY"
 
 
+def test_location_progressive_fallback_on_consecutive_same_state_asks(db_session):
+    lead = _lead(db_session, customer_type=CustomerType.PARTICULIER)
+    conv = Conversation(
+        channel=ConversationChannel.WEB,
+        current_state=ConversationState.COLLECT_LOCATION,
+        consecutive_same_state_ask=2,
+    )
+
+    # 1. Both region and city missing + consecutive_same_state_ask >= 2 -> ASK_REGION_ONLY
+    decision = state_machine.decide(
+        ConversationState.COLLECT_LOCATION,
+        Event(EventType.CUSTOMER_MESSAGE),
+        lead,
+        conversation=conv,
+    )
+    assert decision.next_state == ConversationState.COLLECT_LOCATION
+    assert decision.required_action == "ASK_REGION_ONLY"
+
+    # 2. Region present, city missing -> ASK_CITY_ONLY
+    lead.region = "Flandre"
+    decision = state_machine.decide(
+        ConversationState.COLLECT_LOCATION,
+        Event(EventType.CUSTOMER_MESSAGE),
+        lead,
+        conversation=conv,
+    )
+    assert decision.next_state == ConversationState.COLLECT_LOCATION
+    assert decision.required_action == "ASK_CITY_ONLY"
+
+
+

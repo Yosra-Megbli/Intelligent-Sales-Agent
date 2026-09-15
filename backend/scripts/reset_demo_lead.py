@@ -248,6 +248,7 @@ def reset_demo_lead(
             conv.previous_state = None
             conv.consecutive_detour_count = 0
             conv.consecutive_extraction_failures = 0
+            conv.consecutive_same_state_ask = 0
             conv_ids_reset.append(str(conv.id))
 
             # Evict conversation context from Redis cache

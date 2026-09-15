@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID
 
-from conversation_engine import state_machine
+from conversation_engine import rules, state_machine
 from conversation_engine.intent_classifier import IntentClassifier
 from conversation_engine.memory import ConversationMemory
 from conversation_engine.transitions import DETOUR_STATES, Event, EventType, NO_STATE_CHANGE_STATES
@@ -86,6 +86,25 @@ class ConversationEngine:
         ):
             self.conversation_repo.increment_extraction_failure_count(conversation)
 
+        # Qualification re-ask tracking: reset on group completion or forward extraction progress,
+        # otherwise increment for repeated attempts in the same qualification state.
+        field_group = state_machine.STATE_TO_FIELD_GROUP.get(current_state)
+        if field_group and rules.is_field_group_complete(lead, field_group):
+            self.conversation_repo.reset_same_state_ask_count(conversation)
+        elif current_state in state_machine.QUALIFICATION_STATES and event.type not in (
+            EventType.REQUEST_HUMAN,
+            EventType.QUESTION,
+            EventType.OBJECTION,
+        ):
+            # Forward progress in location (e.g. region given) or contact (partial contact given)
+            # changes the required action, so it resets the same-action repeat counter.
+            if current_state == ConversationState.COLLECT_LOCATION and event.entities and event.entities.get("region"):
+                self.conversation_repo.reset_same_state_ask_count(conversation)
+            elif current_state == ConversationState.COLLECT_CONTACT and has_useful_extraction:
+                self.conversation_repo.reset_same_state_ask_count(conversation)
+            else:
+                self.conversation_repo.increment_same_state_ask_count(conversation)
+
         # F-003 fix: LeadRepository.find_duplicate() existed but was never
         # called anywhere in the live flow, so a lead could always be
         # qualified twice under the same email/phone. Only looked up right
@@ -120,9 +139,10 @@ class ConversationEngine:
             )
             next_state = decision.next_state
 
-        # State transition resets extraction failure count
+        # State transition resets extraction failure count and same-state ask count
         if next_state != current_state:
             self.conversation_repo.reset_extraction_failure_count(conversation)
+            self.conversation_repo.reset_same_state_ask_count(conversation)
 
         # Dialogue Policy bookkeeping: entering a detour counts towards the
         # "consecutive detours" threshold; any other real transition resets

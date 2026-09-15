@@ -114,6 +114,16 @@ class ConversationRepository:
         self.db.flush()
         return conversation
 
+    def increment_same_state_ask_count(self, conversation: Conversation) -> Conversation:
+        conversation.consecutive_same_state_ask = (conversation.consecutive_same_state_ask or 0) + 1
+        self.db.flush()
+        return conversation
+
+    def reset_same_state_ask_count(self, conversation: Conversation) -> Conversation:
+        conversation.consecutive_same_state_ask = 0
+        self.db.flush()
+        return conversation
+
     def add_message(
         self,
         conversation: Conversation,

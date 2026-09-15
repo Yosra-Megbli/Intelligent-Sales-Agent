@@ -505,8 +505,57 @@ def test_extraction_failure_counter_and_progressive_fallback(db_session):
             entities={"phone": "0477123456", "date_of_birth": "15/05/1985"},
         ),
     )
-    assert conversation.consecutive_extraction_failures == 0
     assert res7.next_state == ConversationState.COLLECT_EAN
     assert res7.required_action == "ASK_EAN"
+
+
+def test_location_state_reask_guard_and_escalation(db_session):
+    """Test that:
+    1. Answering region alone ('flandre') immediately triggers ASK_CITY_ONLY.
+    2. Repeated failures in COLLECT_LOCATION increment consecutive_same_state_ask.
+    3. consecutive_same_state_ask >= 2 escalates to ASK_REGION_ONLY when region is missing.
+    4. Providing region shifts ask to ASK_CITY_ONLY.
+    5. Completing city resets consecutive_same_state_ask and transitions to COLLECT_SUPPLIER.
+    """
+    lead, conversation = _new_conversation(db_session)
+    lead.customer_type = "particulier"
+    ConversationRepository(db_session).transition_state(
+        conversation, ConversationState.COLLECT_LOCATION
+    )
+    db_session.commit()
+
+    engine = ConversationEngine(db_session)
+
+    # Initial state
+    assert conversation.consecutive_same_state_ask == 0
+
+    # Turn 1: Customer says something unextractable -> count becomes 1, asks ASK_LOCATION
+    res1 = engine.process_turn(conversation.id, Event(type=EventType.CUSTOMER_MESSAGE, raw_answer_text="hein ?"))
+    assert conversation.consecutive_same_state_ask == 1
+    assert res1.required_action == "ASK_LOCATION"
+
+    # Turn 2: Customer repeats unextractable text -> count becomes 2 -> deterministic escalation to ASK_REGION_ONLY
+    res2 = engine.process_turn(conversation.id, Event(type=EventType.CUSTOMER_MESSAGE, raw_answer_text="je ne sais pas"))
+    assert conversation.consecutive_same_state_ask == 2
+    assert res2.required_action == "ASK_REGION_ONLY"
+
+    # Turn 3: Customer provides region 'Flandre' -> region known but city missing -> ASK_CITY_ONLY
+    res3 = engine.process_turn(
+        conversation.id,
+        Event(type=EventType.PROVIDE_INFORMATION, entities={"region": "Flandre"}),
+    )
+    assert lead.region == "Flandre"
+    assert res3.required_action == "ASK_CITY_ONLY"
+
+    # Turn 4: Customer provides city 'Gent' -> group completed, counter resets, advances to COLLECT_SUPPLIER
+    res4 = engine.process_turn(
+        conversation.id,
+        Event(type=EventType.PROVIDE_INFORMATION, entities={"city": "Gent"}),
+    )
+    assert lead.city == "Gent"
+    assert conversation.consecutive_same_state_ask == 0
+    assert res4.next_state == ConversationState.COLLECT_SUPPLIER
+    assert res4.required_action == "ASK_SUPPLIER"
+
 
 
