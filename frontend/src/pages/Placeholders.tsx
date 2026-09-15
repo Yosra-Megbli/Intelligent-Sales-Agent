@@ -148,7 +148,7 @@ export const ChatSimulatorPage: React.FC = () => {
           ...prev,
           {
             role: "assistant",
-            text: "Chez Ecofix, nous ne proposons aucun contrat fixe mais uniquement nos offres Flexy (variable mensuel transparent) et Motion (dynamique horaire). Quel est votre gestionnaire de réseau (Fluvius en Flandre, ou ORES/RESA en Wallonie) ?",
+            text: "Chez Ecofix, nous ne proposons aucun contrat fixe mais uniquement nos offres Flexy (variable mensuel transparent) et Motion (dynamique horaire). Habitez-vous en Flandre ou en Wallonie, et dans quelle ville ?",
           },
         ]);
       }

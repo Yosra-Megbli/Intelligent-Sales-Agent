@@ -55,6 +55,7 @@ _REQUIRED_ACTION_TO_EXPECTED_FIELD: dict[str, str] = {
     "ASK_CUSTOMER_TYPE": "customer_type",
     "ASK_LOCATION": "location",
     "ASK_CITY_ONLY": "location",
+    "ASK_REGION_ONLY": "location",
     "ASK_SUPPLIER": "current_supplier",
     "ASK_CONTACT": "contact",
     "ASK_PARTIAL_CONTACT": "contact",

@@ -281,3 +281,30 @@ def test_every_state_machine_required_action_is_handled():
         "SEND_FOLLOW_UP",
     }
     assert expected_actions <= known_actions
+
+
+def test_location_and_city_region_multilingual_fallbacks():
+    responder = Responder(None)  # None provider uses fallback
+    for lang, expected_loc in [
+        ("fr", "Habitez-vous en Flandre ou en Wallonie, et dans quelle ville ?"),
+        ("nl", "Woont u in Vlaanderen of Wallonië, en in welke stad?"),
+        ("en", "Do you live in Flanders or Wallonia, and in which city?"),
+    ]:
+        conv = make_conversation(language=lang)
+        assert responder.respond("ASK_LOCATION", conversation=conv) == expected_loc
+
+    for lang, expected_city in [
+        ("fr", "Merci, et dans quelle ville êtes-vous situé(e) ?"),
+        ("nl", "Dank u, en in welke stad bent u gevestigd?"),
+        ("en", "Thank you, and in which city are you located?"),
+    ]:
+        conv = make_conversation(language=lang)
+        assert responder.respond("ASK_CITY_ONLY", conversation=conv) == expected_city
+
+    for lang, expected_reg in [
+        ("fr", "Habitez-vous en Flandre ou en Wallonie ?"),
+        ("nl", "Woont u in Vlaanderen of Wallonië?"),
+        ("en", "Do you live in Flanders or Wallonia?"),
+    ]:
+        conv = make_conversation(language=lang)
+        assert responder.respond("ASK_REGION_ONLY", conversation=conv) == expected_reg
