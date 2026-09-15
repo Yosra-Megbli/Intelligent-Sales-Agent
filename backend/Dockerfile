@@ -1,11 +1,10 @@
 ﻿# Production Dockerfile for Ecofix Sophie FastAPI backend
-# Optimized for free-tier deployments (Render / containers)
 FROM python:3.12-slim
 
-# Prevent Python from writing .pyc files and enable unbuffered output
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PORT=8000
+    PORT=8000 \
+    PYTHONPATH=/app:/app/backend
 
 WORKDIR /app
 
