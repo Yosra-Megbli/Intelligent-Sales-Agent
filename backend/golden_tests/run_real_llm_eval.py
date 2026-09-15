@@ -28,7 +28,12 @@ import json
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+backend_dir = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(backend_dir))
+
+from dotenv import load_dotenv  # noqa: E402
+load_dotenv(backend_dir / ".env")
+load_dotenv(backend_dir.parent / ".env")
 
 from ai.providers.groq import GroqProvider  # noqa: E402
 
@@ -66,7 +71,7 @@ def _print_report(results: list[MessageEvalResult]) -> dict:
             if r.scenario.notes:
                 print(f"  notes:    {r.scenario.notes.strip()}")
     else:
-        print("\nNo failures. 🎉")
+        print("\nNo failures. [OK]")
 
     return summary
 

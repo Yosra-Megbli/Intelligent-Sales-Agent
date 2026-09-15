@@ -1,4 +1,4 @@
-﻿"""
+"""
 Integration tests for ConversationEngine.process_turn().
 
 Redis is mocked out here (patched to an in-memory dict) so these tests run
@@ -427,4 +427,86 @@ def test_engine_without_provider_never_calls_disambiguation(db_session):
     # so INTENT_CONFIRMATION's default branch just asks for clarification.
     assert result.next_state == ConversationState.INTENT_CONFIRMATION
     assert result.required_action == "ASK_CLARIFICATION"
+
+
+def test_extraction_failure_counter_and_progressive_fallback(db_session):
+    """Test that:
+    1. Zero-extraction turns increment consecutive_extraction_failures.
+    2. Any successfully extracted entity resets the counter to 0.
+    3. State transition resets the counter to 0.
+    4. Consecutive failures >= 2 trigger progressive single-field asks.
+    """
+    lead, conversation = _new_conversation(db_session)
+    # Set up lead in COLLECT_CONTACT (clean contact fields)
+    lead.customer_type = "particulier"
+    lead.region = "Wallonie"
+    lead.city = "Namur"
+    lead.current_supplier = "Engie"
+    lead.first_name = None
+    lead.last_name = None
+    lead.email = None
+    lead.phone = None
+    lead.date_of_birth = None
+    ConversationRepository(db_session).transition_state(
+        conversation, ConversationState.COLLECT_CONTACT
+    )
+    db_session.commit()
+
+    engine = ConversationEngine(db_session)
+
+    # Initial state: 0 failures, required_action is ASK_CONTACT
+    assert conversation.consecutive_extraction_failures == 0
+
+    # Turn 1: 0 entities extracted -> failure count becomes 1, still ASK_CONTACT
+    res1 = engine.process_turn(conversation.id, Event(type=EventType.CUSTOMER_MESSAGE, raw_answer_text="hein ?"))
+    assert conversation.consecutive_extraction_failures == 1
+    assert res1.required_action == "ASK_CONTACT"
+
+    # Turn 2: 0 entities extracted again -> failure count becomes 2 -> progressive single-field ask!
+    res2 = engine.process_turn(conversation.id, Event(type=EventType.CUSTOMER_MESSAGE, raw_answer_text="pas compris"))
+    assert conversation.consecutive_extraction_failures == 2
+    assert res2.required_action == "ASK_NAME_ONLY"
+
+    # Turn 3: User provides first and last name -> useful extraction resets counter to 0!
+    res3 = engine.process_turn(
+        conversation.id,
+        Event(
+            type=EventType.PROVIDE_INFORMATION,
+            entities={"first_name": "Ali", "last_name": "Test"},
+        ),
+    )
+    assert conversation.consecutive_extraction_failures == 0
+    # Now partial contact is acknowledged!
+    assert res3.required_action == "ASK_PARTIAL_CONTACT"
+
+    # Turn 4: 0 entities extracted -> failure count becomes 1
+    res4 = engine.process_turn(conversation.id, Event(type=EventType.CUSTOMER_MESSAGE, raw_answer_text="quoi d'autre ?"))
+    assert conversation.consecutive_extraction_failures == 1
+    assert res4.required_action == "ASK_PARTIAL_CONTACT"
+
+    # Turn 5: 0 entities extracted again -> failure count becomes 2 -> progressive ask for next missing field (email)!
+    res5 = engine.process_turn(conversation.id, Event(type=EventType.CUSTOMER_MESSAGE, raw_answer_text="euh"))
+    assert conversation.consecutive_extraction_failures == 2
+    assert res5.required_action == "ASK_EMAIL_ONLY"
+
+    # Turn 6: User provides email -> resets counter to 0
+    res6 = engine.process_turn(
+        conversation.id,
+        Event(type=EventType.PROVIDE_INFORMATION, entities={"email": "ali@test.com"}),
+    )
+    assert conversation.consecutive_extraction_failures == 0
+    assert res6.required_action == "ASK_PARTIAL_CONTACT"
+
+    # Turn 7: Provide phone and date_of_birth -> complete contact group moves to COLLECT_EAN, counter remains 0
+    res7 = engine.process_turn(
+        conversation.id,
+        Event(
+            type=EventType.PROVIDE_INFORMATION,
+            entities={"phone": "0477123456", "date_of_birth": "15/05/1985"},
+        ),
+    )
+    assert conversation.consecutive_extraction_failures == 0
+    assert res7.next_state == ConversationState.COLLECT_EAN
+    assert res7.required_action == "ASK_EAN"
+
 

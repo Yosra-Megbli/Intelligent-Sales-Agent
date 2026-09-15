@@ -131,6 +131,31 @@ class Responder:
         talking_point = _talking_point_for(required_action, rejection_reason)
         language = conversation.language or "fr"
         fallback = _fallback_for(required_action, rejection_reason, language=language)
+
+        if required_action == "ASK_PARTIAL_CONTACT" and lead is not None:
+            missing_items = []
+            if not getattr(lead, "first_name", None) or not getattr(lead, "last_name", None):
+                missing_items.append("nom et prénom" if language == "fr" else ("naam en voornaam" if language == "nl" else "full name"))
+            if not getattr(lead, "email", None):
+                missing_items.append("adresse email" if language == "fr" else ("e-mailadres" if language == "nl" else "email address"))
+            if not getattr(lead, "phone", None):
+                missing_items.append("numéro de téléphone" if language == "fr" else ("telefoonnummer" if language == "nl" else "phone number"))
+            if not getattr(lead, "date_of_birth", None):
+                missing_items.append("date de naissance (JJ/MM/AAAA)" if language == "fr" else ("geboortedatum (DD/MM/JJJJ)" if language == "nl" else "date of birth (DD/MM/YYYY)"))
+
+            if missing_items:
+                missing_str = ", ".join(missing_items)
+                talking_point = (
+                    f"Acknowledge the contact information already provided, and politely ask only for "
+                    f"the missing information: {missing_str}."
+                )
+                if language == "fr":
+                    fallback = f"Merci pour ces informations. Pourriez-vous me préciser votre {missing_str} pour finaliser votre dossier ?"
+                elif language == "nl":
+                    fallback = f"Bedankt voor deze informatie. Kunt u nog uw {missing_str} doorgeven om uw dossier te voltooien?"
+                else:
+                    fallback = f"Thank you for this information. Could you please provide your {missing_str} to complete your file?"
+
         if talking_point is None:
             return fallback
 

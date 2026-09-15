@@ -104,6 +104,16 @@ class ConversationRepository:
         self.db.flush()
         return conversation
 
+    def increment_extraction_failure_count(self, conversation: Conversation) -> Conversation:
+        conversation.consecutive_extraction_failures = (conversation.consecutive_extraction_failures or 0) + 1
+        self.db.flush()
+        return conversation
+
+    def reset_extraction_failure_count(self, conversation: Conversation) -> Conversation:
+        conversation.consecutive_extraction_failures = 0
+        self.db.flush()
+        return conversation
+
     def add_message(
         self,
         conversation: Conversation,

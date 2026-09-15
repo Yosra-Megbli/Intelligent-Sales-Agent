@@ -52,6 +52,11 @@ class Conversation(Base):
     # human - the State Machine itself does not make that call.
     consecutive_detour_count = Column(Integer, nullable=False, default=0)
 
+    # How many consecutive 0-extraction attempts have occurred in the current
+    # qualification state. Resets whenever any entity is successfully extracted
+    # or on state change. Triggers single-field fallback when >= 2.
+    consecutive_extraction_failures = Column(Integer, nullable=False, default=0)
+
     started_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     last_message_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 

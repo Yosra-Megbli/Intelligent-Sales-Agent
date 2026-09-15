@@ -1,4 +1,4 @@
-﻿# Fallback text -- Sophie (Response Generator)
+# Fallback text -- Sophie (Response Generator)
 #
 # Used verbatim when the LLM call fails or no provider is configured. Kept
 # deliberately short and generic - this is a safety net, not the primary
@@ -21,6 +21,11 @@ ASK_LOCATION: "Dans quelle region habitez-vous (Wallonie ou Flandre) et dans que
 ASK_CITY_ONLY: "Merci, et dans quelle ville etes-vous situe(e) ?"
 ASK_SUPPLIER: "Quel est votre fournisseur d'energie actuel ?"
 ASK_CONTACT: "Pouvez-vous me donner votre nom, prenom, email, numero de telephone et date de naissance (JJ/MM/AAAA) ?"
+ASK_PARTIAL_CONTACT: "Merci pour ces elements. Pourriez-vous me preciser les coordonnees manquantes (email, telephone ou date de naissance JJ/MM/AAAA) pour completer votre dossier ?"
+ASK_NAME_ONLY: "Pourriez-vous simplement me donner votre nom et votre prenom ?"
+ASK_EMAIL_ONLY: "Pourriez-vous simplement me donner votre adresse email ?"
+ASK_PHONE_ONLY: "Pourriez-vous simplement me donner votre numero de telephone ?"
+ASK_DOB_ONLY: "Pourriez-vous simplement me donner votre date de naissance (au format JJ/MM/AAAA) ?"
 ASK_EAN: "Pouvez-vous me communiquer le code EAN indique sur votre facture d'electricite ou de gaz ?"
 ASK_EAN_CORRECTION: "Ce code EAN ne semble pas correct. Pouvez-vous verifier sur votre facture et me le renvoyer ?"
 ASK_CONTACT_CORRECTION: "Cet email, ce numero de telephone ou votre date de naissance ne semble pas valide. Pouvez-vous le verifier et me le renvoyer ?"

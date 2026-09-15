@@ -26,8 +26,8 @@ export const ApiKeyModal: React.FC = () => {
   };
 
   const fillDemoKey = () => {
-    // Quick demo helper using the project's standard key
-    setApiKeyInput("sk-live-ecofix-demo-2026");
+    // Quick demo helper using the project's configured key
+    setApiKeyInput("f08fecae54e9cf11e7da0a350830dde900e6cf8dff98e5d2377332a48134ee8e");
   };
 
   return (

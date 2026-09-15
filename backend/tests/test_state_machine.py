@@ -1,4 +1,4 @@
-﻿from crm.lead_repository import LeadRepository
+from crm.lead_repository import LeadRepository
 from conversation_engine import state_machine
 from conversation_engine.transitions import Event, EventType
 from domain.enums import ConversationChannel, ConversationState, CustomerType, LeadSource, Region, RejectionReason
@@ -364,4 +364,79 @@ def test_waiting_customer_sends_follow_up_on_scheduler_event(db_session):
     )
     assert decision.next_state == ConversationState.WAITING_CUSTOMER
     assert decision.required_action == "SEND_FOLLOW_UP"
+
+
+def test_collect_contact_partial_acknowledgment(db_session):
+    """When some contact fields are present, required_action is ASK_PARTIAL_CONTACT."""
+    lead = _lead(
+        db_session,
+        customer_type=CustomerType.PARTICULIER,
+        city="Namur",
+        current_supplier="Engie",
+    )
+    lead.first_name = "Ali"
+    lead.last_name = "Test"
+    decision = state_machine.decide(
+        ConversationState.COLLECT_CONTACT,
+        Event(EventType.CUSTOMER_MESSAGE),
+        lead,
+    )
+    assert decision.next_state == ConversationState.COLLECT_CONTACT
+    assert decision.required_action == "ASK_PARTIAL_CONTACT"
+
+
+def test_collect_contact_progressive_fallback_actions(db_session):
+    """When consecutive extraction failures >= 2, single-field fallback asks are chosen."""
+    lead = _lead(
+        db_session,
+        customer_type=CustomerType.PARTICULIER,
+        city="Namur",
+        current_supplier="Engie",
+    )
+    conv = Conversation(
+        channel=ConversationChannel.WEB,
+        current_state=ConversationState.COLLECT_CONTACT,
+        consecutive_extraction_failures=2,
+    )
+
+    # 1. Missing name -> ASK_NAME_ONLY
+    decision = state_machine.decide(
+        ConversationState.COLLECT_CONTACT,
+        Event(EventType.CUSTOMER_MESSAGE),
+        lead,
+        conversation=conv,
+    )
+    assert decision.required_action == "ASK_NAME_ONLY"
+
+    # 2. Name present, missing email -> ASK_EMAIL_ONLY
+    lead.first_name = "Ali"
+    lead.last_name = "Test"
+    decision = state_machine.decide(
+        ConversationState.COLLECT_CONTACT,
+        Event(EventType.CUSTOMER_MESSAGE),
+        lead,
+        conversation=conv,
+    )
+    assert decision.required_action == "ASK_EMAIL_ONLY"
+
+    # 3. Email present, missing phone -> ASK_PHONE_ONLY
+    lead.email = "ali@test.com"
+    decision = state_machine.decide(
+        ConversationState.COLLECT_CONTACT,
+        Event(EventType.CUSTOMER_MESSAGE),
+        lead,
+        conversation=conv,
+    )
+    assert decision.required_action == "ASK_PHONE_ONLY"
+
+    # 4. Phone present, missing dob -> ASK_DOB_ONLY
+    lead.phone = "0477123456"
+    decision = state_machine.decide(
+        ConversationState.COLLECT_CONTACT,
+        Event(EventType.CUSTOMER_MESSAGE),
+        lead,
+        conversation=conv,
+    )
+    assert decision.required_action == "ASK_DOB_ONLY"
+
 

@@ -406,6 +406,30 @@ scenarios:
         ean: "541234567890123456"
     notes: "Customer answers contact AND jumps ahead to EAN in the same message."
 
+  - id: multi_entity_03
+    category: multi_entity
+    input: "Ali Test, ali.test.demo@gmail.com, 0477123456, 15/05/1985"
+    expected_field: contact
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities:
+        first_name: "Ali"
+        last_name: "Test"
+        email: "ali.test.demo@gmail.com"
+        phone: "0477123456"
+        date_of_birth: "15/05/1985"
+    notes: "Customer provides full 5-field contact block comma-separated in one message."
+
+  - id: partial_contact_01
+    category: entity_extraction
+    input: "Je m'appelle Nour"
+    expected_field: contact
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities:
+        first_name: "Nour"
+    notes: "Customer provides partial contact info (first name only) in French."
+
   # --- 13. Professional customer type ---
 
   - id: customer_type_01

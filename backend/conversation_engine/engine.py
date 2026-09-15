@@ -21,7 +21,7 @@ from uuid import UUID
 from conversation_engine import state_machine
 from conversation_engine.intent_classifier import IntentClassifier
 from conversation_engine.memory import ConversationMemory
-from conversation_engine.transitions import DETOUR_STATES, Event, NO_STATE_CHANGE_STATES
+from conversation_engine.transitions import DETOUR_STATES, Event, EventType, NO_STATE_CHANGE_STATES
 from crm.activity_repository import ActivityRepository
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
@@ -73,6 +73,19 @@ class ConversationEngine:
         if event.entities:
             self.db.flush()
 
+        # Check whether any entity field was successfully extracted in this turn
+        has_useful_extraction = bool(
+            event.entities and any(v for v in event.entities.values() if v not in (None, ""))
+        )
+        if has_useful_extraction:
+            self.conversation_repo.reset_extraction_failure_count(conversation)
+        elif current_state in state_machine.QUALIFICATION_STATES and event.type not in (
+            EventType.REQUEST_HUMAN,
+            EventType.QUESTION,
+            EventType.OBJECTION,
+        ):
+            self.conversation_repo.increment_extraction_failure_count(conversation)
+
         # F-003 fix: LeadRepository.find_duplicate() existed but was never
         # called anywhere in the live flow, so a lead could always be
         # qualified twice under the same email/phone. Only looked up right
@@ -106,6 +119,10 @@ class ConversationEngine:
                 remember_previous=decision.remember_previous,
             )
             next_state = decision.next_state
+
+        # State transition resets extraction failure count
+        if next_state != current_state:
+            self.conversation_repo.reset_extraction_failure_count(conversation)
 
         # Dialogue Policy bookkeeping: entering a detour counts towards the
         # "consecutive detours" threshold; any other real transition resets

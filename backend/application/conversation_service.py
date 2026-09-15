@@ -54,8 +54,14 @@ from domain.models.message import Message
 _REQUIRED_ACTION_TO_EXPECTED_FIELD: dict[str, str] = {
     "ASK_CUSTOMER_TYPE": "customer_type",
     "ASK_LOCATION": "location",
+    "ASK_CITY_ONLY": "location",
     "ASK_SUPPLIER": "current_supplier",
     "ASK_CONTACT": "contact",
+    "ASK_PARTIAL_CONTACT": "contact",
+    "ASK_NAME_ONLY": "contact",
+    "ASK_EMAIL_ONLY": "contact",
+    "ASK_PHONE_ONLY": "contact",
+    "ASK_DOB_ONLY": "contact",
     "ASK_EAN": "ean",
     "ASK_EAN_CORRECTION": "ean",
     "ASK_CONTACT_CORRECTION": "contact",
@@ -425,6 +431,7 @@ class ConversationService:
         return self.responder.respond(
             result.required_action,
             conversation=conversation,
+            lead=conversation.lead,
             rejection_reason=result.rejection_reason,
             rag_answer=rag_answer,
         )

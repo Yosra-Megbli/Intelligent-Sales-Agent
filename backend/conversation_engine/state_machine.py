@@ -73,7 +73,9 @@ class StateDecision:
     required_action: Optional[str] = None  # e.g. "ASK_EAN", "ASK_CLARIFICATION"
 
 
-def _resolve_qualification_action(action: Action, lead: Lead) -> StateDecision:
+def _resolve_qualification_action(
+    action: Action, lead: Lead, conversation: Optional[Conversation] = None
+) -> StateDecision:
     """Translate an Action coming from rules.py into a ConversationState.
     This is the one and only place that mapping happens.
     """
@@ -85,6 +87,27 @@ def _resolve_qualification_action(action: Action, lead: Lead) -> StateDecision:
         required_action = _ASK_ACTION_BY_STATE[next_state]
         if action.field == "location" and getattr(lead, "region", None) and not getattr(lead, "city", None):
             required_action = "ASK_CITY_ONLY"
+        elif action.field == "contact":
+            contact_fields = ("first_name", "last_name", "email", "phone", "date_of_birth")
+            present = [f for f in contact_fields if getattr(lead, f, None) not in (None, "")]
+            missing = [f for f in contact_fields if getattr(lead, f, None) in (None, "")]
+            failure_count = getattr(conversation, "consecutive_extraction_failures", 0) if conversation else 0
+
+            # When consecutive zero-extraction attempts occur, break down into single-field asks:
+            if failure_count >= 2 and missing:
+                if "first_name" in missing or "last_name" in missing:
+                    required_action = "ASK_NAME_ONLY"
+                elif "email" in missing:
+                    required_action = "ASK_EMAIL_ONLY"
+                elif "phone" in missing:
+                    required_action = "ASK_PHONE_ONLY"
+                elif "date_of_birth" in missing:
+                    required_action = "ASK_DOB_ONLY"
+            elif present and missing:
+                required_action = "ASK_PARTIAL_CONTACT"
+            else:
+                required_action = "ASK_CONTACT"
+
         return StateDecision(next_state=next_state, required_action=required_action)
 
     if action.type == ActionType.QUALIFY:
@@ -220,7 +243,9 @@ def decide(
     if current_state == ConversationState.INTENT_CONFIRMATION:
         if event.type == EventType.CHANGE_INTENT_YES:
             lead.change_intent = True
-            return _resolve_qualification_action(rules.next_qualification_action(lead), lead)
+            return _resolve_qualification_action(
+                rules.next_qualification_action(lead), lead, conversation=conversation
+            )
         if event.type == EventType.CHANGE_INTENT_NO:
             lead.change_intent = False
             return StateDecision(
@@ -232,10 +257,14 @@ def decide(
         return StateDecision(next_state=current_state, required_action="ASK_CLARIFICATION")
 
     if current_state in QUALIFICATION_STATES:
-        return _resolve_qualification_action(rules.next_qualification_action(lead), lead)
+        return _resolve_qualification_action(
+            rules.next_qualification_action(lead), lead, conversation=conversation
+        )
 
     if current_state == ConversationState.DATA_VALIDATION:
-        return _resolve_qualification_action(rules.decide_validation(lead, is_duplicate=is_duplicate), lead)
+        return _resolve_qualification_action(
+            rules.decide_validation(lead, is_duplicate=is_duplicate), lead, conversation=conversation
+        )
 
     if current_state == ConversationState.QUALIFIED:
         return StateDecision(next_state=ConversationState.HANDOFF, required_action="NOTIFY_SALES_TEAM")

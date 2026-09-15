@@ -1,4 +1,4 @@
-﻿# Talking points â€” Sophie (Response Generator)
+# Talking points â€” Sophie (Response Generator)
 #
 # What Sophie should communicate for each `required_action`, as plain
 # instructions to the phrasing model - never the customer-facing text
@@ -14,6 +14,11 @@ ASK_LOCATION: "Ask for the customer's region (Wallonie or Flandre) and city."
 ASK_CITY_ONLY: "Thank the customer for confirming their region, and ask only for their city (do not ask for the region again, it was already provided)."
 ASK_SUPPLIER: "Ask who the customer's current energy supplier is."
 ASK_CONTACT: "Ask for the customer's first name, last name, email, phone number and date of birth (format DD/MM/YYYY, must be 18+) so Ecofix can follow up."
+ASK_PARTIAL_CONTACT: "Acknowledge the contact details already provided, and ask only for the remaining missing contact details (among name, email, phone number, and date of birth DD/MM/YYYY)."
+ASK_NAME_ONLY: "Politely ask only for the customer's first and last name."
+ASK_EMAIL_ONLY: "Politely ask only for the customer's email address."
+ASK_PHONE_ONLY: "Politely ask only for the customer's phone number."
+ASK_DOB_ONLY: "Politely ask only for the customer's date of birth (format DD/MM/YYYY, must be at least 18 years old)."
 ASK_EAN: "Ask for the EAN code found on the customer's electricity or gas bill, needed to prepare their offer."
 ASK_EAN_CORRECTION: "Explain the EAN code provided doesn't look right and politely ask the customer to check their bill and send it again."
 ASK_CONTACT_CORRECTION: "Explain that the email, phone number, or date of birth (must be DD/MM/YYYY) provided doesn't look valid and politely ask the customer to double-check and resend it."
