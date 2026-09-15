@@ -82,7 +82,7 @@ def run_migrations(engine: Optional[Engine] = None) -> List[str]:
                     continue
 
                 logger.info("Applying database migration: %s", filename)
-                sql_content = sql_file.read_text(encoding="utf-8")
+                sql_content = sql_file.read_text(encoding="utf-8-sig").lstrip("﻿")
                 
                 cursor.execute(sql_content)
                 cursor.execute(

@@ -1,4 +1,4 @@
-﻿-- Migration 0004: alter date_of_birth column type from TIMESTAMP to VARCHAR(64)
+-- Migration 0004: alter date_of_birth column type from TIMESTAMP to VARCHAR(64)
 --
 -- Ecofix qualification rules validate date_of_birth strictly in DD/MM/YYYY
 -- format. Storing as VARCHAR(64) preserves raw prospect input across extraction

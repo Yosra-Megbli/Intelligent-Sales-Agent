@@ -1,4 +1,4 @@
-﻿-- Migration 0003: add opt_out_at column to leads table
+-- Migration 0003: add opt_out_at column to leads table
 --
 -- Records the UTC timestamp at which a lead sent a STOP/STOPT/ARRET message.
 -- Non-null means the lead has opted out -- the follow-up scheduler and any
