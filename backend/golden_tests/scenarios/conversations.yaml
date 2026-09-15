@@ -1,4 +1,4 @@
-﻿# Golden Dataset â€” full, multi-turn conversation scenarios.
+# Golden Dataset â€” full, multi-turn conversation scenarios.
 #
 # Each scenario replays a realistic sequence of customer messages through
 # ConversationEngine.process_turn() (conversation_engine/engine.py) and
@@ -617,4 +617,47 @@ scenarios:
         expected_state_after: REJECTED
         expected_action_after: SEND_REJECTION
         notes: "Bruxelles is not in allowed_regions -> OUT_OF_COVERAGE rejection at DATA_VALIDATION."
+
+  - id: conv_location_progressive_city
+    category: progressive_collection
+    description: >
+      Customer initially answers only the region ('flandre') when asked for location,
+      causing Sophie to ask ASK_CITY_ONLY. Customer then provides city ('Namur'),
+      advancing successfully to COLLECT_SUPPLIER.
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+
+      - input: "Je veux changer de fournisseur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {}
+        expected_state_after: INTENT_CONFIRMATION
+
+      - input: "Oui"
+        expected_event_type: CHANGE_INTENT_YES
+        expected_entities: {}
+        expected_state_after: COLLECT_CUSTOMER_TYPE
+        expected_action_after: ASK_CUSTOMER_TYPE
+
+      - input: "Particulier"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {customer_type: "particulier"}
+        expected_state_after: COLLECT_LOCATION
+        expected_action_after: ASK_LOCATION
+
+      - input: "flandre"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {region: "Flandre"}
+        expected_state_after: COLLECT_LOCATION
+        expected_action_after: ASK_CITY_ONLY
+        notes: "Customer gives region only -> Sophie responds with ASK_CITY_ONLY instead of looping."
+
+      - input: "Namur"
+        expected_event_type: PROVIDE_INFORMATION
+        expected_entities: {city: "Namur"}
+        expected_state_after: COLLECT_SUPPLIER
+        expected_action_after: ASK_SUPPLIER
+        notes: "Customer provides city -> location group complete -> advances to COLLECT_SUPPLIER."
 

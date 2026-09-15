@@ -447,3 +447,24 @@ scenarios:
     expected:
       event_type: PROVIDE_INFORMATION
       entities: {customer_type: "particulier"}
+
+  # --- 14. Location & Grid Operator (GRD) Hints ---
+
+  - id: location_grd_ores_resa
+    category: entity_extraction
+    input: "ORES/RESA en Wallonie"
+    expected_field: location
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {region: "Wallonie"}
+    notes: "Grid operator ORES/RESA mentions indicate Wallonie region."
+
+  - id: location_grd_fluvius
+    category: entity_extraction
+    input: "Fluvius"
+    expected_field: location
+    expected:
+      event_type: PROVIDE_INFORMATION
+      entities: {region: "Flandre"}
+    notes: "Fluvius mentions indicate Flandre region."
+
