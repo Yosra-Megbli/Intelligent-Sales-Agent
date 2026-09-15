@@ -1,15 +1,24 @@
-# Fallback text (French) — Sophie (Response Generator)
+﻿# Fallback text -- Sophie (Response Generator)
 #
 # Used verbatim when the LLM call fails or no provider is configured. Kept
 # deliberately short and generic - this is a safety net, not the primary
 # phrasing path.
+#
+# COMPLIANCE (AGENTS.md): SEND_GREETING *must* start with the mandatory
+# AI-disclosure sentence for each language. The FR string is the baseline;
+# NL and EN are used when conversation.language is set accordingly.
+# If you change the SEND_GREETING entries, run tests/test_ai_disclosure_guard.py
+# immediately -- any failure here is a compliance regression.
 
-SEND_GREETING: "Bonjour, je suis Sophie, l'assistante d'Ecofix. Je peux vous aider a changer ou revoir votre contrat d'energie."
+SEND_GREETING_fr: "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix -- un conseiller humain reste disponible a tout moment. Je peux vous aider a changer ou revoir votre contrat d'energie."
+SEND_GREETING_nl: "Dag, hier is Sophie, de virtuele assistent (AI) van Ecofix -- een menselijke adviseur neemt op elk moment over als u dat liever heeft. Ik help u graag met uw energiecontract."
+SEND_GREETING_en: "Hi, this is Sophie, a virtual assistant (AI) for Ecofix -- a human advisor is available at any time. I can help you switch or review your energy contract."
+SEND_GREETING: "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix -- un conseiller humain reste disponible a tout moment. Je peux vous aider a changer ou revoir votre contrat d'energie."
 ASK_INTENT: "Souhaitez-vous changer de fournisseur d'energie ou revoir votre contrat actuel ?"
 CONFIRM_INTENT: "Si je comprends bien, vous souhaitez changer de fournisseur d'energie. C'est bien cela ?"
 ASK_CUSTOMER_TYPE: "Etes-vous un particulier ou une entreprise ?"
 ASK_LOCATION: "Dans quelle region habitez-vous (Wallonie, Flandre ou Bruxelles) et dans quelle ville ?"
-ASK_CITY_ONLY: "Merci, et dans quelle ville êtes-vous situé(e) ?"
+ASK_CITY_ONLY: "Merci, et dans quelle ville etes-vous situe(e) ?"
 ASK_SUPPLIER: "Quel est votre fournisseur d'energie actuel ?"
 ASK_CONTACT: "Pouvez-vous me donner votre nom, prenom, email et numero de telephone ?"
 ASK_EAN: "Pouvez-vous me communiquer le code EAN indique sur votre facture d'electricite ou de gaz ?"

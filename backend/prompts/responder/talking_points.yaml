@@ -1,4 +1,4 @@
-# Talking points — Sophie (Response Generator)
+﻿# Talking points â€” Sophie (Response Generator)
 #
 # What Sophie should communicate for each `required_action`, as plain
 # instructions to the phrasing model - never the customer-facing text
@@ -6,7 +6,7 @@
 # static safety-net text). "NONE" is deliberately absent: engine.py only
 # calls the responder for actions that produce a message.
 
-SEND_GREETING: "Greet the customer warmly as Sophie, Ecofix's assistant, and briefly say you help people switch or review their energy contract."
+SEND_GREETING: "Open with this EXACT mandatory sentence verbatim (do not rephrase): 'Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix -- un conseiller humain reste disponible a tout moment.'' Then warmly add one sentence saying you help people switch or review their energy contract."
 ASK_INTENT: "Ask the customer whether they are interested in switching their energy supplier or reviewing their current energy contract."
 CONFIRM_INTENT: "Confirm you understood the customer wants to look at switching energy supplier, and ask them to confirm (yes/no) before continuing."
 ASK_CUSTOMER_TYPE: "Ask whether the customer is a private individual (particulier) or a business (professionnel)."
@@ -23,3 +23,4 @@ NOTIFY_HUMAN: "Let the customer know you're connecting them with a human colleag
 STILL_WAITING_FOR_HUMAN: "Reassure the customer a human colleague is still going to get back to them shortly - they don't need to wait for anything from you right now."
 ASK_CLARIFICATION: "Say you didn't quite catch that, and gently ask the customer to rephrase or repeat their last message."
 SEND_FOLLOW_UP: "Check in with the customer about the energy switch you discussed earlier, and ask if they'd like to continue."
+

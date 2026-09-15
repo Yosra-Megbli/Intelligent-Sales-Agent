@@ -80,7 +80,7 @@ def _talking_point_for(required_action: str, rejection_reason: Optional[str]) ->
     return _TALKING_POINTS.get(required_action)
 
 
-def _fallback_for(required_action: str, rejection_reason: Optional[str]) -> str:
+def _fallback_for(required_action: str, rejection_reason: Optional[str], language: str = "fr") -> str:
     if required_action == "SEND_REJECTION":
         if rejection_reason is not None:
             return _REJECTION_FALLBACK_TEXT.get(
@@ -88,7 +88,8 @@ def _fallback_for(required_action: str, rejection_reason: Optional[str]) -> str:
                 _REJECTION_FALLBACK_TEXT[RejectionReason.NO_INTENT],
             )
         return _REJECTION_FALLBACK_TEXT[RejectionReason.NO_INTENT]
-    return _FALLBACK_TEXT.get(required_action, "Un instant, je reviens vers vous.")
+    lang_key = f"{required_action}_{language}"
+    return _FALLBACK_TEXT.get(lang_key) or _FALLBACK_TEXT.get(required_action, "Un instant, je reviens vers vous.")
 
 
 class Responder:
@@ -128,7 +129,8 @@ class Responder:
             return self._respond_with_rag_answer(required_action, conversation, rag_answer)
 
         talking_point = _talking_point_for(required_action, rejection_reason)
-        fallback = _fallback_for(required_action, rejection_reason)
+        language = conversation.language or "fr"
+        fallback = _fallback_for(required_action, rejection_reason, language=language)
         if talking_point is None:
             return fallback
 
@@ -160,3 +162,4 @@ class Responder:
 
         text = (response.content or "").strip()
         return text or fallback
+
