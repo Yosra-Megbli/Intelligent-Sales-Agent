@@ -1,23 +1,57 @@
 @import "tailwindcss";
 
+@theme {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-ink: var(--color-ink);
+  --color-navy: var(--color-navy);
+  --color-navy-soft: var(--color-navy-soft);
+  --color-teal: var(--color-teal);
+  --color-teal-dim: var(--color-teal-dim);
+  --color-lavender: var(--color-lavender);
+  --color-lavender-hover: var(--color-lavender-hover);
+  --color-lavender-ink: var(--color-lavender-ink);
+  --color-danger: var(--color-danger);
+
+  /* Legacy brand tokens for existing Overview / Leads / Placeholders */
+  --color-brand-green: var(--brand-green);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-active: var(--brand-active);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-border: var(--brand-soft-border);
+}
+
 @layer base {
   :root {
-    --bg-app: oklch(97.5% 0.004 250);
-    --surface: #ffffff;
-    --surface-hover: oklch(99% 0.002 250);
-    --surface-card: #ffffff;
-    --ink: oklch(24% 0.02 260);
-    --ink-muted: oklch(48% 0.02 260);
-    --ink-subtle: oklch(65% 0.015 260);
+    /* NEW IDENTITY (Navy / Teal / Lavender) */
+    --color-bg: oklch(98% 0.003 280);
+    --color-surface: oklch(100% 0 0);
+    --color-ink: oklch(16% 0.035 280);
+    --color-navy: oklch(15% 0.045 280);
+    --color-navy-soft: oklch(21% 0.05 280);
+    --color-teal: oklch(78% 0.13 175);
+    --color-teal-dim: oklch(55% 0.10 175);
+    --color-lavender: oklch(83% 0.07 300);
+    --color-lavender-hover: oklch(77% 0.085 300);
+    --color-lavender-ink: oklch(20% 0.06 300);
+    --color-danger: oklch(60% 0.19 25);
+
+    /* Surface & background mappings */
+    --bg-app: var(--color-bg);
+    --surface: var(--color-surface);
+    --surface-hover: oklch(96% 0.005 280);
+    --surface-card: var(--color-surface);
+    --ink: var(--color-ink);
+    --ink-muted: oklch(45% 0.025 280);
+    --ink-subtle: oklch(65% 0.015 280);
     
-    --border: oklch(90% 0.006 250);
-    --border-hover: oklch(82% 0.01 250);
+    --border: oklch(90% 0.006 280);
+    --border-hover: oklch(82% 0.01 280);
     
+    /* Legacy brand green tokens (kept for Overview, Leads, and placeholders) */
     --brand-green: oklch(60% 0.14 160);
     --brand-hover: oklch(54% 0.15 160);
     --brand-active: oklch(48% 0.14 160);
-    --color-brand-hover: oklch(54% 0.15 160);
-    --color-brand-active: oklch(48% 0.14 160);
     --color-danger-soft: oklch(96% 0.04 25);
     --brand-soft: oklch(95% 0.04 160);
     --brand-soft-border: oklch(88% 0.07 160);
@@ -26,7 +60,7 @@
     --warn-soft: oklch(96% 0.04 85);
     --warn-border: oklch(86% 0.08 85);
     
-    --danger-red: oklch(58% 0.19 25);
+    --danger-red: var(--color-danger);
     --danger-soft: oklch(96% 0.04 25);
     --danger-border: oklch(88% 0.08 25);
     
@@ -41,22 +75,35 @@
   }
 
   .dark {
-    --bg-app: oklch(16% 0.015 250);
-    --surface: oklch(20% 0.018 255);
-    --surface-hover: oklch(23% 0.02 255);
-    --surface-card: oklch(20% 0.018 255);
-    --ink: oklch(96% 0.005 250);
-    --ink-muted: oklch(72% 0.012 250);
-    --ink-subtle: oklch(50% 0.015 250);
+    /* NEW IDENTITY (Navy / Teal / Lavender - Dark Mode) */
+    --color-bg: oklch(15% 0.03 280);
+    --color-surface: oklch(19% 0.04 280);
+    --color-ink: oklch(96% 0.006 280);
+    --color-navy: oklch(15% 0.045 280);
+    --color-navy-soft: oklch(24% 0.05 280);
+    --color-teal: oklch(78% 0.13 175);
+    --color-teal-dim: oklch(55% 0.10 175);
+    --color-lavender: oklch(83% 0.07 300);
+    --color-lavender-hover: oklch(77% 0.085 300);
+    --color-lavender-ink: oklch(20% 0.06 300);
+    --color-danger: oklch(60% 0.19 25);
+
+    /* Surface & background mappings */
+    --bg-app: var(--color-bg);
+    --surface: var(--color-surface);
+    --surface-hover: oklch(23% 0.04 280);
+    --surface-card: var(--color-surface);
+    --ink: var(--color-ink);
+    --ink-muted: oklch(72% 0.015 280);
+    --ink-subtle: oklch(52% 0.015 280);
     
-    --border: oklch(26% 0.02 255);
-    --border-hover: oklch(34% 0.025 255);
+    --border: oklch(27% 0.025 280);
+    --border-hover: oklch(35% 0.03 280);
     
+    /* Legacy brand green tokens (dark) */
     --brand-green: oklch(64% 0.15 160);
     --brand-hover: oklch(69% 0.16 160);
     --brand-active: oklch(58% 0.14 160);
-    --color-brand-hover: oklch(69% 0.16 160);
-    --color-brand-active: oklch(58% 0.14 160);
     --color-danger-soft: oklch(28% 0.06 25);
     --brand-soft: oklch(26% 0.06 160);
     --brand-soft-border: oklch(36% 0.09 160);
