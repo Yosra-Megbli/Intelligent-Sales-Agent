@@ -16,7 +16,7 @@ Product facts: NO fixed contracts (deliberate). Flexy=variable monthly,Motion=dy
 Always vouvoiement (FR) / u-form (NL). FIXED_SEEKER: max 1 reframe → politerefusal, save status, do_not_pitch_variable=true.
 Never ask Rijksregisternummer. EAN = 18 digits starting with 5414.
 Known gaps (never claim "done")
-Contract generation/signature (states CONTRACT/CUSTOMER empty); date_of_birthin DB but NOT in qualification_rules.yaml; no SMS; AI-disclosure not yet inprompts; no GDPR docs; dashboard lacks cost-per-sale & CA; NL not field-tested.
+Contract generation/signature (states CONTRACT/CUSTOMER empty); no SMS; dashboard lacks cost-per-sale & CA; NL not field-tested.
 
 Priority order
 Sprint 1 (compliance): disclosure strings in all channels + guard tests;STOP handler + purge + suppression list + tests; date_of_birth intoqualification_rules.yaml + golden tests; GDPR section in README.
