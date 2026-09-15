@@ -109,16 +109,141 @@
   },
   "toast": {
     "phase2Title": "Phase 2 Feature",
-    "phase2Desc": "This module will be fully connected to the backend during the next sprint.",
+    "phase2Desc": "Available in Phase 2 — see the technical roadmap.",
     "copied": "Copied to clipboard",
     "authSuccess": "Connection successfully established",
-    "loggedOut": "Session ended"
+    "loggedOut": "Session ended",
+    "exportedCsv": "CSV export generated successfully"
   },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
     "retry": "Retry",
     "back": "Back",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "close": "Close",
+    "all": "All",
+    "copy": "Copy",
+    "export": "Export"
+  },
+  "leads": {
+    "title": "Prospects & CRM Qualification",
+    "subtitle": "Live sales pipeline, deterministic rules qualification and GDPR audit trail.",
+    "exportCsv": "Export CSV",
+    "searchPlaceholder": "Filter by name, email, phone, EAN...",
+    "allStatuses": "All statuses",
+    "allLanguages": "All languages",
+    "allRegions": "All regions",
+    "allGrds": "All grid operators",
+    "resultsCount": "{{count}} prospects displayed",
+    "table": {
+      "name": "Prospect",
+      "status": "Status",
+      "language": "Language",
+      "region": "Region",
+      "grd": "Grid Operator",
+      "supplier": "Supplier",
+      "ean": "EAN Code",
+      "date": "Last Contact"
+    },
+    "drawer": {
+      "title": "360° Prospect Record",
+      "qualificationTitle": "Qualification Verification (9 criteria)",
+      "profileTitle": "Energy Profile & Product Fit",
+      "activityTitle": "Prospect Activity Journal",
+      "purgedNotice": "PII data erased on {{date}} pursuant to GDPR Article 17 (STOP/STOPT/ARRÊT).",
+      "fields": {
+        "customerType": "Customer Type (Residential/Pro)",
+        "location": "Region & City",
+        "supplier": "Current Supplier",
+        "fullName": "Full Name",
+        "email": "Email Address",
+        "phone": "Phone Number",
+        "dob": "Date of Birth (DD/MM/YYYY)",
+        "ean": "EAN Code (18 digits 5414...)",
+        "changeConfirmation": "Switch Confirmation"
+      },
+      "productFit": {
+        "ev": "Electric Vehicle (EV)",
+        "evPitch": "Suggestion: Pitch Ecofix Motion (dynamic hourly pricing)",
+        "heatPump": "Heat Pump",
+        "heatPumpPitch": "Suggestion: Motion flexibility optimization",
+        "solar": "Solar Panels",
+        "solarPitch": "Suggestion: Feed-in tariff monetization",
+        "battery": "Home Battery",
+        "batteryPitch": "Suggestion: Motion hourly rate arbitrage"
+      }
+    }
+  },
+  "conversations": {
+    "title": "Conversation Replay",
+    "subtitle": "Certified audit log of Sophie dialogues, AI transparency and state transition traces.",
+    "searchPlaceholder": "Search by prospect, message...",
+    "filterState": "Filter by state",
+    "allStates": "All states",
+    "noSelection": "Select a conversation to view the replay",
+    "disclosureBadge": "AI Transparency Notice — mandated by the AI Act",
+    "collectedEntity": "Collected field",
+    "stateTimeline": "Deterministic State Machine",
+    "chips": {
+      "optOut": "Immediate opt-out — data purged",
+      "fixedSeeker": "Polite decline — fixed price seeker",
+      "errorRecovery": "Single-question fallback activated"
+    },
+    "emptyList": "No conversations found."
+  },
+  "campaignsPage": {
+    "title": "Acquisition Campaigns",
+    "subtitle": "Multichannel outreach campaigns with native duplicate detection.",
+    "newCampaign": "New Campaign",
+    "importLeads": "Import leads",
+    "targetVolume": "Target Volume",
+    "sent": "Sent",
+    "responseRate": "Response Rate",
+    "optOutRate": "Opt-Out Rate",
+    "duplicatesSaved": "Duplicates Intercepted (find_duplicate)",
+    "channel": "Channel",
+    "status": "Status",
+    "empty": "No active campaigns. Import your first leads file."
+  },
+  "compliancePage": {
+    "title": "Compliance & GDPR Center",
+    "subtitle": "AI Act transparency, opt-out ledger and data sovereignty guarantees.",
+    "guardTitle": "AI Act Transparency Guard",
+    "guardStatus": "ACTIVE — 673 tests",
+    "guardDesc": "Automated verification: every first outbound message and call opening explicitly discloses the AI agent status and human handover.",
+    "optOutJournalTitle": "Opt-out Ledger (Right to Erasure)",
+    "optOutJournalDesc": "Immediate purging of PII upon receipt of a STOP / STOPT / ARRÊT keyword.",
+    "retentionTitle": "Data Retention Policy",
+    "retentionDesc": "12-month maximum retention. Automated scheduled purge with cryptographic suppression key retained.",
+    "transfersTitle": "Non-EU Data Transfers",
+    "transfersDesc": "Data Processing Agreement (DPA) and Standard Contractual Clauses (SCC) signed with Groq Inc. Hosted EU-ready.",
+    "anonymizationStatus": "Pre-LLM Anonymization: Planned (Phase 3)",
+    "shieldHero": "Native Regulatory Compliance",
+    "shieldHeroDesc": "Certified deterministic architecture: the language model makes zero contractual business decisions."
+  },
+  "settingsPage": {
+    "title": "Console Settings",
+    "subtitle": "Communication channels, API keys and contractual documents.",
+    "channelsTitle": "Contact Channels",
+    "channelsDesc": "Connection status of Sophie's sales and engagement channels.",
+    "telegram": "Telegram",
+    "telegramStatus": "Online",
+    "whatsApp": "WhatsApp",
+    "whatsAppStatus": "Ready",
+    "voice": "Voice / Twilio",
+    "voiceStatus": "Ready",
+    "sms": "SMS",
+    "smsStatus": "Planned",
+    "contractTitle": "Contract & Specimen",
+    "contractDesc": "Generate contract or download demonstration specimen.",
+    "generateContract": "Generate contract",
+    "downloadSpecimen": "Download specimen PDF",
+    "contractToast": "Full generation available in Phase 2 (electronic signature)",
+    "apiKeyTitle": "API Authentication",
+    "apiKeyDesc": "Access key used to query Sophie's protected services.",
+    "languageTitle": "Default Language",
+    "languageDesc": "Interface language for the commercial supervision console."
   }
 }
+

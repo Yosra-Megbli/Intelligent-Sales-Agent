@@ -109,16 +109,141 @@
   },
   "toast": {
     "phase2Title": "Fonctionnalité Phase 2",
-    "phase2Desc": "Ce module sera pleinement connecté au backend lors du prochain sprint.",
+    "phase2Desc": "Disponible en Phase 2 — voir la roadmap technique.",
     "copied": "Copié dans le presse-papier",
     "authSuccess": "Connexion établie avec succès",
-    "loggedOut": "Session terminée"
+    "loggedOut": "Session terminée",
+    "exportedCsv": "Export CSV généré avec succès"
   },
   "common": {
     "loading": "Chargement...",
     "error": "Une erreur est survenue",
     "retry": "Réessayer",
     "back": "Retour",
-    "refresh": "Actualiser"
+    "refresh": "Actualiser",
+    "close": "Fermer",
+    "all": "Tous",
+    "copy": "Copier",
+    "export": "Exporter"
+  },
+  "leads": {
+    "title": "Prospects & Qualification CRM",
+    "subtitle": "Pipeline commercial en direct, qualification par règles déterministes et audit RGPD.",
+    "exportCsv": "Exporter CSV",
+    "searchPlaceholder": "Filtrer par nom, email, téléphone, EAN...",
+    "allStatuses": "Tous les statuts",
+    "allLanguages": "Toutes les langues",
+    "allRegions": "Toutes les régions",
+    "allGrds": "Tous les GRD",
+    "resultsCount": "{{count}} prospects affichés",
+    "table": {
+      "name": "Prospect",
+      "status": "Statut",
+      "language": "Langue",
+      "region": "Région",
+      "grd": "GRD",
+      "supplier": "Fournisseur",
+      "ean": "Code EAN",
+      "date": "Dernier contact"
+    },
+    "drawer": {
+      "title": "Dossier Prospect 360°",
+      "qualificationTitle": "Contrôle de qualification (9 critères)",
+      "profileTitle": "Profil énergétique & Compatibilité produit",
+      "activityTitle": "Journal d'activité du prospect",
+      "purgedNotice": "Données PII effacées le {{date}} conformément à l'article 17 du RGPD (STOP/ARRÊT).",
+      "fields": {
+        "customerType": "Type de client (Particulier/Pro)",
+        "location": "Région & Ville",
+        "supplier": "Fournisseur actuel",
+        "fullName": "Nom & Prénom",
+        "email": "Adresse email",
+        "phone": "Numéro de téléphone",
+        "dob": "Date de naissance (DD/MM/YYYY)",
+        "ean": "Code EAN (18 chiffres 5414...)",
+        "changeConfirmation": "Confirmation du changement"
+      },
+      "productFit": {
+        "ev": "Véhicule électrique (EV)",
+        "evPitch": "Suggestion : Pitch Ecofix Motion (tarification horaire dynamique)",
+        "heatPump": "Pompe à chaleur",
+        "heatPumpPitch": "Suggestion : Optimisation flexibilité Motion",
+        "solar": "Panneaux solaires",
+        "solarPitch": "Suggestion : Valorisation d'injection",
+        "battery": "Batterie domestique",
+        "batteryPitch": "Suggestion : Arbitrage tarif horaire Motion"
+      }
+    }
+  },
+  "conversations": {
+    "title": "Replay des Conversations",
+    "subtitle": "Historique certifié des échanges Sophie, transparence IA et traçabilité des transitions.",
+    "searchPlaceholder": "Rechercher par prospect, message...",
+    "filterState": "Filtrer par état",
+    "allStates": "Tous les états",
+    "noSelection": "Sélectionnez une conversation pour afficher le replay",
+    "disclosureBadge": "Énoncé de transparence IA — exigé par l'AI Act",
+    "collectedEntity": "Champ collecté",
+    "stateTimeline": "Machine à états déterministe",
+    "chips": {
+      "optOut": "Opt-out immédiat — données purgées",
+      "fixedSeeker": "Refus poli — prix fixe exigé",
+      "errorRecovery": "Bascule question-par-question"
+    },
+    "emptyList": "Aucune conversation trouvée."
+  },
+  "campaignsPage": {
+    "title": "Campagnes d'Acquisition",
+    "subtitle": "Campagnes d'outreach multicanal avec détection de doublons intégrée.",
+    "newCampaign": "Nouvelle Campagne",
+    "importLeads": "Importer des leads",
+    "targetVolume": "Volume cible",
+    "sent": "Envoyés",
+    "responseRate": "Taux de réponse",
+    "optOutRate": "Taux d'opt-out",
+    "duplicatesSaved": "Doublons interceptés (find_duplicate)",
+    "channel": "Canal",
+    "status": "Statut",
+    "empty": "Aucune campagne active. Importez votre premier fichier de leads."
+  },
+  "compliancePage": {
+    "title": "Centre de Conformité & RGPD",
+    "subtitle": "Transparence AI Act, journal d'opt-out et garanties de souveraineté des données.",
+    "guardTitle": "Garde-fou Transparence AI Act",
+    "guardStatus": "ACTIF — 673 tests",
+    "guardDesc": "Vérification automatisée : tout premier message sortant et toute ouverture d'appel divulgue explicitement le statut d'agent IA et le relais humain.",
+    "optOutJournalTitle": "Journal des Opt-outs (Droit à l'effacement)",
+    "optOutJournalDesc": "Purge immédiate des PII dès réception d'un mot-clé STOP / STOPT / ARRÊT.",
+    "retentionTitle": "Politique de Rétention des Données",
+    "retentionDesc": "Rétention maximale de 12 mois. Purge automatique programmée et liste d'exclusion chiffrée conservée.",
+    "transfersTitle": "Transferts de Données hors UE",
+    "transfersDesc": "Accord DPA et Clauses Contractuelles Types (SCC) signées avec Groq Inc. Hébergé UE-ready.",
+    "anonymizationStatus": "Anonymisation avant LLM : Planifiée (Phase 3)",
+    "shieldHero": "Conformité Règlementaire Native",
+    "shieldHeroDesc": "Architecture déterministe certifiée : le modèle de langage ne prend aucune décision contractuelle."
+  },
+  "settingsPage": {
+    "title": "Paramètres de la Console",
+    "subtitle": "Canaux de communication, clés d'API et documents contractuels.",
+    "channelsTitle": "Canaux de Contact",
+    "channelsDesc": "État de connexion des différents canaux de vente de Sophie.",
+    "telegram": "Telegram",
+    "telegramStatus": "En ligne",
+    "whatsApp": "WhatsApp",
+    "whatsAppStatus": "Prêt",
+    "voice": "Voix / Twilio",
+    "voiceStatus": "Prêt",
+    "sms": "SMS",
+    "smsStatus": "Planifié",
+    "contractTitle": "Contrat & Spécimen",
+    "contractDesc": "Génération de contrat ou téléchargement du spécimen d'illustration.",
+    "generateContract": "Générer le contrat",
+    "downloadSpecimen": "Télécharger le spécimen PDF",
+    "contractToast": "Génération complète disponible en Phase 2 (signature électronique)",
+    "apiKeyTitle": "Authentification API",
+    "apiKeyDesc": "Clé d'accès utilisée pour interroger les services sécurisés de Sophie.",
+    "languageTitle": "Langue par Défaut",
+    "languageDesc": "Langue d'affichage de la console de supervision commerciale."
   }
 }
+

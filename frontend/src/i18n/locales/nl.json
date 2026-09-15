@@ -108,17 +108,141 @@
     "gdprPurged": "— (gewist / AVG)"
   },
   "toast": {
-    "phase2Title": "Fase 2 Functionaliteit",
-    "phase2Desc": "Deze module wordt tijdens de volgende sprint volledig aan de backend gekoppeld.",
-    "copied": "Gekopieerd naar klembord",
+    "phase2Title": "Functie Fase 2",
+    "phase2Desc": "Beschikbaar in Fase 2 — raadpleeg de technische roadmap.",
+    "copied": "Gekopieerd naar het klembord",
     "authSuccess": "Verbinding succesvol tot stand gebracht",
-    "loggedOut": "Sessie beëindigd"
+    "loggedOut": "Sessie beëindigd",
+    "exportedCsv": "CSV-export succesvol gegenereerd"
   },
   "common": {
-    "loading": "Laden...",
+    "loading": "Bezig met laden...",
     "error": "Er is een fout opgetreden",
     "retry": "Opnieuw proberen",
     "back": "Terug",
-    "refresh": "Vernieuwen"
+    "refresh": "Vernieuwen",
+    "close": "Sluiten",
+    "all": "Alle",
+    "copy": "Kopiëren",
+    "export": "Exporteren"
+  },
+  "leads": {
+    "title": "Prospects & CRM-Kwalificatie",
+    "subtitle": "Live commerciële pipeline, kwalificatie volgens deterministische regels en AVG-audit.",
+    "exportCsv": "CSV Exporteren",
+    "searchPlaceholder": "Filter op naam, e-mail, telefoon, EAN...",
+    "allStatuses": "Alle statussen",
+    "allLanguages": "Alle talen",
+    "allRegions": "Alle regio's",
+    "allGrds": "Alle netbeheerders",
+    "resultsCount": "{{count}} prospects weergegeven",
+    "table": {
+      "name": "Prospect",
+      "status": "Status",
+      "language": "Taal",
+      "region": "Regio",
+      "grd": "Netbeheerder",
+      "supplier": "Leverancier",
+      "ean": "EAN-code",
+      "date": "Laatste contact"
+    },
+    "drawer": {
+      "title": "360° Prospectdossier",
+      "qualificationTitle": "Kwalificatiecontrole (9 criteria)",
+      "profileTitle": "Energieprofiel & Productcompatibiliteit",
+      "activityTitle": "Activiteitenlogboek van de prospect",
+      "purgedNotice": "PII-gegevens gewist op {{date}} conform artikel 17 van de AVG/GDPR (STOP/STOPT).",
+      "fields": {
+        "customerType": "Klanttype (Particulier/B2B)",
+        "location": "Regio & Stad",
+        "supplier": "Huidige leverancier",
+        "fullName": "Naam & Voornaam",
+        "email": "E-mailadres",
+        "phone": "Telefoonnummer",
+        "dob": "Geboortedatum (DD/MM/YYYY)",
+        "ean": "EAN-code (18 cijfers 5414...)",
+        "changeConfirmation": "Bevestiging overstap"
+      },
+      "productFit": {
+        "ev": "Elektrisch voertuig (EV)",
+        "evPitch": "Suggestie: Pitch Ecofix Motion (dynamische uurtarieven)",
+        "heatPump": "Warmtepomp",
+        "heatPumpPitch": "Suggestie: Optimalisatie flexibiliteit Motion",
+        "solar": "Zonnepanelen",
+        "solarPitch": "Suggestie: Waardering teruglevering",
+        "battery": "Thuisbatterij",
+        "batteryPitch": "Suggestie: Arbitrage uurtarief Motion"
+      }
+    }
+  },
+  "conversations": {
+    "title": "Herhaling van Gesprekken",
+    "subtitle": "Geverifieerde geschiedenis van Sophie-interacties, AI-transparantie en traceerbaarheid van statusovergangen.",
+    "searchPlaceholder": "Zoek op prospect, bericht...",
+    "filterState": "Filter op status",
+    "allStates": "Alle statussen",
+    "noSelection": "Selecteer een gesprek om de herhaling weer te geven",
+    "disclosureBadge": "AI-transparantieverklaring — vereist door de AI Act",
+    "collectedEntity": "Verzameld veld",
+    "stateTimeline": "Deterministische toestandsmachine",
+    "chips": {
+      "optOut": "Onmiddellijke opt-out — gegevens gewist",
+      "fixedSeeker": "Beleefde weigering — vaste prijs vereist",
+      "errorRecovery": "Omschakeling vraag-per-vraag"
+    },
+    "emptyList": "Geen gesprekken gevonden."
+  },
+  "campaignsPage": {
+    "title": "Wervingscampagnes",
+    "subtitle": "Multichannel outreachcampagnes met geïntegreerde duplicaatdetectie.",
+    "newCampaign": "Nieuwe Campagne",
+    "importLeads": "Leads importeren",
+    "targetVolume": "Doelvolume",
+    "sent": "Verzonden",
+    "responseRate": "Responspercentage",
+    "optOutRate": "Opt-out percentage",
+    "duplicatesSaved": "Onderschepte duplicaten (find_duplicate)",
+    "channel": "Kanaal",
+    "status": "Status",
+    "empty": "Geen actieve campagnes. Importeer uw eerste leadsbestand."
+  },
+  "compliancePage": {
+    "title": "Nalevings- & AVG-Centrum",
+    "subtitle": "AI Act transparantie, opt-out logboek en garanties voor gegevenssoevereiniteit.",
+    "guardTitle": "AI Act Transparantiewaakhond",
+    "guardStatus": "ACTIEF — 673 tests",
+    "guardDesc": "Geautomatiseerde verificatie: elk eerste uitgaand bericht en elke oproepopening onthult expliciet de AI-status en menselijke overname.",
+    "optOutJournalTitle": "Opt-out Logboek (Recht op gegevenswissing)",
+    "optOutJournalDesc": "Onmiddellijke verwijdering van PII bij ontvangst van een STOP / STOPT / ARRÊT sleutelwoord.",
+    "retentionTitle": "Gegevensbewaarbeleid",
+    "retentionDesc": "Maximale bewaring van 12 maanden. Automatische purge en versleutelde uitsluitingslijst bewaard.",
+    "transfersTitle": "Gegevensoverdrachten buiten de EU",
+    "transfersDesc": "DPA-overeenkomst en Standaard Contractbepalingen (SCC) ondertekend met Groq Inc. Gehost EU-ready.",
+    "anonymizationStatus": "Anonimisering vóór LLM: Gepland (Fase 3)",
+    "shieldHero": "Ingebouwde Wettelijke Naleving",
+    "shieldHeroDesc": "Gecertificeerde deterministische architectuur: het taalmodel neemt geen bindende contractuele beslissingen."
+  },
+  "settingsPage": {
+    "title": "Console-instellingen",
+    "subtitle": "Communicatiekanalen, API-sleutels en contractdocumenten.",
+    "channelsTitle": "Contactkanalen",
+    "channelsDesc": "Verbindingsstatus van de verschillende verkoopkanalen van Sophie.",
+    "telegram": "Telegram",
+    "telegramStatus": "Online",
+    "whatsApp": "WhatsApp",
+    "whatsAppStatus": "Gereed",
+    "voice": "Stem / Twilio",
+    "voiceStatus": "Gereed",
+    "sms": "SMS",
+    "smsStatus": "Gepland",
+    "contractTitle": "Contract & Specimen",
+    "contractDesc": "Contractgeneratie of download van het demonstratiespecimen.",
+    "generateContract": "Contract genereren",
+    "downloadSpecimen": "Download specimen PDF",
+    "contractToast": "Volledige generatie beschikbaar in Fase 2 (elektronische handtekening)",
+    "apiKeyTitle": "API-Authenticatie",
+    "apiKeyDesc": "Toegangssleutel gebruikt om de beveiligde Sophie-diensten te bevragen.",
+    "languageTitle": "Standaardtaal",
+    "languageDesc": "Weergavetaal van de commerciële supervisieconsole."
   }
 }

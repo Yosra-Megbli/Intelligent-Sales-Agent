@@ -22,7 +22,12 @@ export interface LeadSummary {
   region: string | null;
   city: string | null;
   date_of_birth: string | null;
+  address?: string | null;
   current_supplier: string | null;
+  ean?: string | null;
+  consumption?: string | null;
+  change_intent?: boolean | null;
+  opt_out_at?: string | null;
   provider: string | null;
   notes: string | null;
   qualification_score: number | null;
@@ -34,6 +39,7 @@ export interface LeadSummary {
   campaign_name: string | null;
   last_contact_date: string | null;
 }
+
 
 export interface LeadListResponse {
   items: LeadSummary[];
@@ -139,3 +145,50 @@ export interface ApiError {
   status?: number;
   detail?: string;
 }
+
+export interface ConversationListItem {
+  id: string;
+  lead_id: string;
+  lead_name: string;
+  lead_phone: string | null;
+  lead_email: string | null;
+  channel: string;
+  language: string;
+  current_state: string;
+  started_at: string;
+  last_message_at: string;
+  messages: MessageSummary[];
+  last_message_preview: string | null;
+  message_count: number;
+}
+
+export interface ConversationListResponse {
+  items: ConversationListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface OptOutJournalEntry {
+  id: string;
+  lead_id: string;
+  lead_name: string;
+  channel: string;
+  timestamp: string;
+  details: string | null;
+  confirmation_sent: boolean;
+}
+
+export interface ComplianceOverviewResponse {
+  guard_status: string;
+  guard_tests_count: number;
+  guard_last_run: string;
+  retention_months: number;
+  auto_purge_enabled: boolean;
+  suppression_list_count: number;
+  groq_dpa_signed: boolean;
+  scc_status: string;
+  anonymization_before_llm: boolean;
+  opt_out_events: OptOutJournalEntry[];
+}
+

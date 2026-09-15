@@ -1,6 +1,9 @@
 import {
   ActivityFeedListResponse,
   CampaignListResponse,
+  ComplianceOverviewResponse,
+  ConversationListItem,
+  ConversationListResponse,
   HandoffListResponse,
   LeadDetailResponse,
   LeadListResponse,
@@ -8,6 +11,7 @@ import {
   StatsSummaryResponse,
 } from "./types";
 import { toast } from "sonner";
+
 
 export const DEFAULT_API_BASE = "https://intelligent-sales-agent.onrender.com";
 
@@ -142,6 +146,32 @@ export class ApiClient {
   async getCampaigns(limit = 50, offset = 0): Promise<CampaignListResponse> {
     return this.request<CampaignListResponse>(`/api/campaigns?limit=${limit}&offset=${offset}`);
   }
+
+  async getConversations(params?: {
+    state?: string;
+    channel?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ConversationListResponse> {
+    const searchParams = new URLSearchParams();
+    if (params?.state) searchParams.set("state", params.state);
+    if (params?.channel) searchParams.set("channel", params.channel);
+    if (params?.search) searchParams.set("search", params.search);
+    if (params?.limit) searchParams.set("limit", params.limit.toString());
+    if (params?.offset) searchParams.set("offset", params.offset.toString());
+    const qs = searchParams.toString();
+    return this.request<ConversationListResponse>(`/api/dashboard/conversations${qs ? `?${qs}` : ""}`);
+  }
+
+  async getConversation(id: string): Promise<ConversationListItem> {
+    return this.request<ConversationListItem>(`/api/dashboard/conversations/${id}`);
+  }
+
+  async getCompliance(): Promise<ComplianceOverviewResponse> {
+    return this.request<ComplianceOverviewResponse>("/api/dashboard/compliance");
+  }
 }
+
 
 export const apiClient = new ApiClient();
