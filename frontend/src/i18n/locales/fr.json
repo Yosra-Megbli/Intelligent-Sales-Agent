@@ -1,0 +1,106 @@
+{
+  "brand": {
+    "name": "Sophie",
+    "tagline": "Console Commerciale IA",
+    "company": "Ecofix Belgique"
+  },
+  "auth": {
+    "title": "Authentification Sophie",
+    "subtitle": "Entrez votre clé API Sophie pour accéder à la console de supervision commerciale.",
+    "keyPlaceholder": "Ex: sk-live-ecofix-...",
+    "connect": "Accéder à la console",
+    "connecting": "Vérification en cours...",
+    "invalidKey": "Clé API invalide ou non autorisée par le serveur Render.",
+    "networkError": "Impossible de joindre le serveur API Render. Vérifiez votre connexion.",
+    "demoHint": "Mode démonstration : testez avec votre clé secrète configurée dans .env",
+    "changeKey": "Changer de clé",
+    "logout": "Déconnexion"
+  },
+  "nav": {
+    "overview": "Vue d'ensemble",
+    "leads": "Prospects & CRM",
+    "handoffs": "Relais Humains",
+    "campaigns": "Campagnes",
+    "chat": "Simulateur Sophie",
+    "compliance": "Conformité & RGPD",
+    "phase2Badge": "Phase 2"
+  },
+  "topbar": {
+    "search": "Rechercher un prospect, EAN, téléphone... (Ctrl+K)",
+    "statusProduction": "Production Render (Live)",
+    "statusLocal": "Développement Local",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "switchLang": "Langue"
+  },
+  "overview": {
+    "title": "Supervision des Performances",
+    "subtitle": "Métriques en direct, tunnel de conversion et conformité RGPD en Belgique.",
+    "kpi": {
+      "contacts": "Contacts Engagés",
+      "conversations": "Conversations Actives",
+      "qualified": "Prospects Qualifiés",
+      "sales": "Ventes Finalisées",
+      "conversionRate": "Taux de Transformation",
+      "costPerSale": "Coût d'Acquisition / Vente",
+      "estimatedRevenue": "CA Récurrent Estimé (MRR)"
+    },
+    "delta": {
+      "vsLastWeek": "vs sem. précédente",
+      "target": "Objectif mensuel",
+      "neutral": "Stable"
+    },
+    "funnel": {
+      "title": "Entonnoir de Conversion Commerciale",
+      "subtitle": "Flux déterministe de qualification de Sophie",
+      "stepNew": "Nouveaux Contacts",
+      "stepContacted": "Engagés par Sophie",
+      "stepQualified": "Qualifiés (Flexy & Motion)",
+      "stepSigned": "Contrats Signés"
+    },
+    "statusDistribution": {
+      "title": "Répartition des Statuts CRM",
+      "subtitle": "Ventilation des prospects selon le moteur de règles déterministe"
+    },
+    "recentActivity": {
+      "title": "Flux d'Activité en Direct",
+      "subtitle": "Dernières interactions et changements de statut",
+      "empty": "Aucune activité récente enregistrée.",
+      "viewAll": "Voir tout l'historique"
+    },
+    "quickActions": {
+      "title": "Actions Rapides",
+      "importCsv": "Importer un fichier CSV",
+      "newCampaign": "Lancer une Campagne",
+      "exportRgpd": "Rapport Conformité RGPD"
+    }
+  },
+  "status": {
+    "NEW": "Nouveau",
+    "CONTACTED": "Contacté",
+    "QUALIFIED_FLEXY": "Qualifié Flexy",
+    "QUALIFIED_MOTION": "Qualifié Motion",
+    "FIXED_SEEKER": "Chercheur Fixe",
+    "OPT_OUT": "Désinscrit (RGPD)",
+    "LOST": "Perdu",
+    "HUMAN_HANDOFF": "Relais Humain"
+  },
+  "compliance": {
+    "rgpdNotice": "Conformité RGPD garantie : toutes les coordonnées des prospects ayant signifié 'STOP' sont automatiquement et irréversiblement purgées du CRM.",
+    "gdprPurged": "— (effacées / RGPD)"
+  },
+  "toast": {
+    "phase2Title": "Fonctionnalité Phase 2",
+    "phase2Desc": "Ce module sera pleinement connecté au backend lors du prochain sprint.",
+    "copied": "Copié dans le presse-papier",
+    "authSuccess": "Connexion établie avec succès",
+    "loggedOut": "Session terminée"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "back": "Retour",
+    "refresh": "Actualiser"
+  }
+}

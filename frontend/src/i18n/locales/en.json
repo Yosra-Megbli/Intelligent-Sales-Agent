@@ -1,0 +1,106 @@
+{
+  "brand": {
+    "name": "Sophie",
+    "tagline": "AI Sales Console",
+    "company": "Ecofix Belgium"
+  },
+  "auth": {
+    "title": "Sophie Authentication",
+    "subtitle": "Enter your Sophie API key to access the commercial supervision console.",
+    "keyPlaceholder": "E.g.: sk-live-ecofix-...",
+    "connect": "Access Console",
+    "connecting": "Verifying...",
+    "invalidKey": "Invalid API key or unauthorized by Render server.",
+    "networkError": "Unable to reach Render API server. Check your network connection.",
+    "demoHint": "Demo mode: test with your secret key configured in .env",
+    "changeKey": "Change Key",
+    "logout": "Sign Out"
+  },
+  "nav": {
+    "overview": "Overview",
+    "leads": "Leads & CRM",
+    "handoffs": "Human Handoffs",
+    "campaigns": "Campaigns",
+    "chat": "Sophie Simulator",
+    "compliance": "Compliance & GDPR",
+    "phase2Badge": "Phase 2"
+  },
+  "topbar": {
+    "search": "Search lead, EAN, phone... (Ctrl+K)",
+    "statusProduction": "Render Production (Live)",
+    "statusLocal": "Local Development",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "switchLang": "Language"
+  },
+  "overview": {
+    "title": "Performance Supervision",
+    "subtitle": "Live metrics, conversion funnel and GDPR compliance in Belgium.",
+    "kpi": {
+      "contacts": "Engaged Contacts",
+      "conversations": "Active Conversations",
+      "qualified": "Qualified Leads",
+      "sales": "Completed Sales",
+      "conversionRate": "Conversion Rate",
+      "costPerSale": "Acquisition Cost / Sale",
+      "estimatedRevenue": "Estimated Monthly Revenue (MRR)"
+    },
+    "delta": {
+      "vsLastWeek": "vs last week",
+      "target": "Monthly target",
+      "neutral": "Stable"
+    },
+    "funnel": {
+      "title": "Sales Conversion Funnel",
+      "subtitle": "Sophie's deterministic qualification flow",
+      "stepNew": "New Contacts",
+      "stepContacted": "Contacted by Sophie",
+      "stepQualified": "Qualified (Flexy & Motion)",
+      "stepSigned": "Signed Contracts"
+    },
+    "statusDistribution": {
+      "title": "CRM Status Breakdown",
+      "subtitle": "Leads distribution according to the deterministic rules engine"
+    },
+    "recentActivity": {
+      "title": "Live Activity Stream",
+      "subtitle": "Recent interactions and status changes",
+      "empty": "No recent activity recorded.",
+      "viewAll": "View full history"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "importCsv": "Import CSV File",
+      "newCampaign": "Launch Campaign",
+      "exportRgpd": "GDPR Compliance Report"
+    }
+  },
+  "status": {
+    "NEW": "New",
+    "CONTACTED": "Contacted",
+    "QUALIFIED_FLEXY": "Qualified Flexy",
+    "QUALIFIED_MOTION": "Qualified Motion",
+    "FIXED_SEEKER": "Fixed Seeker",
+    "OPT_OUT": "Opted-Out (GDPR)",
+    "LOST": "Lost",
+    "HUMAN_HANDOFF": "Human Handoff"
+  },
+  "compliance": {
+    "rgpdNotice": "GDPR compliance guaranteed: all contact details of prospects who replied 'STOP' are automatically and irreversibly purged from the CRM.",
+    "gdprPurged": "— (purged / GDPR)"
+  },
+  "toast": {
+    "phase2Title": "Phase 2 Feature",
+    "phase2Desc": "This module will be fully connected to the backend during the next sprint.",
+    "copied": "Copied to clipboard",
+    "authSuccess": "Connection successfully established",
+    "loggedOut": "Session ended"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "back": "Back",
+    "refresh": "Refresh"
+  }
+}

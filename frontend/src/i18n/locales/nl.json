@@ -1,0 +1,106 @@
+{
+  "brand": {
+    "name": "Sophie",
+    "tagline": "AI Verkoopconsole",
+    "company": "Ecofix België"
+  },
+  "auth": {
+    "title": "Sophie Authenticatie",
+    "subtitle": "Voer uw Sophie API-sleutel in om toegang te krijgen tot de verkoopsupervisieconsole.",
+    "keyPlaceholder": "Bijv: sk-live-ecofix-...",
+    "connect": "Toegang tot console",
+    "connecting": "Verifiëren...",
+    "invalidKey": "Ongeldige API-sleutel of geweigerd door de Render server.",
+    "networkError": "Kan geen verbinding maken met de Render API-server. Controleer uw netwerk.",
+    "demoHint": "Demomodus: test met de geheime sleutel geconfigureerd in .env",
+    "changeKey": "Sleutel wijzigen",
+    "logout": "Afmelden"
+  },
+  "nav": {
+    "overview": "Overzicht",
+    "leads": "Prospects & CRM",
+    "handoffs": "Menselijke Overdracht",
+    "campaigns": "Campagnes",
+    "chat": "Sophie Simulator",
+    "compliance": "Naleving & AVG",
+    "phase2Badge": "Fase 2"
+  },
+  "topbar": {
+    "search": "Zoek prospect, EAN, telefoon... (Ctrl+K)",
+    "statusProduction": "Render Productie (Live)",
+    "statusLocal": "Lokale Ontwikkeling",
+    "themeLight": "Licht",
+    "themeDark": "Donker",
+    "switchLang": "Taal"
+  },
+  "overview": {
+    "title": "Prestatiesupervisie",
+    "subtitle": "Live statistieken, conversietrechter en AVG/GDPR-naleving in België.",
+    "kpi": {
+      "contacts": "Betrokken Contacten",
+      "conversations": "Actieve Gesprekken",
+      "qualified": "Gekwalificeerde Leads",
+      "sales": "Afgeronde Verkopen",
+      "conversionRate": "Conversieratio",
+      "costPerSale": "Acquisitiekost / Verkoop",
+      "estimatedRevenue": "Geschatte Terugkerende Omzet (MRR)"
+    },
+    "delta": {
+      "vsLastWeek": "vs vorige week",
+      "target": "Maandelijkse doelstelling",
+      "neutral": "Stabiel"
+    },
+    "funnel": {
+      "title": "Commerciële Conversietrechter",
+      "subtitle": "Deterministische kwalificatiestroom van Sophie",
+      "stepNew": "Nieuwe Contacten",
+      "stepContacted": "Benaderd door Sophie",
+      "stepQualified": "Gekwalificeerd (Flexy & Motion)",
+      "stepSigned": "Ondertekende Contracten"
+    },
+    "statusDistribution": {
+      "title": "CRM Statusverdeling",
+      "subtitle": "Verdeling van prospects volgens de deterministische regelengine"
+    },
+    "recentActivity": {
+      "title": "Live Activiteitenstroom",
+      "subtitle": "Recente interacties en statuswijzigingen",
+      "empty": "Geen recente activiteit geregistreerd.",
+      "viewAll": "Bekijk volledige geschiedenis"
+    },
+    "quickActions": {
+      "title": "Snelle Acties",
+      "importCsv": "CSV-bestand importeren",
+      "newCampaign": "Campagne Starten",
+      "exportRgpd": "AVG-Nalevingsrapport"
+    }
+  },
+  "status": {
+    "NEW": "Nieuw",
+    "CONTACTED": "Gecontacteerd",
+    "QUALIFIED_FLEXY": "Gekwalificeerd Flexy",
+    "QUALIFIED_MOTION": "Gekwalificeerd Motion",
+    "FIXED_SEEKER": "Vast Contract Zoeker",
+    "OPT_OUT": "Afgemeld (AVG)",
+    "LOST": "Verloren",
+    "HUMAN_HANDOFF": "Menselijke Overdracht"
+  },
+  "compliance": {
+    "rgpdNotice": "AVG-naleving gegarandeerd: alle contactgegevens van prospects die 'STOPT' hebben gemeld, worden automatisch en onomkeerbaar uit het CRM gewist.",
+    "gdprPurged": "— (gewist / AVG)"
+  },
+  "toast": {
+    "phase2Title": "Fase 2 Functionaliteit",
+    "phase2Desc": "Deze module wordt tijdens de volgende sprint volledig aan de backend gekoppeld.",
+    "copied": "Gekopieerd naar klembord",
+    "authSuccess": "Verbinding succesvol tot stand gebracht",
+    "loggedOut": "Sessie beëindigd"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Er is een fout opgetreden",
+    "retry": "Opnieuw proberen",
+    "back": "Terug",
+    "refresh": "Vernieuwen"
+  }
+}

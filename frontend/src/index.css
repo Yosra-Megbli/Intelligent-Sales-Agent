@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-app: oklch(97.5% 0.004 250);
+    --surface: #ffffff;
+    --surface-hover: oklch(99% 0.002 250);
+    --surface-card: #ffffff;
+    --ink: oklch(24% 0.02 260);
+    --ink-muted: oklch(48% 0.02 260);
+    --ink-subtle: oklch(65% 0.015 260);
+    
+    --border: oklch(90% 0.006 250);
+    --border-hover: oklch(82% 0.01 250);
+    
+    --brand-green: oklch(60% 0.14 160);
+    --brand-hover: oklch(54% 0.15 160);
+    --brand-soft: oklch(95% 0.04 160);
+    --brand-soft-border: oklch(88% 0.07 160);
+    
+    --warn-amber: oklch(75% 0.13 85);
+    --warn-soft: oklch(96% 0.04 85);
+    --warn-border: oklch(86% 0.08 85);
+    
+    --danger-red: oklch(58% 0.19 25);
+    --danger-soft: oklch(96% 0.04 25);
+    --danger-border: oklch(88% 0.08 25);
+    
+    --info-blue: oklch(65% 0.12 240);
+    --info-soft: oklch(95% 0.03 240);
+    --info-border: oklch(88% 0.06 240);
+    
+    --teal-motion: oklch(65% 0.13 190);
+    --teal-soft: oklch(95% 0.03 190);
+    
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --bg-app: oklch(16% 0.015 250);
+    --surface: oklch(20% 0.018 255);
+    --surface-hover: oklch(23% 0.02 255);
+    --surface-card: oklch(20% 0.018 255);
+    --ink: oklch(96% 0.005 250);
+    --ink-muted: oklch(72% 0.012 250);
+    --ink-subtle: oklch(50% 0.015 250);
+    
+    --border: oklch(26% 0.02 255);
+    --border-hover: oklch(34% 0.025 255);
+    
+    --brand-green: oklch(64% 0.15 160);
+    --brand-hover: oklch(69% 0.16 160);
+    --brand-soft: oklch(26% 0.06 160);
+    --brand-soft-border: oklch(36% 0.09 160);
+    
+    --warn-amber: oklch(78% 0.13 85);
+    --warn-soft: oklch(28% 0.05 85);
+    --warn-border: oklch(38% 0.08 85);
+    
+    --danger-red: oklch(64% 0.19 25);
+    --danger-soft: oklch(28% 0.06 25);
+    --danger-border: oklch(38% 0.09 25);
+    
+    --info-blue: oklch(70% 0.12 240);
+    --info-soft: oklch(26% 0.05 240);
+    --info-border: oklch(36% 0.08 240);
+    
+    --teal-motion: oklch(70% 0.13 190);
+    --teal-soft: oklch(26% 0.05 190);
+  }
+
+  body {
+    background-color: var(--bg-app);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+}
+
+/* Tabular numbers for all KPIs and numeric data */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* Micro-transitions */
+.transition-smooth {
+  transition: all 200ms cubic-bezier(0, 0, 0.2, 1);
+}
