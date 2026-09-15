@@ -137,7 +137,7 @@ export const OverviewPage: React.FC = () => {
       {/* Compliance / Belgian Energy Regulatory Footer Callout */}
       <div className="p-4 rounded-[0.75rem] border border-[var(--border)] bg-[var(--surface)] flex items-center justify-between gap-4 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-[var(--brand-soft)] border border-[var(--brand-soft-border)] flex items-center justify-center text-[var(--brand-green)] shrink-0">
+          <div className="w-8 h-8 rounded-full bg-[var(--color-teal-soft)] border border-[var(--color-teal-soft-border)] flex items-center justify-center text-[var(--color-teal-text)] shrink-0">
             <ShieldCheck className="w-4 h-4" />
           </div>
           <div>

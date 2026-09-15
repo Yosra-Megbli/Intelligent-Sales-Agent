@@ -31,7 +31,7 @@ const DashboardContent: React.FC = () => {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-[var(--bg-app)]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-2 border-[var(--border)] border-t-[var(--brand-green)] animate-spin" />
+          <div className="w-8 h-8 rounded-full border-2 border-[var(--border)] border-t-[var(--color-teal)] animate-spin" />
           <span className="text-xs text-[var(--ink-muted)] font-medium">
             Initialisation de la console Sophie...
           </span>

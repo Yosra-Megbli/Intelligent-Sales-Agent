@@ -29,8 +29,8 @@ export const Badge: React.FC<BadgeProps> = ({ variant = "default", className, ch
   const styles: Record<BadgeVariant, string> = {
     NEW: "bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700",
     CONTACTED: "bg-[var(--info-soft)] text-[var(--info-blue)] border-[var(--info-border)]",
-    QUALIFIED_FLEXY: "bg-[var(--brand-soft)] text-[var(--brand-green)] border-[var(--brand-soft-border)] font-semibold",
-    QUALIFIED_MOTION: "bg-[var(--teal-soft)] text-[var(--teal-motion)] border-[var(--teal-soft)] font-semibold",
+    QUALIFIED_FLEXY: "bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border-[var(--color-teal-soft-border)] font-semibold",
+    QUALIFIED_MOTION: "bg-[var(--color-motion-soft)] text-[var(--color-motion)] border-[var(--color-motion-border)] font-semibold",
     FIXED_SEEKER: "bg-[var(--warn-soft)] text-[var(--warn-amber)] border-[var(--warn-border)]",
     OPT_OUT: "bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 border-pink-200 dark:border-pink-900 line-through opacity-80",
     HUMAN_HANDOFF: "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",

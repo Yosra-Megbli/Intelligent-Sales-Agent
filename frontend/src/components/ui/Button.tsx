@@ -15,19 +15,19 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", isLoading = false, children, disabled, ...props }, ref) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium transition-smooth rounded-[0.75rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-green)] disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer";
+      "inline-flex items-center justify-center font-medium transition-smooth rounded-[0.75rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal/40 disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer";
 
     const variants = {
       primary:
-        "bg-[var(--brand-green)] text-white hover:bg-[var(--brand-hover)] shadow-sm active:scale-[0.98]",
+        "bg-lavender text-lavender-ink hover:bg-lavender-hover font-semibold shadow-xs active:scale-[0.98]",
       secondary:
-        "bg-[var(--surface)] text-[var(--ink)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--border-hover)] shadow-sm",
+        "bg-[var(--surface)] text-[var(--ink)] border border-[var(--border)] hover:bg-[var(--surface-hover)] hover:border-[var(--border-hover)] shadow-xs",
       outline:
-        "border border-[var(--border)] text-[var(--ink)] hover:bg-[var(--brand-soft)] hover:text-[var(--brand-green)] hover:border-[var(--brand-soft-border)]",
+        "border border-[var(--border)] text-[var(--ink)] hover:bg-[var(--color-teal-soft)] hover:text-[var(--color-teal-text)] hover:border-[var(--color-teal-soft-border)]",
       ghost:
-        "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--brand-soft)]",
+        "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--color-teal-soft)]",
       danger:
-        "bg-[var(--danger-red)] text-white hover:opacity-90 shadow-sm active:scale-[0.98]",
+        "bg-[var(--danger-red)] text-white hover:opacity-90 shadow-xs active:scale-[0.98]",
     };
 
     const sizes = {

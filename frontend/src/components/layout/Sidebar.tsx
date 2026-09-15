@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Brand Header */}
       <div className="h-16 flex items-center px-4 border-b border-[var(--border)] justify-between">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-8 h-8 rounded-[0.5rem] bg-[var(--brand-green)] text-white flex items-center justify-center shrink-0 shadow-xs">
+          <div className="w-8 h-8 rounded-[0.5rem] bg-[var(--color-navy)] text-[var(--color-teal)] border border-white/10 flex items-center justify-center shrink-0 shadow-xs">
             <Zap className="w-4 h-4 fill-current" />
           </div>
           {!collapsed && (
@@ -124,13 +124,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               title={collapsed ? item.label : undefined}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-[0.5rem] text-xs font-medium transition-smooth cursor-pointer ${
                 isActive
-                  ? "bg-[var(--brand-soft)] text-[var(--brand-green)] font-semibold shadow-xs"
+                  ? "bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] font-semibold shadow-xs"
                   : "text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-hover)]"
               }`}
             >
               <Icon
                 className={`w-4 h-4 shrink-0 ${
-                  isActive ? "text-[var(--brand-green)]" : "text-[var(--ink-muted)]"
+                  isActive ? "text-[var(--color-teal-text)]" : "text-[var(--ink-muted)]"
                 }`}
               />
               {!collapsed && (
@@ -151,7 +151,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {!collapsed ? (
           <div className="p-2.5 rounded-[0.5rem] bg-[var(--surface-hover)] border border-[var(--border)]">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[var(--brand-green)] animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[var(--color-teal)] animate-pulse" />
               <span className="text-[11px] font-medium text-[var(--ink)]">
                 Sophie v1.0 • Ecofix
               </span>
@@ -162,7 +162,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         ) : (
           <div className="flex justify-center" title="Sophie Online">
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--brand-green)] animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-teal)] animate-pulse" />
           </div>
         )}
       </div>

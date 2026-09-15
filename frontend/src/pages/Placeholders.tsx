@@ -36,7 +36,7 @@ export const HandoffsPage: React.FC = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <PhoneCall className="w-4 h-4 text-[var(--brand-green)]" />
+              <PhoneCall className="w-4 h-4 text-[var(--color-teal-text)]" />
               <CardTitle>Transferts Téléphoniques & Voice</CardTitle>
             </div>
             <CardDescription>
@@ -53,7 +53,7 @@ export const HandoffsPage: React.FC = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <UserCheck className="w-4 h-4 text-[var(--brand-green)]" />
+              <UserCheck className="w-4 h-4 text-[var(--color-teal-text)]" />
               <CardTitle>Cas Complexes / Énergie Spécifique</CardTitle>
             </div>
             <CardDescription>
@@ -99,7 +99,7 @@ export const CampaignsPage: React.FC = () => {
 
       <Card>
         <CardContent className="p-8 text-center flex flex-col items-center justify-center">
-          <div className="w-12 h-12 rounded-full bg-[var(--brand-soft)] border border-[var(--brand-soft-border)] flex items-center justify-center text-[var(--brand-green)] mb-3">
+          <div className="w-12 h-12 rounded-full bg-[var(--color-teal-soft)] border border-[var(--color-teal-soft-border)] flex items-center justify-center text-[var(--color-teal-text)] mb-3">
             <Megaphone className="w-6 h-6" />
           </div>
           <h3 className="font-semibold text-sm text-[var(--ink)]">
@@ -166,7 +166,7 @@ export const ChatSimulatorPage: React.FC = () => {
             Simulateur d'échange direct avec Sophie (vérification des règles de divulgation IA et opt-out).
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-[var(--brand-green)] font-semibold bg-[var(--brand-soft)] px-2.5 py-1 rounded-full">
+        <div className="flex items-center gap-1.5 text-xs text-[var(--color-teal-text)] font-semibold bg-[var(--color-teal-soft)] border border-[var(--color-teal-soft-border)] px-2.5 py-1 rounded-full">
           <CheckCircle className="w-3.5 h-3.5" />
           <span>Divulgation IA Active</span>
         </div>
@@ -175,7 +175,7 @@ export const ChatSimulatorPage: React.FC = () => {
       <Card className="flex flex-col h-[520px]">
         <CardHeader className="py-3 px-4">
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-4 h-4 text-[var(--brand-green)]" />
+            <MessageSquare className="w-4 h-4 text-[var(--color-teal-text)]" />
             <CardTitle className="text-sm">Session de Test Canal Web</CardTitle>
           </div>
         </CardHeader>
@@ -188,7 +188,7 @@ export const ChatSimulatorPage: React.FC = () => {
               <div
                 className={`max-w-[80%] rounded-[0.75rem] px-3.5 py-2.5 text-xs leading-relaxed ${
                   m.role === "user"
-                    ? "bg-[var(--brand-green)] text-white font-medium"
+                    ? "bg-lavender text-lavender-ink font-semibold shadow-xs"
                     : "bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--ink)]"
                 }`}
               >
@@ -203,7 +203,7 @@ export const ChatSimulatorPage: React.FC = () => {
             placeholder="Tapez un message pour Sophie (ex: 'Quel tarif ?', 'STOP')..."
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
-            className="flex-1 px-3.5 py-2 text-xs rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-green)]"
+            className="flex-1 px-3.5 py-2 text-xs rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)]/40 focus:border-[var(--color-teal)]"
           />
           <Button type="submit" size="sm">
             <Send className="w-3.5 h-3.5 mr-1" />
@@ -229,7 +229,7 @@ export const CompliancePage: React.FC = () => {
             Conformité RGPD et cadre réglementaire de l'énergie en Belgique.
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-[var(--brand-green)] font-semibold bg-[var(--brand-soft)] px-2.5 py-1 rounded-full">
+        <div className="flex items-center gap-1.5 text-xs text-[var(--color-teal-text)] font-semibold bg-[var(--color-teal-soft)] border border-[var(--color-teal-soft-border)] px-2.5 py-1 rounded-full">
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>RGPD / GDPR Strict</span>
         </div>
@@ -239,7 +239,7 @@ export const CompliancePage: React.FC = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-[var(--brand-green)]" />
+              <Lock className="w-4 h-4 text-[var(--color-teal-text)]" />
               <CardTitle>Mécanisme STOP & Déréférencement</CardTitle>
             </div>
             <CardDescription>Purge irréversible des Données à Caractère Personnel</CardDescription>
@@ -259,7 +259,7 @@ export const CompliancePage: React.FC = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[var(--brand-green)]" />
+              <ShieldCheck className="w-4 h-4 text-[var(--color-teal-text)]" />
               <CardTitle>Règles Marché de l'Énergie Belge</CardTitle>
             </div>
             <CardDescription>Protection des consommateurs & Régions</CardDescription>

@@ -78,7 +78,7 @@ export const ConversionFunnel: React.FC<ConversionFunnelProps> = ({
       count: signed,
       pct: total > 0 ? Math.round((signed / total) * 100) : 0,
       dropoff: 0,
-      color: "bg-[var(--brand-green)]",
+      color: "bg-[var(--color-teal)]",
     },
   ];
 
@@ -90,7 +90,7 @@ export const ConversionFunnel: React.FC<ConversionFunnelProps> = ({
             <CardTitle>{t("overview.funnel.title")}</CardTitle>
             <CardDescription>{t("overview.funnel.subtitle")}</CardDescription>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-[var(--brand-green)] font-semibold bg-[var(--brand-soft)] px-2.5 py-1 rounded-full self-start">
+          <div className="flex items-center gap-1.5 text-xs text-[var(--color-teal-text)] font-semibold bg-[var(--color-teal-soft)] border border-[var(--color-teal-soft-border)] px-2.5 py-1 rounded-full self-start">
             <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Moteur déterministe certifié</span>
           </div>

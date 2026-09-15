@@ -86,7 +86,7 @@ export const RecentActivityList: React.FC<RecentActivityListProps> = ({
                       {isOptOut ? (
                         <ShieldAlert className="w-4 h-4 text-pink-600 dark:text-pink-400" />
                       ) : (
-                        <ArrowUpRight className="w-4 h-4 text-[var(--brand-green)]" />
+                        <ArrowUpRight className="w-4 h-4 text-[var(--color-teal-text)]" />
                       )}
                     </div>
 

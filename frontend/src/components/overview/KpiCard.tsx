@@ -72,7 +72,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
               delta.value === 0
                 ? "bg-[var(--surface-hover)] text-[var(--ink-muted)]"
                 : isPositive
-                ? "bg-[var(--brand-soft)] text-[var(--brand-green)]"
+                ? "bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border border-[var(--color-teal-soft-border)]"
                 : "bg-[var(--danger-soft)] text-[var(--danger-red)]"
             }`}
           >

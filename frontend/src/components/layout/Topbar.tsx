@@ -39,7 +39,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onSearchChange }) => {
           type="text"
           placeholder={t("topbar.search")}
           onChange={(e) => onSearchChange?.(e.target.value)}
-          className="w-full pl-9 pr-12 py-1.5 text-xs rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface-hover)] text-[var(--ink)] placeholder:text-[var(--ink-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-green)] focus:bg-[var(--surface)] transition-smooth"
+          className="w-full pl-9 pr-12 py-1.5 text-xs rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface-hover)] text-[var(--ink)] placeholder:text-[var(--ink-subtle)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)]/40 focus:border-[var(--color-teal)] focus:bg-[var(--surface)] transition-smooth"
         />
         <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5 text-[10px] text-[var(--ink-subtle)] font-mono border border-[var(--border)] rounded px-1 bg-[var(--surface)]">
           <span>⌘K</span>
@@ -50,7 +50,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onSearchChange }) => {
       <div className="flex items-center gap-3">
         {/* Backend live indicator */}
         <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-[0.5rem] bg-[var(--surface-hover)] border border-[var(--border)] text-xs">
-          <Radio className="w-3.5 h-3.5 text-[var(--brand-green)] animate-pulse" />
+          <Radio className="w-3.5 h-3.5 text-[var(--color-teal)] animate-pulse" />
           <span className="text-[11px] font-medium text-[var(--ink-muted)]">
             Render Cloud
           </span>
@@ -66,7 +66,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onSearchChange }) => {
                 onClick={() => handleLanguageChange(lang)}
                 className={`px-2 py-1 rounded-[0.35rem] uppercase text-[11px] font-semibold transition-smooth cursor-pointer ${
                   isCurrent
-                    ? "bg-[var(--surface)] text-[var(--brand-green)] shadow-xs"
+                    ? "bg-[var(--surface)] text-[var(--color-teal-text)] shadow-xs font-bold"
                     : "text-[var(--ink-muted)] hover:text-[var(--ink)]"
                 }`}
               >
@@ -95,7 +95,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onSearchChange }) => {
             className="flex items-center gap-1.5 px-2 py-1 rounded-[0.5rem] bg-[var(--surface-hover)] border border-[var(--border)] font-mono text-[11px] text-[var(--ink-muted)]"
             title="Clé API active"
           >
-            <Key className="w-3 h-3 text-[var(--brand-green)]" />
+            <Key className="w-3 h-3 text-[var(--color-teal-text)]" />
             <span>{keyDisplay}</span>
           </div>
 

@@ -71,7 +71,7 @@ export const LeadsPage: React.FC = () => {
             placeholder="Filtrer par nom, téléphone, EAN..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface-hover)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--brand-green)]"
+            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface-hover)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)]/40 focus:border-[var(--color-teal)]"
           />
         </div>
 
@@ -82,7 +82,7 @@ export const LeadsPage: React.FC = () => {
               onClick={() => setStatusFilter(s.value)}
               className={`px-2.5 py-1 rounded-[0.35rem] text-[11px] font-medium whitespace-nowrap transition-smooth cursor-pointer ${
                 statusFilter === s.value
-                  ? "bg-[var(--brand-green)] text-white"
+                  ? "bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border border-[var(--color-teal-soft-border)] font-semibold shadow-xs"
                   : "bg-[var(--surface-hover)] text-[var(--ink-muted)] hover:text-[var(--ink)]"
               }`}
             >

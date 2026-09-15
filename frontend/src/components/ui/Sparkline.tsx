@@ -32,7 +32,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
     .join(" ");
 
   const strokeColor =
-    color || (positive ? "var(--brand-green)" : "var(--danger-red)");
+    color || (positive ? "var(--color-teal-text)" : "var(--color-danger)");
 
   return (
     <svg
