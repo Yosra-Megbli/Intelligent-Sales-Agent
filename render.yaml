@@ -3,7 +3,7 @@
     name: ecofix-sophie-backend
     runtime: docker
     plan: free
-    region: frankfurt
+    region: ohio
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
     healthCheckPath: /health
@@ -25,7 +25,11 @@
         sync: false
       - key: TELEGRAM_WEBHOOK_SECRET
         generateValue: true
+      - key: WEBHOOK_SECRET
+        sync: false
       - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CORS_ORIGINS
         sync: false
       - key: PUBLIC_BASE_URL
         sync: false
