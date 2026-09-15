@@ -11,7 +11,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Settings,
 } from "lucide-react";
+
 import { Badge } from "@/components/ui/Badge";
 
 export interface SidebarProps {
@@ -43,30 +45,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
       isPhase2: false,
     },
     {
-      id: "handoffs",
-      label: t("nav.handoffs"),
-      icon: UserCheck,
-      isPhase2: false,
-    },
-    {
-      id: "campaigns",
-      label: t("nav.campaigns"),
-      icon: Megaphone,
-      isPhase2: true,
-    },
-    {
-      id: "chat",
-      label: t("nav.chat"),
+      id: "conversations",
+      label: t("conversations.title"),
       icon: MessageSquare,
       isPhase2: false,
     },
     {
+      id: "campaigns",
+      label: t("campaignsPage.title"),
+      icon: Megaphone,
+      isPhase2: false,
+    },
+    {
       id: "compliance",
-      label: t("nav.compliance"),
+      label: t("compliancePage.title"),
       icon: ShieldCheck,
       isPhase2: false,
     },
+    {
+      id: "settings",
+      label: t("settingsPage.title"),
+      icon: Settings,
+      isPhase2: false,
+    },
   ];
+
 
   const handleNavClick = (item: (typeof navItems)[0]) => {
     if (item.isPhase2) {
