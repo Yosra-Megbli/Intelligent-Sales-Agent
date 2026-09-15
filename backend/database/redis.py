@@ -18,7 +18,7 @@ from typing import Any, Optional
 
 import redis
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0").strip().strip('"').strip("'")
 
 _client: Optional[redis.Redis] = None
 

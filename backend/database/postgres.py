@@ -23,9 +23,12 @@ load_dotenv()
 def normalize_database_url(url: str) -> str:
     """Normalize DATABASE_URL for SQLAlchemy and psycopg2.
 
-    Neon and cloud providers often provide 'postgres://' or 'postgresql://' connection strings,
-    which need to use 'postgresql+psycopg2://' so SQLAlchemy loads the psycopg2 driver reliably.
+    Safely strips any leading/trailing spaces or quotes that operators might paste,
+    and ensures 'postgresql+psycopg2://' is used so SQLAlchemy loads the psycopg2 driver.
     """
+    if not url:
+        return url
+    url = url.strip().strip('"').strip("'")
     if url.startswith("postgres://"):
         return url.replace("postgres://", "postgresql+psycopg2://", 1)
     if url.startswith("postgresql://") and not url.startswith("postgresql+psycopg2://"):
