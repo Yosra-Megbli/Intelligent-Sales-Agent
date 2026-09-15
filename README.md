@@ -3,14 +3,14 @@
 ![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB?logo=react&logoColor=black)
-![Tests](https://img.shields.io/badge/tests-583%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-653%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'électricité et de gaz Ecofix : elle engage la conversation, répond aux objections, collecte et valide les informations nécessaires, puis transmet les leads qualifiés à l'équipe commerciale humaine.
 
 ## In short (EN)
 
-A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision — the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, a React ops dashboard, API-key/webhook-signature security, and **583 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs — this project is built for a real French-speaking client.
+A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision — the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, a React ops dashboard, API-key/webhook-signature security, and **653 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs — this project is built for a real French-speaking client.
 
 ## Statut du projet
 
@@ -56,7 +56,7 @@ frontend/
 - Backend : Python 3.12+, FastAPI, SQLAlchemy, PostgreSQL (SQLite pour les tests), Redis
 - IA : Groq (`openai/gpt-oss-120b` par défaut), abstraction `LLMProvider` remplaçable
 - Frontend : React, Vite, TypeScript, Tailwind v4, shadcn/ui, TanStack Query
-- Tests : Pytest (583 tests unitaires/intégration + scénarios golden)
+- Tests : Pytest (653 tests unitaires/intégration + scénarios golden)
 
 ## Démarrage rapide — backend
 
@@ -131,6 +131,33 @@ pytest tests/ golden_tests/ -v
 - ⚠️ Par défaut (développement), si `API_KEY` n'est pas configurée, l'authentification est désactivée avec un avertissement en log
 - ✅ En définissant `ENVIRONMENT=production` (voir `backend/.env.example`), l'API **refuse de démarrer** si `API_KEY` ou `TELEGRAM_WEBHOOK_SECRET` ne sont pas configurées, au lieu de tourner sans authentification (`api/main.py:_fail_fast_if_misconfigured_for_production`)
 - `backend/.env` (secrets réels) est exclu de git via `.gitignore` et n'a jamais été commit — pour livrer une archive au client, utiliser `scripts/package_client_delivery.ps1` (basé sur `git archive`, ne peut physiquement pas inclure un fichier non commit comme `.env`) plutôt qu'une compression manuelle du dossier
+
+## Conformité RGPD / GDPR Compliance
+
+Sophie intègre les principes du Règlement Général sur la Protection des Données (RGPD / GDPR) dès la conception (*privacy by design*) :
+
+### 1. Bases légales de traitement (Art. 6 RGPD)
+- **Leads entrants (Inbound)** : Consentement explicite et exécution de mesures précontractuelles à la demande du prospect (Art. 6(1)(a) & (b) RGPD) lors de l'initiation d'un échange pour étudier ou souscrire une offre d'énergie Ecofix.
+- **Campagnes sortantes (Outbound)** : Intérêt légitime (Art. 6(1)(f) RGPD) pour la prospection commerciale B2B / prospects qualifiés, assorti d'une **transparence obligatoire et immédiate** (mention explicite de l'agent virtuel IA dès le premier message sur tous les canaux) et du droit inconditionnel d'opposition (Art. 21 RGPD).
+
+### 2. Durée de conservation (Règle des 12 mois)
+- Les données à caractère personnel des prospects non convertis sont conservées pendant une durée maximale de **12 mois** à compter du dernier contact ou de la clôture de la qualification.
+- À l'issue de cette période de 12 mois, les données d'identification (`first_name`, `last_name`, `email`, `phone`, `notes`, `date_of_birth`) sont purgées ou anonymisées de manière irréversible, sauf en cas de conversion effective en contrat client actif (soumis aux délais légaux de conservation contractuelle et comptable).
+
+### 3. Procédure d'opt-out / droit d'opposition (STOP / STOPT / ARRÊT)
+- Le prospect peut à tout moment exercer son droit d'opposition par simple envoi d'un mot-clé d'arrêt standardisé : **`STOP`**, **`STOPT`** ou **`ARRÊT`** (insensible à la casse et aux accents, supporté en français, néerlandais et anglais).
+- Le traitement d'opt-out est **immédiat et déterministe** (géré au niveau applicatif par le Rules Engine / ConversationService, sans dépendance LLM) :
+  1. **Retrait immédiat des campagnes** : le lead est retiré de toute campagne sortante active ou future (`campaign_id = NULL`).
+  2. **Annulation des relances programmées** : tout follow-up programmé est annulé ; le planificateur de relances (`FollowUpEngine`) ignore systématiquement tout prospect ayant manifesté son opposition (`opt_out_at IS NOT NULL`).
+  3. **Purge des données PII** : suppression immédiate des données identifiantes directes (`first_name`, `last_name`, `email`, `notes`, `date_of_birth`).
+  4. **Clé de suppression (Suppression Key)** : conservation d'une clé technique de suppression / empreinte hashée afin d'empêcher toute réimportation ou réenvoi ultérieur non sollicité.
+  5. **Horodatage et audit trail** : enregistrement de l'horodatage UTC (`opt_out_at`), mise à jour du statut en `REJECTED` et inscription d'un événement `OPT_OUT` dans le journal d'activité d'audit (`activities`).
+  6. **Confirmation de désabonnement** : envoi d'un message unique de confirmation attestant la prise en compte de la demande et garantissant qu'aucune communication ultérieure ne sera émise.
+
+### 4. Transfert de données & DPA Groq (Sous-traitance IA)
+- Les requêtes d'extraction d'entités et de formulation de réponses s'appuient sur l'API Groq Cloud.
+- **Accord de traitement des données (DPA)** : l'exploitation en production nécessite la souscription du Data Processing Agreement (DPA) avec Groq Inc., incorporant les Clauses Contractuelles Types (CCT / SCCs) approuvées par la Commission Européenne pour régir les transferts de données hors Union Européenne.
+- **Minimisation des données (Art. 5(1)(c) RGPD)** : seuls les fragments textuels strictement nécessaires à la qualification conversationnelle transitent par l'API d'inférence. L'évaluation des règles métier, la validation de la majorité, la détection des doublons et la liste d'exclusion (suppression list) s'exécutent entièrement en local dans l'application.
 
 ## Limites connues du MVP actuel
 
