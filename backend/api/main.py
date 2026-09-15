@@ -87,12 +87,18 @@ def _auto_run_migrations_and_init_db() -> None:
 # CORS at all) works without setting anything.
 _allowed_origins_raw = os.getenv("CORS_ALLOWED_ORIGINS") or os.getenv("CORS_ORIGINS") or ""
 _allowed_origins = [origin.strip() for origin in _allowed_origins_raw.split(",") if origin.strip()]
+
+# Always allow local development origins so the Vite frontend (port 5173) can communicate with the API
+for _dev_origin in ("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", "http://127.0.0.1:3000"):
+    if _dev_origin not in _allowed_origins:
+        _allowed_origins.append(_dev_origin)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["X-API-Key", "X-Telegram-Bot-Api-Secret-Token", "Content-Type"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["X-API-Key", "X-Telegram-Bot-Api-Secret-Token", "Content-Type", "Authorization"],
 )
 
 app.include_router(router)

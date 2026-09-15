@@ -14,6 +14,13 @@ export default defineConfig(async () => {
     server: {
       port: 5173,
       host: true,
+      proxy: {
+        "/api": {
+          target: "https://intelligent-sales-agent.onrender.com",
+          changeOrigin: true,
+          secure: true,
+        },
+      },
     },
   };
 });

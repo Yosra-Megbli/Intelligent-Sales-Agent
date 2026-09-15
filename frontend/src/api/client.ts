@@ -15,7 +15,16 @@ export class ApiClient {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
-    this.baseUrl = baseUrl || (import.meta.env.VITE_API_URL as string) || DEFAULT_API_BASE;
+    if (baseUrl) {
+      this.baseUrl = baseUrl;
+    } else if (import.meta.env.VITE_API_URL) {
+      this.baseUrl = import.meta.env.VITE_API_URL as string;
+    } else if (import.meta.env.DEV) {
+      // In dev mode, fall back to relative path so Vite proxy forwards to Render without CORS issues
+      this.baseUrl = "";
+    } else {
+      this.baseUrl = DEFAULT_API_BASE;
+    }
   }
 
   private getApiKey(): string | null {
