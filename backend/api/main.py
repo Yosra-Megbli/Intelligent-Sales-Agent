@@ -135,6 +135,21 @@ if _DASHBOARD_DIR.is_dir():
         return FileResponse(_dashboard_index)
 
 
+
+@app.get("/")
+def root() -> dict:
+    """Root service discovery endpoint."""
+    return {
+        "service": "Ecofix Sophie API",
+        "status": "online",
+        "version": "0.1.0",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "dashboard": "/dashboard"
+        }
+    }
+
 @app.get("/health")
 def health() -> JSONResponse:
     """Healthcheck endpoint verifying DB and Redis connectivity."""
