@@ -35,6 +35,7 @@ from ai.providers.interface import LLMProvider
 from ai.rag import Rag
 from ai.responder import Responder
 from conversation_engine.engine import ConversationEngine, EngineResult
+from conversation_engine.compliance import is_withdrawal_intent
 from conversation_engine.language_detector import detect_language
 from conversation_engine.memory import ConversationMemory
 from conversation_engine.transitions import Event, EventType
@@ -42,7 +43,8 @@ from conversation_engine.opt_out import is_opt_out
 from crm.activity_repository import ActivityRepository
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
-from domain.enums import ActivityType, ConversationChannel, ConversationState, LeadSource, LeadStatus, MessageRole, RejectionReason
+from domain.enums import ActivityType, ContractStatus, ConversationChannel, ConversationState, LeadSource, LeadStatus, MessageRole, RejectionReason
+
 from domain.models.conversation import Conversation
 from domain.models.lead import Lead
 from domain.models.message import Message
@@ -316,6 +318,11 @@ class ConversationService:
         if is_opt_out(request.text):
             return self._handle_opt_out(context.conversation, request.text)
 
+        # COMPLIANCE: 14-day legal withdrawal ("JE RENONCE" -> WITHDRAWN).
+        if is_withdrawal_intent(request.text):
+            return self._handle_withdrawal(context.conversation, request.text)
+
+
         event = self._extract_event(request.text, context.last_question_action)
         self.conversation_repo.add_message(context.conversation, MessageRole.USER, request.text)
 
@@ -436,7 +443,77 @@ class ConversationService:
             ),
         )
 
+    def _handle_withdrawal(self, conversation: Conversation, raw_text: str) -> ConversationResponse:
+        """Handle 14-day legal withdrawal ('JE RENONCE' handler).
+
+        1. Record the USER message.
+        2. Look up contract for lead.
+        3. Transition contract status to WITHDRAWN and set withdrawn_at.
+        4. Transition lead status to CLOSED.
+        5. Log ActivityType.CONTRACT_WITHDRAWN and ActivityType.STATUS_CHANGED.
+        6. Return deterministic legal confirmation message in lead's language (no LLM call).
+        """
+        from datetime import datetime
+        from crm.contract_repository import ContractRepository
+
+        self.conversation_repo.add_message(conversation, MessageRole.USER, raw_text)
+        lead = self.lead_repo.get_by_id(conversation.lead_id) if conversation.lead_id else None
+        contract_repo = ContractRepository(self.db)
+        contract = contract_repo.get_latest_by_lead_id(lead.id) if lead else None
+
+        if contract and contract.status != ContractStatus.WITHDRAWN:
+            contract_repo.set_status(contract, ContractStatus.WITHDRAWN, withdrawn_at=datetime.utcnow())
+            if lead:
+                self.activity_repo.log(
+                    lead.id,
+                    ActivityType.CONTRACT_WITHDRAWN,
+                    details=f"Contract {contract.id} withdrawn via 14-day legal right",
+                )
+
+        if lead and lead.status != LeadStatus.CLOSED:
+            self.lead_repo.set_status(lead, LeadStatus.CLOSED)
+            self.activity_repo.log(
+                lead.id,
+                ActivityType.STATUS_CHANGED,
+                details=f"{lead.status.value} -> CLOSED (withdrawal)",
+            )
+
+        self.conversation_repo.transition_state(conversation, ConversationState.CLOSED)
+
+        lang = (conversation.language or "fr").lower()
+        if lang == "nl":
+            reply_text = (
+                "Uw herroeping is goed geregistreerd conform uw wettelijke bedenktijd van 14 dagen. "
+                "Uw Ecofix-contract is kosteloos geannuleerd. Een menselijke adviseur blijft te allen tijde beschikbaar."
+            )
+        elif lang == "en":
+            reply_text = (
+                "Your withdrawal request has been registered in accordance with your 14-day legal right. "
+                "Your Ecofix contract has been cancelled with no fees. A human advisor remains available at any time."
+            )
+        else:
+            reply_text = (
+                "Votre demande de rétractation a bien été prise en compte conformément à votre droit légal de 14 jours. "
+                "Votre contrat Ecofix est annulé sans aucun frais. Un conseiller humain reste à votre disposition à tout moment."
+            )
+
+        self.conversation_repo.add_message(conversation, MessageRole.ASSISTANT, reply_text)
+
+        from conversation_engine.engine import EngineResult
+        from domain.enums import ConversationState as CS
+        return ConversationResponse(
+            response_text=reply_text,
+            state=ConversationState.CLOSED.value,
+            required_action="WITHDRAW_CONTRACT",
+            engine_result=EngineResult(
+                previous_state=conversation.current_state,
+                next_state=CS.CLOSED,
+                required_action="WITHDRAW_CONTRACT",
+            ),
+        )
+
     def _extract_event(self, raw_text: str, last_question_action: Optional[str]) -> Event:
+
         if self.extractor is None:
             return Event(type=EventType.CUSTOMER_MESSAGE, raw_answer_text=raw_text)
 

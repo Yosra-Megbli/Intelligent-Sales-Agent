@@ -123,3 +123,18 @@ def verify_output_guard(
         return False, f"forbidden_claim:{pattern_name}:{matched_string}"
 
     return True, None
+
+
+# 14-day legal withdrawal intent (Belgian Code of Economic Law Art. VI.47)
+WITHDRAWAL_INTENT_PATTERN = re.compile(
+    r"\b(?:je\s+renonce|ik\s+herroep|i\s+withdraw|renonciation|droit\s+de\s+r[eé]tractation|herroepingsrecht|right\s+of\s+withdrawal|annuler\s+mon\s+contrat|annule\s+le\s+contrat)\b",
+    re.IGNORECASE,
+)
+
+
+def is_withdrawal_intent(text: Optional[str]) -> bool:
+    """Return True if incoming message contains the 14-day legal withdrawal intent ('JE RENONCE')."""
+    if not text:
+        return False
+    return bool(WITHDRAWAL_INTENT_PATTERN.search(text.strip()))
+
