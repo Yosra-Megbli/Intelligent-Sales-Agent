@@ -62,11 +62,12 @@
       "signedContracts": "Ondertekende Contracten",
       "conversionRate": "Conversieratio",
       "costPerSale": "Acquisitiekost / Verkoop",
-      "estimatedRevenue": "Geschatte Terugkerende Omzet (MRR)"
+      "estimatedRevenue": "Geschatte Jaaromzet (ARR)",
+      "annualSuffix": "/jaar"
     },
     "delta": {
       "vsLastWeek": "vs vorige week",
-      "target": "Maandelijkse doelstelling",
+      "target": "Jaarlijks doel",
       "neutral": "Stabiel"
     },
     "funnel": {

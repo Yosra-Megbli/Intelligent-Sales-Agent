@@ -8,6 +8,7 @@ venv/
 *.db
 *.sqlite3
 /storage/
+/backend/storage/
 
 # --- Secrets ---
 .env

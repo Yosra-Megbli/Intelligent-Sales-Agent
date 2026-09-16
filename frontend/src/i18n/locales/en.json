@@ -62,11 +62,12 @@
       "signedContracts": "Signed Contracts",
       "conversionRate": "Conversion Rate",
       "costPerSale": "Acquisition Cost / Sale",
-      "estimatedRevenue": "Estimated Monthly Revenue (MRR)"
+      "estimatedRevenue": "Estimated Annual Revenue (ARR)",
+      "annualSuffix": "/yr"
     },
     "delta": {
       "vsLastWeek": "vs last week",
-      "target": "Monthly target",
+      "target": "Annual target",
       "neutral": "Stable"
     },
     "funnel": {

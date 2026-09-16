@@ -62,11 +62,12 @@
       "signedContracts": "Contrats Signés",
       "conversionRate": "Taux de Transformation",
       "costPerSale": "Coût d'Acquisition / Vente",
-      "estimatedRevenue": "CA Récurrent Estimé (MRR)"
+      "estimatedRevenue": "Chiffre d'Affaires Annuel Estimé (ARR)",
+      "annualSuffix": "/an"
     },
     "delta": {
       "vsLastWeek": "vs sem. précédente",
-      "target": "Objectif mensuel",
+      "target": "Objectif annuel",
       "neutral": "Stable"
     },
     "funnel": {
