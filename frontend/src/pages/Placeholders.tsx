@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { toast } from "sonner";
+import { apiClient } from "@/api/client";
 import {
   UserCheck,
   Megaphone,
@@ -13,6 +14,7 @@ import {
   Lock,
   PhoneCall,
   CheckCircle,
+  RotateCcw,
 } from "lucide-react";
 
 export const HandoffsPage: React.FC = () => {
@@ -117,73 +119,151 @@ export const CampaignsPage: React.FC = () => {
 
 export const ChatSimulatorPage: React.FC = () => {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState<Array<{ role: "assistant" | "user"; text: string }>>([
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [currentState, setCurrentState] = useState<string>("START");
+  const [lastAction, setLastAction] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState<boolean>(false);
+  const [inputMessage, setInputMessage] = useState("");
+  const [messages, setMessages] = useState<
+    Array<{ role: "assistant" | "user"; text: string; state?: string; action?: string | null }>
+  >([
     {
       role: "assistant",
       text: "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix — un conseiller humain reste disponible à tout moment. Comment puis-je vous renseigner sur nos contrats d'énergie ?",
+      state: "GREETING",
     },
   ]);
-  const [inputMessage, setInputMessage] = useState("");
 
-  const handleSend = (e: React.FormEvent) => {
+  const initConversation = async () => {
+    try {
+      const res = await apiClient.startConversation({
+        first_name: "Simulateur",
+        last_name: "Web",
+      });
+      setConversationId(res.conversation_id);
+      setCurrentState("START");
+      setLastAction(null);
+    } catch (err) {
+      console.warn("Could not pre-init conversation:", err);
+    }
+  };
+
+  useEffect(() => {
+    initConversation();
+  }, []);
+
+  const handleReset = async () => {
+    setMessages([
+      {
+        role: "assistant",
+        text: "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix — un conseiller humain reste disponible à tout moment. Comment puis-je vous renseigner sur nos contrats d'énergie ?",
+        state: "GREETING",
+      },
+    ]);
+    setCurrentState("START");
+    setLastAction(null);
+    await initConversation();
+    toast.success("Nouvelle session de simulation démarrée.");
+  };
+
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputMessage.trim()) return;
+    if (!inputMessage.trim() || isSending) return;
 
-    const userText = inputMessage;
+    const userText = inputMessage.trim();
     setInputMessage("");
     setMessages((prev) => [...prev, { role: "user", text: userText }]);
+    setIsSending(true);
 
-    // Instant simulated response honoring Sophie's golden rules
-    setTimeout(() => {
-      if (userText.toUpperCase().includes("STOP") || userText.toUpperCase().includes("ARRÊT")) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            text: "C'est bien noté. Votre demande d'arrêt a été prise en compte immédiatement. Vos données sont supprimées de nos listes de contact conformément au RGPD.",
-          },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            text: "Chez Ecofix, nous ne proposons aucun contrat fixe mais uniquement nos offres Flexy (variable mensuel transparent) et Motion (dynamique horaire). Habitez-vous en Flandre ou en Wallonie, et dans quelle ville ?",
-          },
-        ]);
+    try {
+      let activeConvId = conversationId;
+      if (!activeConvId) {
+        const startRes = await apiClient.startConversation({
+          first_name: "Simulateur",
+          last_name: "Web",
+        });
+        activeConvId = startRes.conversation_id;
+        setConversationId(activeConvId);
       }
-    }, 400);
+
+      const res = await apiClient.sendChatMessage(activeConvId, userText);
+      setCurrentState(res.state);
+      setLastAction(res.required_action);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text:
+            res.reply ||
+            "Merci pour votre réponse. Un conseiller humain reste à votre disposition.",
+          state: res.state,
+          action: res.required_action,
+        },
+      ]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(`Erreur simulateur: ${msg}`);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: "Désolée, une erreur de communication avec le moteur Sophie s'est produite. Veuillez réessayer.",
+        },
+      ]);
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex items-center justify-between pb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-2">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--ink)]">
             {t("nav.chat")}
           </h1>
           <p className="text-xs text-[var(--ink-muted)] mt-1">
-            Simulateur d'échange direct avec Sophie (vérification des règles de divulgation IA et opt-out).
+            Simulateur en direct connecté au moteur de vente déterministe (State Machine & Rules Engine).
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-xs text-[var(--color-teal-text)] font-semibold bg-[var(--color-teal-soft)] border border-[var(--color-teal-soft-border)] px-2.5 py-1 rounded-full">
-          <CheckCircle className="w-3.5 h-3.5" />
-          <span>Divulgation IA Active</span>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={handleReset} className="text-xs">
+            <RotateCcw className="w-3.5 h-3.5 mr-1" />
+            <span>Réinitialiser la session</span>
+          </Button>
+          <div className="flex items-center gap-1.5 text-xs text-[var(--color-teal-text)] font-semibold bg-[var(--color-teal-soft)] border border-[var(--color-teal-soft-border)] px-2.5 py-1 rounded-full">
+            <CheckCircle className="w-3.5 h-3.5" />
+            <span>Moteur Direct (Live API)</span>
+          </div>
         </div>
       </div>
 
-      <Card className="flex flex-col h-[520px]">
-        <CardHeader className="py-3 px-4">
+      <Card className="flex flex-col h-[560px]">
+        <CardHeader className="py-3 px-4 border-b border-[var(--border)] flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-[var(--color-teal-text)]" />
             <CardTitle className="text-sm">Session de Test Canal Web</CardTitle>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono uppercase text-[var(--ink-muted)]">
+              État actuel :
+            </span>
+            <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border border-[var(--color-teal-soft-border)]">
+              {currentState}
+            </span>
+            {lastAction && (
+              <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--ink-muted)]">
+                {lastAction}
+              </span>
+            )}
           </div>
         </CardHeader>
         <CardContent className="flex-1 overflow-y-auto p-4 space-y-3">
           {messages.map((m, idx) => (
             <div
               key={idx}
-              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}
             >
               <div
                 className={`max-w-[80%] rounded-[0.75rem] px-3.5 py-2.5 text-xs leading-relaxed ${
@@ -194,18 +274,31 @@ export const ChatSimulatorPage: React.FC = () => {
               >
                 {m.text}
               </div>
+              {m.state && m.role === "assistant" && (
+                <div className="flex items-center gap-1.5 mt-1 px-1 text-[10px] font-mono text-[var(--ink-subtle)]">
+                  <span>État : {m.state}</span>
+                  {m.action && <span>• Action : {m.action}</span>}
+                </div>
+              )}
             </div>
           ))}
+          {isSending && (
+            <div className="flex items-center gap-2 text-xs text-[var(--ink-muted)] italic px-2 py-1">
+              <div className="w-2 h-2 rounded-full bg-[var(--color-teal)] animate-ping" />
+              <span>Sophie analyse et répond...</span>
+            </div>
+          )}
         </CardContent>
         <form onSubmit={handleSend} className="p-3 border-t border-[var(--border)] flex gap-2">
           <input
             type="text"
-            placeholder="Tapez un message pour Sophie (ex: 'Quel tarif ?', 'STOP')..."
+            placeholder="Tapez un message pour Sophie (ex: 'bonjour', 'flandre', 'Namur', 'STOP')..."
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
+            disabled={isSending}
             className="flex-1 px-3.5 py-2 text-xs rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)]/40 focus:border-[var(--color-teal)]"
           />
-          <Button type="submit" size="sm">
+          <Button type="submit" size="sm" disabled={isSending || !inputMessage.trim()}>
             <Send className="w-3.5 h-3.5 mr-1" />
             <span>Envoyer</span>
           </Button>

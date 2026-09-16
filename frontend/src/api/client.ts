@@ -227,6 +227,31 @@ export class ApiClient {
     document.body.removeChild(link);
     window.URL.revokeObjectURL(blobUrl);
   }
+
+  async startConversation(payload?: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+  }): Promise<{ conversation_id: string; lead_id: string }> {
+    return this.request<{ conversation_id: string; lead_id: string }>("/api/conversations", {
+      method: "POST",
+      body: JSON.stringify(payload || {}),
+    });
+  }
+
+  async sendChatMessage(
+    conversationId: string,
+    text: string
+  ): Promise<{ reply: string; state: string; required_action: string | null }> {
+    return this.request<{ reply: string; state: string; required_action: string | null }>(
+      `/api/conversations/${conversationId}/messages`,
+      {
+        method: "POST",
+        body: JSON.stringify({ text }),
+      }
+    );
+  }
 }
 
 

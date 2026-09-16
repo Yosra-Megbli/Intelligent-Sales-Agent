@@ -9,7 +9,7 @@ import { ConversationsPage } from "@/pages/ConversationsPage";
 import { CampaignsPage } from "@/pages/CampaignsPage";
 import { CompliancePage } from "@/pages/CompliancePage";
 import { SettingsPage } from "@/pages/SettingsPage";
-import { HandoffsPage } from "@/pages/Placeholders";
+import { ChatSimulatorPage, HandoffsPage } from "@/pages/Placeholders";
 import { Toaster } from "sonner";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -48,7 +48,8 @@ const DashboardContent: React.FC = () => {
     <AppShell currentTab={currentTab} onTabChange={setCurrentTab}>
       {currentTab === "overview" && <OverviewPage />}
       {currentTab === "leads" && <LeadsPage />}
-      {(currentTab === "conversations" || currentTab === "chat") && <ConversationsPage />}
+      {currentTab === "conversations" && <ConversationsPage />}
+      {currentTab === "chat" && <ChatSimulatorPage />}
       {currentTab === "handoffs" && <HandoffsPage />}
       {currentTab === "campaigns" && <CampaignsPage />}
       {currentTab === "compliance" && <CompliancePage />}

@@ -51,6 +51,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       isPhase2: false,
     },
     {
+      id: "chat",
+      label: t("nav.chat"),
+      icon: Zap,
+      isPhase2: false,
+    },
+    {
       id: "campaigns",
       label: t("campaignsPage.title"),
       icon: Megaphone,
