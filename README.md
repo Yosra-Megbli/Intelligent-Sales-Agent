@@ -4,14 +4,14 @@
 ![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB?logo=react&logoColor=black)
-![Tests](https://img.shields.io/badge/tests-752%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-896%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'أ©lectricitأ© et de gaz Ecofix : elle engage la conversation, rأ©pond aux objections, collecte et valide les informations nأ©cessaires, puis transmet les leads qualifiأ©s أ  l'أ©quipe commerciale humaine.
 
 ## In short (EN)
 
-A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision â€” the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, a React ops dashboard, API-key/webhook-signature security, and **752 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs â€” this project is built for a real French-speaking client.
+A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision â€” the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, a React ops dashboard, API-key/webhook-signature security, and **896 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs â€” this project is built for a real French-speaking client.
 
 ## Statut du projet
 
@@ -57,7 +57,7 @@ frontend/
 - Backend : Python 3.12+, FastAPI, SQLAlchemy, PostgreSQL (SQLite pour les tests), Redis
 - IA : Groq (`openai/gpt-oss-120b` par dأ©faut), abstraction `LLMProvider` remplaأ§able
 - Frontend : React, Vite, TypeScript, Tailwind v4, shadcn/ui, TanStack Query
-- Tests : Pytest (655 tests unitaires/intأ©gration + scأ©narios golden)
+- Tests : Pytest (896 tests unitaires/intأ©gration + scأ©narios golden)
 
 ## Dأ©marrage rapide â€” backend
 
@@ -112,6 +112,55 @@ directement.
 cd backend
 pytest tests/ golden_tests/ -v
 ```
+
+## Ecrans du Dashboard React
+
+Le dashboard d'administration et de supervision comporte 8 ecrans complets :
+
+- **Tableau de bord** (`/`) : Indicateurs cles (taux de qualification, cout moyen par conversation ~0.02 EUR, cout d'acquisition, revenus annuels estimes avec distinction frais fixes 60 EUR/an et add-on Digi optionnel 5.99 EUR/mois).
+- **Prospects & Leads** (`/leads`) : Tableau CRM en temps reel, filtres multi-criteres, tiroir de detail du lead (donnees CRM, timeline d'activites, generation et suivi du contrat PDF).
+- **Conversations & Replay** (`/conversations`) : Historique trilingue des dialogues par canal, drawer de relecture pas-a-pas avec trace d'audit.
+- **Supervision Live** (`/live`) : Cockpit temps reel alimente par flux SSE (Server-Sent Events) via jeton HMAC signe, cartes de conversation actives dynamiques, compteurs in/out par minute, tiroir replay integre et repli automatique sur polling 30s si la liaison est interrompue plus de 60s.
+- **Campagnes sortantes** (`/campaigns`) : Gestion des campagnes sortantes SMS, previsualisation obligatoire avant lancement (apercu de divulgation IA legale et comptage reel des cibles), pause/reprise et metriques de progression en direct.
+- **Base de Connaissances** (`/knowledge`) : Gestionnaire RAG v2 avec table des documents sources PDF, statut de cycle de vie (Brouillon / Publie / Archive), zone de televersement avec verification de la couche texte, testeur QA de transparence (inspection des segments extraits et score sans appel LLM), alertes d'obsolescence (cycle W3) et table de repli RAG v1 par mots-cles.
+- **Simulateur** (`/simulator`) : Bac a sable interactif multi-canal et multi-langue (FR, NL, EN) permettant d'eprouver les 5 couches anti-hallucination et les regles d'admissibilite en direct.
+- **Parametres** (`/settings`) : Gestion securisee des cles API, secrets de webhooks, simulation Yousign Sandbox pour validation du cycle de vie contractuel et statut de sante des integrations.
+
+## Architecture RAG v2
+
+Le systeme RAG v2 implemente les patrons ZEN Knowledge adaptes a FastAPI et pgvector :
+
+### 1. Ingestion explicite et cycle de vie (Publish-Explicit)
+- Decoupage par fenetres de mots de ~500 tokens (50 tokens de recouvrement) sans perte d'information.
+- Tout document ingere est cree au statut `DRAFT` : ses segments vectoriels restent strictement invisibles pour l'agent Sophie jusqu'a sa publication manuelle et explicite.
+- Le cycle de vie complet (`DRAFT -> PUBLISHED -> ARCHIVED`) garantit une maitrise absolue des sources citees.
+
+### 2. Double moteur de recherche et seuil de pertinence (Relevance Gate)
+- Recherche vectorielle cross-dialecte : `PgVectorSearch` (distance cosinus `<=>` PostgreSQL) en production, `InMemoryCosineSearch` (calcul cosinus Python pur) sur SQLite et en environnement de test.
+- Seuil de similarite `RAG_MIN_SIMILARITY` (defaut `0.30`) et extraction bornee `RAG_TOP_K` (defaut `20`).
+- Chaine de repli a double niveau :
+  1. Si aucun segment n'atteint le seuil minimal, repli transparent vers le RAG v1 par mots-cles.
+  2. Si aucune entree mot-cle ne correspond, emission d'un **refus deterministe trilingue sans aucun appel LLM** :
+     - FR : *"Je n'ai pas d'information suffisante dans ma base documentaire pour repondre precisement a cette question - un conseiller humain vous repondra tres prochainement."*
+     - NL : *"Ik heb niet voldoende informatie in mijn documentenbasis om deze vraag nauwkeurig te beantwoorden - een menselijke adviseur zal u zeer binnenkort antwoorden."*
+     - EN : *"I don't have sufficient information in my document base to answer this question precisely - a human advisor will get back to you very soon."*
+
+### 3. Generation ancree et validateur de citations
+- Les segments valides sont injectes sous la forme de blocs contextualises `[SOURCE n]` avec titre, version et date de revue.
+- Le validateur de citations (`rag_v2/citations.py`) analyse la reponse generee : toute reference `[SOURCE n]` non presente dans le contexte fourni est automatiquement retiree et tracee dans le journal d'audit (`CITATION_STRIPPED`).
+- La couche de garde regex (Layer 5) valide la reponse finale contre toute statistique inventee ou promesse absolue.
+
+### 4. Gestion de l'obsolescence (Patron ZEN W3)
+- Controle continu des dates de revue documentaire (`review_date`).
+- Les documents a echeance dans les 7 jours sont signales a l'administrateur (`due_soon`).
+- Les documents depassant la periode de grace (`RAG_GRACE_PERIOD_DAYS`, defaut 30 jours) sont automatiquement archives (`auto_archive_expired`), retirant instantanement leurs segments du perimetre de recherche.
+- Detection proactive des conflits de versions sur les memes types de produits.
+
+### 5. Calibration du seuil, Fournisseurs d'Embeddings et Estimation des Couts
+- **Calibration** : Ajustez `RAG_MIN_SIMILARITY` dans les variables d'environnement en observant les scores de similarite reels retournes par l'outil de test QA (`POST /api/knowledge/test`).
+- **Fournisseur d'embeddings** : Abstraction basee sur `EmbeddingProvider` (`ai/providers/embeddings/`). L'implementation actuelle utilise Google AI `text-embedding-004` (768 dimensions, niveau gratuit). Le basculement vers Mistral Embeddings ou un autre fournisseur s'effectue par simple mise en oeuvre de la meme interface sans modifier l'application.
+- **Estimation des couts** : Accessible via `/api/knowledge/stats`, estimee sur la base du nombre de segments actifs (`total_chunks * 500 tokens * cout unitaire du fournisseur`).
+- **Guide d'ingestion officiel** : Consultez `docs/RAG_V2_INGESTION_GUIDE.md` pour les commandes CLI d'ingestion des 12 grilles tarifaires de reference.
 
 ## Canaux
 
