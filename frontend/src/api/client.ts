@@ -11,13 +11,18 @@ import {
   ConversationListItem,
   ConversationListResponse,
   HandoffListResponse,
+  KnowledgeDocument,
   KnowledgeEntry,
   KnowledgeEntryListResponse,
+  KnowledgeStatsResponse,
   LeadDetailResponse,
   LeadListResponse,
   LeadSummary,
+  ObsolescenceStatusResponse,
   OverviewResponse,
   StatsSummaryResponse,
+  TestQueryResponse,
+  UploadDocumentResponse,
 } from "./types";
 import { toast } from "sonner";
 
@@ -234,6 +239,78 @@ export class ApiClient {
 
   async deleteKnowledgeEntry(entryId: string): Promise<void> {
     await this.request<void>(`/api/knowledge/${entryId}`, { method: "DELETE" });
+  }
+
+  // ── RAG v2 Documents & QA (Phase 4) ───────────────────────────────────
+
+  async getKnowledgeDocuments(): Promise<KnowledgeDocument[]> {
+    return this.request<KnowledgeDocument[]>("/api/knowledge/documents");
+  }
+
+  async uploadKnowledgeDocument(formData: FormData): Promise<UploadDocumentResponse> {
+    const headers: Record<string, string> = {};
+    const apiKey = this.getApiKey();
+    if (apiKey) {
+      headers["X-API-Key"] = apiKey;
+    }
+    const url = `${this.baseUrl.replace(/\/$/, "")}/api/knowledge/documents/upload`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      let message = `HTTP ${response.status}: ${response.statusText}`;
+      let code: string | undefined;
+      try {
+        const body = await response.json();
+        if (body?.detail && typeof body.detail === "object") {
+          code = body.detail.code;
+          message = body.detail.message || body.detail.code || message;
+        } else if (body?.detail) {
+          message = body.detail;
+        }
+      } catch {}
+      const error = new Error(message) as Error & { code?: string };
+      if (code) error.code = code;
+      throw error;
+    }
+
+    return (await response.json()) as UploadDocumentResponse;
+  }
+
+  async publishKnowledgeDocument(documentId: string): Promise<KnowledgeDocument> {
+    return this.request<KnowledgeDocument>(`/api/knowledge/documents/${documentId}/publish`, {
+      method: "POST",
+    });
+  }
+
+  async archiveKnowledgeDocument(documentId: string): Promise<KnowledgeDocument> {
+    return this.request<KnowledgeDocument>(`/api/knowledge/documents/${documentId}/archive`, {
+      method: "POST",
+    });
+  }
+
+  async unpublishKnowledgeDocument(documentId: string): Promise<KnowledgeDocument> {
+    return this.request<KnowledgeDocument>(`/api/knowledge/documents/${documentId}/unpublish`, {
+      method: "POST",
+    });
+  }
+
+  async getKnowledgeStats(): Promise<KnowledgeStatsResponse> {
+    return this.request<KnowledgeStatsResponse>("/api/knowledge/stats");
+  }
+
+  async getKnowledgeObsolescence(): Promise<ObsolescenceStatusResponse> {
+    return this.request<ObsolescenceStatusResponse>("/api/knowledge/obsolescence");
+  }
+
+  async testKnowledgeQuery(query: string, language = "fr"): Promise<TestQueryResponse> {
+    return this.request<TestQueryResponse>("/api/knowledge/test", {
+      method: "POST",
+      body: JSON.stringify({ query, language }),
+    });
   }
 
   async getHandoffs(params?: { limit?: number; offset?: number }): Promise<HandoffListResponse> {

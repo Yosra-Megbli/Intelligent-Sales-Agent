@@ -55,6 +55,14 @@ def archive_document(db_session, document_id: UUID) -> KnowledgeDocument:
     return document
 
 
+def unpublish_document(db_session, document_id: UUID) -> KnowledgeDocument:
+    """Returns a published or archived document to DRAFT status."""
+    document = _require_document(db_session, document_id)
+    document.status = KnowledgeDocumentStatus.DRAFT
+    db_session.commit()
+    return document
+
+
 def list_published_chunks(db_session, *, language: str | None = None) -> list[KnowledgeChunk]:
     """The one enforcement point for publish-explicit: a chunk is only
     ever returned here if its parent document is PUBLISHED. DRAFT and

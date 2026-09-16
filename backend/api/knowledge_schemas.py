@@ -7,7 +7,7 @@ other api/*_schemas.py in this codebase.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -67,3 +67,54 @@ class UpdateKnowledgeEntryRequest(BaseModel):
     answer_nl: Optional[str] = None
     answer_en: Optional[str] = None
     active: Optional[bool] = None
+
+
+# RAG v2 schemas (Phase 4)
+
+class KnowledgeDocumentResponse(BaseModel):
+    id: UUID
+    title: str
+    source_type: str
+    language: str
+    status: str
+    version: int
+    review_date: Optional[date] = None
+    chunk_count: int = 0
+    created_at: datetime
+    published_at: Optional[datetime] = None
+
+
+class KnowledgeDocumentListResponse(BaseModel):
+    items: list[KnowledgeDocumentResponse]
+    total: int
+
+
+class UploadDocumentResponse(BaseModel):
+    document_id: str
+    chunks_created: int
+    status: str = "draft"
+
+
+class KnowledgeStatsResponse(BaseModel):
+    documents_by_status: dict[str, int]
+    total_chunks: int
+    chunks_by_language: dict[str, int]
+    estimated_embedding_cost_eur: float
+    obsolescence_summary: dict
+
+
+class TestQueryRequest(BaseModel):
+    query: str = Field(min_length=1)
+    language: str = Field(default="fr")
+
+
+class TestQueryChunkMatch(BaseModel):
+    content_preview: str
+    score: float
+    document_title: str
+    version: int
+
+
+class TestQueryResponse(BaseModel):
+    chunks: list[TestQueryChunkMatch]
+    would_refuse: bool

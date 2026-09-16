@@ -281,3 +281,60 @@ export interface ComplianceOverviewResponse {
   opt_out_events: OptOutJournalEntry[];
 }
 
+export interface KnowledgeDocument {
+  id: string;
+  title: string;
+  source_type: string;
+  language: string;
+  status: "draft" | "published" | "archived" | string;
+  version: number;
+  review_date: string | null;
+  chunk_count: number;
+  created_at: string;
+  published_at: string | null;
+}
+
+export interface UploadDocumentResponse {
+  document_id: string;
+  chunks_created: number;
+  status: string;
+}
+
+export interface ObsolescenceItem {
+  id: string;
+  title: string;
+  review_date: string;
+  status: string;
+  language: string;
+}
+
+export interface ObsolescenceStatusResponse {
+  due_soon: ObsolescenceItem[];
+  overdue: ObsolescenceItem[];
+  archived_today_count: number;
+}
+
+export interface KnowledgeStatsResponse {
+  documents_by_status: {
+    draft: number;
+    published: number;
+    archived: number;
+  };
+  total_chunks: number;
+  chunks_by_language: Record<string, number>;
+  estimated_embedding_cost_eur: number;
+  obsolescence_summary: ObsolescenceStatusResponse;
+}
+
+export interface TestQueryChunk {
+  content_preview: string;
+  score: number;
+  document_title: string;
+  version: number;
+}
+
+export interface TestQueryResponse {
+  chunks: TestQueryChunk[];
+  would_refuse: boolean;
+}
+

@@ -111,11 +111,16 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 - API: `GET /api/knowledge/obsolescence` (due_soon, overdue, archived_today_count) routed through `KnowledgeService`.
 - Tests: 7 new tests covering auto-archive, grace periods, idempotency, version conflict detection, API endpoint.
 
+**Phase 4 (Admin API + UI) is done:**
+- Endpoints: `GET /api/knowledge/documents`, `POST /api/knowledge/documents/upload` (multipart PDF, typed errors 422/503), `POST /api/knowledge/documents/{id}/publish` | `/archive` | `/unpublish`, `GET /api/knowledge/stats` (documents by status, total chunks, language breakdown, embedding cost estimate, obsolescence summary), `POST /api/knowledge/test` (QA transparency tool without LLM call).
+- Frontend: "Base de Connaissances" screen upgraded with RAG v2 source documents table (status badges, review date alerts, publish/archive/republish with confirmation), drag-drop PDF upload zone with client validation and typed error handling, "Tester le RAG" QA transparency box (instant retrieval inspection), obsolescence alert card with quick archive, stats & cost cards, and legacy keyword RAG v1 retained below as fallback. Trilingual fr/nl/en.
+
 ## Priority order
 
 1. **Sprint 4:** make the remaining admin surfaces real — manual Leads CRUD (`POST /api/leads`; campaign channel-activation guard + launch preview already done, see Sprint 5 note below), Knowledge management (`knowledge_base.yaml` → `knowledge_entries` table + CRUD + active toggle — this is the *keyword* RAG's admin surface, separate from RAG v2). Remove stubs that become real; keep honest stubs for WhatsApp/Voice, real Yousign, and RAG v2's retrieval/admin UI.
-2. **RAG v2:** Phase 1 (schema + ingestion), Phase 2 (retrieval + gate + citations), Phase 3 (obsolescence) done. Phase 4 (admin API + UI: documents table, upload PDF, stats, QA test box) next.
-3. Optional: real WhatsApp/Voice, EU hosting region instead of US.
+2. **RAG v2:** Complete (Phases 1, 2, 3, 4 done).
+3. **Sprint 5 (Live Cockpit SSE):** Backend broker + SSE stream (C1) and Cockpit frontend supervision screen (C2) next.
+4. Optional: real WhatsApp/Voice, EU hosting region instead of US.
 
 **Sprint 4c / Campaigns are real** (Sprint 5's own Phase 1 backend + a scoped-down frontend, done together): channel-activation guard (`WHATSAPP`/`VOICE` → 422 `channel_not_activated`, `SMS` allowed), `POST /api/campaigns/{id}/preview` (dry-run launch count + disclosure preview), and the Campagnes screen itself — list with real data, create (name + channel + optional region target_rules), two-step launch (preview modal → start), pause/resume. **Fixed while wiring this up**: the previous CampaignsPage.tsx rendered fabricated numbers (hardcoded `34.2%` response rate, `1.8%` opt-out rate, `14 protégés`, `c.leads_count || 120`) instead of real API data — a compliance-adjacent honesty bug (AGENTS.md's own "no invented stats" rule), not just a stub; the frontend `CampaignSummary` type also didn't match the real backend schema at all (`status: "ACTIVE"` isn't a real value — it's `RUNNING`). Both fixed. **Not built**: the 3-step wizard (multi-select leads / CSV import with row-level validation), SSE live-supervisor layer, "Annuler" (no `CANCELLED` `CampaignStatus` value exists), a `campaign_member` mapping table (deliberately not added — `get_campaign_analytics` already derives sent/responded/qualified/opted-out live from `Lead.status`, a mapping table would just re-shadow that). Creation targets one optional region instead of a lead multi-select/CSV wizard — documented tradeoff, not an oversight.
 
