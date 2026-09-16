@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      run_real_llm_eval:
+        description: "Also run the real-LLM eval against Groq (consumes API quota)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    # 3.12 is what the Dockerfile ships to Render; 3.11 is the local dev venv.
+    # Both are built so the two never silently diverge.
+    name: Backend tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      # tests/conftest.py builds the schema with Base.metadata.create_all()
+      # on SQLite in-memory, so no Postgres or Redis service is needed here.
+      - name: Run test suite (tests/ + golden_tests/)
+        run: pytest -q
+
+  frontend:
+    name: Frontend build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `npm run build` is `tsc -b && vite build`, so this type-checks too.
+      - name: Type-check and build
+        run: npm run build
+
+  real-llm-eval:
+    # Opt-in only: costs Groq quota and is non-deterministic by nature.
+    name: Real-LLM eval (manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_real_llm_eval
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Fail early if the Groq key is missing
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          if [ -z "$GROQ_API_KEY" ]; then
+            echo "::error::GROQ_API_KEY secret is not set on this repository."
+            exit 1
+          fi
+
+      # --category is a plain argparse option, not repeatable: passing it
+      # twice would silently keep only the last value, so one step each.
+      - name: Eval - entity_extraction
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python golden_tests/run_real_llm_eval.py --category entity_extraction --save-report eval-entity_extraction.json
+
+      - name: Eval - multi_entity
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python golden_tests/run_real_llm_eval.py --category multi_entity --save-report eval-multi_entity.json
+
+      # The script deliberately always exits 0 (LLM output is not a stable
+      # gate), so the reports are the actual deliverable - a human reads them.
+      - name: Upload eval reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-llm-eval-reports
+          path: backend/eval-*.json
+          if-no-files-found: warn
