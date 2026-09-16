@@ -150,6 +150,8 @@
     "drawer": {
       "title": "360° Prospectdossier",
       "qualificationTitle": "Kwalificatiecontrole (9 criteria)",
+      "criteriaMet": "criteria voldaan",
+      "notProvided": "Niet ingevuld",
       "profileTitle": "Energieprofiel & Productcompatibiliteit",
       "activityTitle": "Activiteitenlogboek van de prospect",
       "purgedNotice": "PII-gegevens gewist op {{date}} conform artikel 17 van de AVG/GDPR (STOP/STOPT).",
@@ -167,12 +169,16 @@
       "productFit": {
         "ev": "Elektrisch voertuig (EV)",
         "evPitch": "Suggestie: Pitch Ecofix Motion (dynamische uurtarieven)",
+        "evOff": "Geen EV opgegeven",
         "heatPump": "Warmtepomp",
         "heatPumpPitch": "Suggestie: Optimalisatie flexibiliteit Motion",
+        "heatPumpOff": "Klassieke verwarming",
         "solar": "Zonnepanelen",
         "solarPitch": "Suggestie: Waardering teruglevering",
+        "solarOff": "Geen zonnepanelen",
         "battery": "Thuisbatterij",
-        "batteryPitch": "Suggestie: Arbitrage uurtarief Motion"
+        "batteryPitch": "Suggestie: Arbitrage uurtarief Motion",
+        "batteryOff": "Geen batterij"
       },
       "contract": {
         "title": "Contract & Handtekening",

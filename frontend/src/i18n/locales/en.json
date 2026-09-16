@@ -150,6 +150,8 @@
     "drawer": {
       "title": "360° Prospect Record",
       "qualificationTitle": "Qualification Verification (9 criteria)",
+      "criteriaMet": "criteria met",
+      "notProvided": "Not provided",
       "profileTitle": "Energy Profile & Product Fit",
       "activityTitle": "Prospect Activity Journal",
       "purgedNotice": "PII data erased on {{date}} pursuant to GDPR Article 17 (STOP/STOPT/ARRÊT).",
@@ -167,12 +169,16 @@
       "productFit": {
         "ev": "Electric Vehicle (EV)",
         "evPitch": "Suggestion: Pitch Ecofix Motion (dynamic hourly pricing)",
+        "evOff": "No EV declared",
         "heatPump": "Heat Pump",
         "heatPumpPitch": "Suggestion: Motion flexibility optimization",
+        "heatPumpOff": "Conventional heating",
         "solar": "Solar Panels",
         "solarPitch": "Suggestion: Feed-in tariff monetization",
+        "solarOff": "No solar panels",
         "battery": "Home Battery",
-        "batteryPitch": "Suggestion: Motion hourly rate arbitrage"
+        "batteryPitch": "Suggestion: Motion hourly rate arbitrage",
+        "batteryOff": "No battery"
       },
       "contract": {
         "title": "Contract & Signature",
