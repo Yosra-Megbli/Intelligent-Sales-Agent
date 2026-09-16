@@ -225,7 +225,6 @@
     "title": "Compliance & GDPR Center",
     "subtitle": "AI Act transparency, opt-out ledger and data sovereignty guarantees.",
     "guardTitle": "AI Act Transparency Guard",
-    "guardStatus": "ACTIVE — 673 tests",
     "guardDesc": "Automated verification: every first outbound message and call opening explicitly discloses the AI agent status and human handover.",
     "optOutJournalTitle": "Opt-out Ledger (Right to Erasure)",
     "optOutJournalDesc": "Immediate purging of PII upon receipt of a STOP / STOPT / ARRÊT keyword.",

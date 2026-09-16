@@ -225,7 +225,6 @@
     "title": "Nalevings- & AVG-Centrum",
     "subtitle": "AI Act transparantie, opt-out logboek en garanties voor gegevenssoevereiniteit.",
     "guardTitle": "AI Act Transparantiewaakhond",
-    "guardStatus": "ACTIEF — 673 tests",
     "guardDesc": "Geautomatiseerde verificatie: elk eerste uitgaand bericht en elke oproepopening onthult expliciet de AI-status en menselijke overname.",
     "optOutJournalTitle": "Opt-out Logboek (Recht op gegevenswissing)",
     "optOutJournalDesc": "Onmiddellijke verwijdering van PII bij ontvangst van een STOP / STOPT / ARRÊT sleutelwoord.",

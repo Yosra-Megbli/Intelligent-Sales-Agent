@@ -14,6 +14,7 @@ from sqlalchemy.pool import StaticPool
 
 from api.main import app
 from api.routes import get_db_session
+from application.dashboard_service import GUARD_TESTS_COUNT
 from crm.activity_repository import ActivityRepository
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
@@ -457,7 +458,7 @@ def test_get_compliance_overview(client):
     assert response.status_code == 200
     data = response.json()
     assert data["guard_status"] == "ACTIF"
-    assert data["guard_tests_count"] == 673
+    assert data["guard_tests_count"] == GUARD_TESTS_COUNT
     assert data["retention_months"] == 12
     assert data["auto_purge_enabled"] is True
     assert len(data["opt_out_events"]) >= 1

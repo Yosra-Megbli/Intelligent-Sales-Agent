@@ -168,9 +168,13 @@ export const CompliancePage: React.FC = () => {
                 <ShieldCheck className="w-4 h-4 text-[var(--color-teal)]" />
                 <CardTitle>{t("compliancePage.guardTitle")}</CardTitle>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] font-semibold border border-[var(--color-teal-soft-border)]">
-                {complianceData?.guard_status || "ACTIF"} — {complianceData?.guard_tests_count || 673} tests
-              </span>
+              {isLoading ? (
+                <Skeleton className="h-4 w-24 rounded-full" />
+              ) : (
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] font-semibold border border-[var(--color-teal-soft-border)]">
+                  {complianceData?.guard_status} — {complianceData?.guard_tests_count} tests
+                </span>
+              )}
             </div>
             <CardDescription>{t("compliancePage.guardDesc")}</CardDescription>
           </CardHeader>

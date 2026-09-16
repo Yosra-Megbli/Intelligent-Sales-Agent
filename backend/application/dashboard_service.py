@@ -28,6 +28,15 @@ from crm.campaign_repository import CampaignRepository
 from crm.contract_repository import ContractRepository
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
+
+# Single source of truth for the automated-test count shown on the
+# Compliance Center's "guard status" badge (get_compliance_overview below)
+# and in the frontend's guardStatus i18n strings. This was previously
+# hardcoded to 673 in six separate places (backend, one test, the frontend
+# card, and all three locale files) and had already drifted from reality
+# before anyone noticed - see AGENTS.md. Update this ONE constant when the
+# suite grows; everything else reads from it or from the API response.
+GUARD_TESTS_COUNT = 800
 from domain.enums import ActivityType, ConversationChannel, ConversationState, LeadSource, LeadStatus
 from domain.models.activity import Activity
 from domain.models.campaign import Campaign
@@ -333,7 +342,7 @@ class DashboardService:
         entries = [ActivityFeedEntry(activity=a, lead=a.lead) for a in opt_out_activities]
         return ComplianceOverview(
             guard_status="ACTIF",
-            guard_tests_count=673,
+            guard_tests_count=GUARD_TESTS_COUNT,
             guard_last_run=datetime.utcnow(),
             retention_months=12,
             auto_purge_enabled=True,

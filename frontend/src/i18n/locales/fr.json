@@ -225,7 +225,6 @@
     "title": "Centre de Conformité & RGPD",
     "subtitle": "Transparence AI Act, journal d'opt-out et garanties de souveraineté des données.",
     "guardTitle": "Garde-fou Transparence AI Act",
-    "guardStatus": "ACTIF — 673 tests",
     "guardDesc": "Vérification automatisée : tout premier message sortant et toute ouverture d'appel divulgue explicitement le statut d'agent IA et le relais humain.",
     "optOutJournalTitle": "Journal des Opt-outs (Droit à l'effacement)",
     "optOutJournalDesc": "Purge immédiate des PII dès réception d'un mot-clé STOP / STOPT / ARRÊT.",
