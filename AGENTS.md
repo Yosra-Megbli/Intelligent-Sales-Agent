@@ -56,7 +56,7 @@ Verified against the Sept 2026 tariff card on 2026-09-16. **Tariff cards change 
 
 CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus the frontend build on every push/PR to main. The real-LLM eval is `workflow_dispatch` opt-in.
 
-**Migration trap:** tests build the schema with `Base.metadata.create_all()` on SQLite in-memory, and `migration_runner.py` skips SQL migrations on any non-postgresql dialect. A broken `.sql` migration therefore passes CI green and fails at boot on Render. Any new table needs BOTH a SQLAlchemy model AND a SQL migration, kept consistent by hand — a static coherence test (column names cross-checked between the model and the `.sql` file) is the pattern to reuse; see `tests/test_rag_v2_migration_coherence.py`. Next migration number is **0012** (note: two files already share the `0007` prefix).
+**Migration trap:** tests build the schema with `Base.metadata.create_all()` on SQLite in-memory, and `migration_runner.py` skips SQL migrations on any non-postgresql dialect. A broken `.sql` migration therefore passes CI green and fails at boot on Render. Any new table needs BOTH a SQLAlchemy model AND a SQL migration, kept consistent by hand — a static coherence test (column names cross-checked between the model and the `.sql` file) is the pattern to reuse; see `tests/test_rag_v2_migration_coherence.py`. Next migration number is **0013** (`0011` and `0012` are both now used - RAG v2's `knowledge_documents`/`knowledge_chunks` and Sprint 4b's `knowledge_entries` respectively; note two files also already share the `0007` prefix).
 
 ## Status
 
@@ -75,7 +75,7 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 
 - WhatsApp and Voice are built but NOT activated (API keys missing).
 - Yousign is sandbox-only; no real e-signature key.
-- Campaigns and Knowledge admin screens are still honest "Phase 2" stubs (Sprint 4 target).
+- Campaigns admin screen (wizard, live cockpit) is still a Phase 2 stub - backend gaps closed (channel guard, launch preview, Sprint 5 Phase 1), frontend not built.
 - No manual lead creation endpoint (`POST /api/leads`) — only CSV import; `PATCH` and `DELETE` already exist.
 - RAG v2 retrieval is not wired into the chat: `ai/rag.py` (chat-facing) is still keyword-only. RAG v2 Phase 1 (schema + ingestion) exists — see below — but nothing calls it from `application/conversation_service.py` yet.
 - NL copy has never been field-tested.
@@ -84,6 +84,8 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 ## Knowledge & RAG
 
 `knowledge_corpus/` holds the official raw material (12 Sept-2026 tariff card PDFs FR+NL, terms, FAQ, regulators) — see `knowledge_corpus/README.md`.
+
+**Keyword RAG v1 admin (Sprint 4b) is done**, migration `0012` (RAG v2's Phase 1 already claimed `0011` - see below): `knowledge_entries` table (`domain/models/knowledge_entry.py`), CRUD at `GET/POST/PUT/DELETE /api/knowledge` + `POST /api/knowledge/{id}/toggle-active`, and a "Base de Connaissances" sidebar screen. `ai/rag.py` is untouched — it already accepted `entries=` as a constructor parameter before this work started, so `application/conversation_service.py`'s new `_build_rag(language)` just uses that existing injection point: it re-queries `knowledge_entries` on every call (never cached), converts active rows to `ai.rag.KnowledgeEntry` tuples using the answer matching the conversation's language, and falls back to the original YAML-backed `Rag()` when the table is empty. Seed script `scripts/seed_knowledge_entries.py` migrates `ai/knowledge_base.yaml` into the table (idempotent, deterministic UUIDs via `uuid.uuid5` — not run automatically, run it once after applying migration `0012`).
 
 **RAG v2** — vision: port the ZEN Knowledge patterns (publish-explicit, W3 obsolescence, citations validator, refusal-before-LLM) to FastAPI/Python. Backlog and decisions: `docs/RAG_BACKLOG.md`. Settled decisions: pgvector on Neon; embeddings via API (Google AI `text-embedding-004`, 768-dim, free tier — Mistral documented as a fallback), no local models (Render free = 512 MB); source-of-truth hierarchy tariff card > terms > helpdesk > regulator > marketing; legacy keyword RAG kept during migration.
 

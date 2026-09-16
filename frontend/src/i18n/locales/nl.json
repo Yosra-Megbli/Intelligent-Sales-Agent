@@ -121,6 +121,7 @@
     "loading": "Bezig met laden...",
     "error": "Er is een fout opgetreden",
     "retry": "Opnieuw proberen",
+    "save": "Opslaan",
     "back": "Terug",
     "refresh": "Vernieuwen",
     "close": "Sluiten",
@@ -257,6 +258,36 @@
     "anonymizationStatus": "Anonimisering vóór LLM: Gepland (Fase 3)",
     "shieldHero": "Ingebouwde Wettelijke Naleving",
     "shieldHeroDesc": "Gecertificeerde deterministische architectuur: het taalmodel neemt geen bindende contractuele beslissingen."
+  },
+  "knowledgePage": {
+    "title": "Kennisbank",
+    "subtitle": "Feiten en antwoorden die Sophie mag geven op vragen en bezwaren.",
+    "addButton": "Item toevoegen",
+    "editTitle": "Item bewerken",
+    "searchPlaceholder": "Filter op vraag, categorie, trefwoord...",
+    "ragV1Banner": "Trefwoord-RAG v1 — vectorzoeken met PDF-documenten (upload, versies, veroudering) komt in RAG v2 — zie docs/RAG_BACKLOG.md.",
+    "createSuccess": "Item succesvol aangemaakt",
+    "updateSuccess": "Item bijgewerkt",
+    "deleteSuccess": "Item verwijderd",
+    "validationError": "Vraag, trefwoorden en FR-antwoord zijn verplicht",
+    "deleteConfirmTitle": "Dit item verwijderen?",
+    "deleteConfirmBody": "deze actie is onomkeerbaar.",
+    "empty": "Geen items gevonden.",
+    "table": {
+      "category": "Categorie",
+      "question": "Vraag",
+      "languages": "Talen",
+      "active": "Actief",
+      "actions": "Acties"
+    },
+    "form": {
+      "category": "Categorie",
+      "question": "Vraag / label",
+      "keywords": "Trefwoorden (komma-gescheiden)",
+      "answerFr": "Antwoord (FR) *",
+      "answerNl": "Antwoord (NL) — optioneel, anders FR gebruikt",
+      "answerEn": "Antwoord (EN) — optioneel, anders FR gebruikt"
+    }
   },
   "settingsPage": {
     "title": "Console-instellingen",

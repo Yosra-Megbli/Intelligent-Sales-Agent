@@ -32,6 +32,7 @@ from sqlalchemy.exc import IntegrityError
 
 from ai.extractor import Extractor
 from ai.providers.interface import LLMProvider
+from ai.rag import KnowledgeEntry as RagKnowledgeEntry
 from ai.rag import Rag
 from ai.responder import Responder
 from conversation_engine.engine import ConversationEngine, EngineResult
@@ -42,6 +43,7 @@ from conversation_engine.transitions import Event, EventType
 from conversation_engine.opt_out import is_opt_out
 from crm.activity_repository import ActivityRepository
 from crm.conversation_repository import ConversationRepository
+from crm.knowledge_repository import KnowledgeRepository
 from crm.lead_repository import LeadRepository
 from domain.enums import ActivityType, ContractStatus, ConversationChannel, ConversationState, LeadSource, LeadStatus, MessageRole, RejectionReason
 
@@ -137,8 +139,15 @@ class ConversationService:
         self.conversation_repo = ConversationRepository(db_session)
         self.lead_repo = LeadRepository(db_session)
         self.activity_repo = ActivityRepository(db_session)
+        self.knowledge_repo = KnowledgeRepository(db_session)
         self.extractor = Extractor(provider) if provider is not None else None
         self.responder = Responder(provider)
+        # `rag` explicitly injected (e.g. by a test) always wins and is used
+        # as-is, forever - no DB-backed override. Otherwise `_build_rag()`
+        # re-queries knowledge_entries on every call (see its own docstring
+        # for why), and this YAML-only instance is only its fallback when
+        # that table is empty.
+        self._injected_rag = rag
         self.rag = rag if rag is not None else Rag()
 
     def start_conversation(
@@ -521,11 +530,44 @@ class ConversationService:
         expected_field = _REQUIRED_ACTION_TO_EXPECTED_FIELD.get(last_question_action or "")
         return self.extractor.extract(raw_text, expected_field=expected_field)
 
+    def _build_rag(self, language: str) -> Rag:
+        """DB-editable source of RAG entries (Sprint 4b), re-read on every
+        call so deactivating an entry in the admin UI takes effect on the
+        very next customer message - never cached on self. Falls back to
+        `self.rag` (YAML-loaded, ai/rag.py's own default) when either an
+        explicit `rag=` was injected at construction time (tests) or the
+        knowledge_entries table is empty - so an empty/unmigrated table
+        never leaves Sophie unable to answer anything.
+
+        ai/rag.py itself is untouched: this only uses the injection point
+        its own constructor already exposed (`Rag(entries=...)`), per its
+        docstring - "Swapping in a real vector store later only needs a
+        new implementation behind the same Rag.answer() contract."
+        """
+        if self._injected_rag is not None:
+            return self._injected_rag
+
+        db_entries = self.knowledge_repo.list_active()
+        if not db_entries:
+            return self.rag
+
+        entries = tuple(
+            RagKnowledgeEntry(
+                id=str(row.id),
+                category=row.category,
+                keywords=tuple(row.get_keywords()),
+                answer=row.answer_for_language(language),
+            )
+            for row in db_entries
+        )
+        return Rag(entries=entries)
+
     def _generate_response(self, result: EngineResult, conversation: Conversation, raw_text: str) -> Optional[str]:
         rag_answer = None
         rag_category = _RAG_CATEGORY_BY_ACTION.get(result.required_action or "")
         if rag_category:
-            rag_answer = self.rag.answer(raw_text, category=rag_category)
+            rag = self._build_rag(conversation.language or "fr")
+            rag_answer = rag.answer(raw_text, category=rag_category)
 
         response_text = self.responder.respond(
             result.required_action,

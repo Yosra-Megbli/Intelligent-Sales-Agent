@@ -121,6 +121,7 @@
     "loading": "Chargement...",
     "error": "Une erreur est survenue",
     "retry": "Réessayer",
+    "save": "Enregistrer",
     "back": "Retour",
     "refresh": "Actualiser",
     "close": "Fermer",
@@ -257,6 +258,36 @@
     "anonymizationStatus": "Anonymisation avant LLM : Planifiée (Phase 3)",
     "shieldHero": "Conformité Règlementaire Native",
     "shieldHeroDesc": "Architecture déterministe certifiée : le modèle de langage ne prend aucune décision contractuelle."
+  },
+  "knowledgePage": {
+    "title": "Base de Connaissances",
+    "subtitle": "Faits et réponses que Sophie est autorisée à donner aux questions et objections.",
+    "addButton": "Ajouter une entrée",
+    "editTitle": "Modifier l'entrée",
+    "searchPlaceholder": "Filtrer par question, catégorie, mot-clé...",
+    "ragV1Banner": "RAG mot-clé v1 — la recherche vectorielle avec documents PDF (upload, versions, obsolescence) arrive en RAG v2 — voir docs/RAG_BACKLOG.md.",
+    "createSuccess": "Entrée créée avec succès",
+    "updateSuccess": "Entrée mise à jour",
+    "deleteSuccess": "Entrée supprimée",
+    "validationError": "Question, mots-clés et réponse FR sont requis",
+    "deleteConfirmTitle": "Supprimer cette entrée ?",
+    "deleteConfirmBody": "cette action est irréversible.",
+    "empty": "Aucune entrée trouvée.",
+    "table": {
+      "category": "Catégorie",
+      "question": "Question",
+      "languages": "Langues",
+      "active": "Actif",
+      "actions": "Actions"
+    },
+    "form": {
+      "category": "Catégorie",
+      "question": "Question / intitulé",
+      "keywords": "Mots-clés (séparés par des virgules)",
+      "answerFr": "Réponse (FR) *",
+      "answerNl": "Réponse (NL) — optionnel, sinon FR utilisé",
+      "answerEn": "Réponse (EN) — optionnel, sinon FR utilisé"
+    }
   },
   "settingsPage": {
     "title": "Paramètres de la Console",

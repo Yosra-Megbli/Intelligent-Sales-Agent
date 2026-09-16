@@ -213,6 +213,23 @@ export interface OptOutJournalEntry {
   confirmation_sent: boolean;
 }
 
+export interface KnowledgeEntry {
+  id: string;
+  category: string;
+  question: string;
+  keywords: string[];
+  answer_fr: string;
+  answer_nl: string | null;
+  answer_en: string | null;
+  active: boolean;
+  updated_at: string;
+}
+
+export interface KnowledgeEntryListResponse {
+  items: KnowledgeEntry[];
+  total: number;
+}
+
 export interface ComplianceOverviewResponse {
   guard_status: string;
   guard_tests_count: number;

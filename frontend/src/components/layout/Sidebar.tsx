@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Zap,
   Settings,
+  BookOpen,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -66,6 +67,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: "compliance",
       label: t("compliancePage.title"),
       icon: ShieldCheck,
+      isPhase2: false,
+    },
+    {
+      id: "knowledge",
+      label: t("knowledgePage.title"),
+      icon: BookOpen,
       isPhase2: false,
     },
     {

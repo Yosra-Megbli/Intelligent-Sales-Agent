@@ -218,6 +218,29 @@ def test_lead_service_never_imports_the_engine_or_ai():
     assert not leaked, f"application/lead_service.py must not import these directly: {leaked}"
 
 
+def test_knowledge_service_never_imports_the_engine_or_ai():
+    """KnowledgeService (Sprint 4b admin CRUD for knowledge_entries) only
+    manages rows - turning an active row into something ai/rag.py's Rag
+    can use is application/conversation_service.py's job (the one place
+    allowed to import both), never this one's."""
+    from application import knowledge_service as knowledge_service_module
+
+    imported = _imported_module_names(knowledge_service_module)
+    leaked = {name for name in imported if any(name.startswith(m) for m in _ENGINE_AND_AI_MODULES)}
+    assert not leaked, f"application/knowledge_service.py must not import these directly: {leaked}"
+
+
+def test_knowledge_routes_never_import_repositories_or_engine_directly():
+    """api/knowledge_routes.py must only reach the data layer through
+    KnowledgeService - same rule as api/leads_routes.py."""
+    from api import knowledge_routes as knowledge_routes_module
+
+    imported = _imported_module_names(knowledge_routes_module)
+    forbidden = _ENGINE_AND_AI_MODULES + ("crm.knowledge_repository",)
+    leaked = {name for name in imported if any(name.startswith(m) for m in forbidden)}
+    assert not leaked, f"api/knowledge_routes.py must not import these directly: {leaked}"
+
+
 def test_dashboard_service_never_imports_the_engine_or_ai():
     """DashboardService is read-only reporting, not a use-case that talks to
     the LLM or the Business Engine - unlike ConversationService, it should

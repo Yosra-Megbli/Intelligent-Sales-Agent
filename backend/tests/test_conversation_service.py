@@ -336,6 +336,90 @@ def test_question_event_triggers_rag_lookup_and_llm_phrasing(db_session):
     assert "gratuit" in phrasing_call["messages"][0].content.lower()
 
 
+def test_db_backed_knowledge_entry_is_used_when_present(db_session):
+    """Sprint 4b: an active knowledge_entries row is matched exactly like a
+    YAML entry would be - proven with a keyword the YAML file does not
+    contain at all, so a match can only have come from the DB path."""
+    from crm.knowledge_repository import KnowledgeRepository
+
+    KnowledgeRepository(db_session).create(
+        category="faq",
+        question="Question de test",
+        keywords=["motclefunique123"],
+        answer_fr="Reponse issue de la base de donnees.",
+    )
+    db_session.commit()
+    _, conversation = _new_conversation(db_session)
+    provider = ScriptedProvider(extraction_payload={"event_type": "QUESTION", "entities": {}})
+    service = ConversationService(db_session, provider=provider)
+
+    service.handle_message(
+        ConversationRequest(conversation_id=conversation.id, text="motclefunique123 ?")
+    )
+
+    phrasing_call = next(c for c in provider.calls if c["json_mode"] is False)
+    assert "Reponse issue de la base de donnees." in phrasing_call["messages"][0].content
+
+
+def test_deactivating_a_knowledge_entry_removes_it_from_the_very_next_call(db_session):
+    """The actual Sprint 4b acceptance criterion: toggling active=False
+    takes effect immediately, not after a service restart - because
+    _build_rag() re-queries knowledge_entries on every call rather than
+    caching it on ConversationService.__init__."""
+    from crm.knowledge_repository import KnowledgeRepository
+
+    repo = KnowledgeRepository(db_session)
+    entry = repo.create(
+        category="faq",
+        question="Question de test",
+        keywords=["motclefunique456"],
+        answer_fr="Reponse qui va disparaitre.",
+    )
+    db_session.commit()
+    _, conversation = _new_conversation(db_session)
+    provider = ScriptedProvider(extraction_payload={"event_type": "QUESTION", "entities": {}})
+    service = ConversationService(db_session, provider=provider)
+
+    # First call: the entry is active, so it matches.
+    service.handle_message(ConversationRequest(conversation_id=conversation.id, text="motclefunique456 ?"))
+    first_phrasing = next(c for c in provider.calls if c["json_mode"] is False)
+    assert "Reponse qui va disparaitre." in first_phrasing["messages"][0].content
+
+    # Deactivate, then ask again in a fresh conversation on the SAME
+    # (long-lived) ConversationService instance - proving the re-query
+    # happens per call, not once at __init__.
+    repo.update_fields(entry, active=False)
+    db_session.commit()
+    _, conversation2 = _new_conversation(db_session)
+    provider.calls.clear()
+
+    service.handle_message(ConversationRequest(conversation_id=conversation2.id, text="motclefunique456 ?"))
+
+    # No YAML entry matches this made-up keyword either, so with the DB
+    # entry gone, nothing matches at all: generic fallback, no LLM call.
+    phrasing_calls = [c for c in provider.calls if c["json_mode"] is False]
+    assert phrasing_calls == []
+
+
+def test_knowledge_entries_table_empty_falls_back_to_yaml(db_session):
+    """When knowledge_entries has no rows at all (not just none active),
+    the original YAML-backed matching keeps working unchanged - same
+    scenario as test_question_event_triggers_rag_lookup_and_llm_phrasing,
+    named explicitly here for the Sprint 4b acceptance criterion."""
+    _, conversation = _new_conversation(db_session)
+    provider = ScriptedProvider(
+        extraction_payload={"event_type": "QUESTION", "entities": {}},
+        response_text="Le changement de fournisseur s'effectue simplement chez Ecofix.",
+    )
+    service = ConversationService(db_session, provider=provider)
+
+    reply = service.handle_message(
+        ConversationRequest(conversation_id=conversation.id, text="C'est gratuit ou il y a des frais ?")
+    )
+
+    assert reply.response_text == "Le changement de fournisseur s'effectue simplement chez Ecofix."
+
+
 def test_question_with_no_rag_match_uses_generic_fallback_without_llm_call(db_session):
     _, conversation = _new_conversation(db_session)
     provider = ScriptedProvider(extraction_payload={"event_type": "QUESTION", "entities": {}})

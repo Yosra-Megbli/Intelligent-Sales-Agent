@@ -7,6 +7,8 @@ import {
   ConversationListItem,
   ConversationListResponse,
   HandoffListResponse,
+  KnowledgeEntry,
+  KnowledgeEntryListResponse,
   LeadDetailResponse,
   LeadListResponse,
   LeadSummary,
@@ -194,6 +196,40 @@ export class ApiClient {
 
   async deleteLead(leadId: string): Promise<void> {
     await this.request<void>(`/api/leads/${leadId}`, { method: "DELETE" });
+  }
+
+  async getKnowledgeEntries(): Promise<KnowledgeEntryListResponse> {
+    return this.request<KnowledgeEntryListResponse>("/api/knowledge");
+  }
+
+  async createKnowledgeEntry(payload: {
+    category: string;
+    question: string;
+    keywords: string[];
+    answer_fr: string;
+    answer_nl?: string;
+    answer_en?: string;
+    active?: boolean;
+  }): Promise<KnowledgeEntry> {
+    return this.request<KnowledgeEntry>("/api/knowledge", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateKnowledgeEntry(entryId: string, payload: Record<string, unknown>): Promise<KnowledgeEntry> {
+    return this.request<KnowledgeEntry>(`/api/knowledge/${entryId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async toggleKnowledgeEntryActive(entryId: string): Promise<KnowledgeEntry> {
+    return this.request<KnowledgeEntry>(`/api/knowledge/${entryId}/toggle-active`, { method: "POST" });
+  }
+
+  async deleteKnowledgeEntry(entryId: string): Promise<void> {
+    await this.request<void>(`/api/knowledge/${entryId}`, { method: "DELETE" });
   }
 
   async getHandoffs(params?: { limit?: number; offset?: number }): Promise<HandoffListResponse> {

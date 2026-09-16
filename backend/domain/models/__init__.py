@@ -4,6 +4,7 @@ from domain.models.contract import Contract
 from domain.models.conversation import Conversation
 from domain.models.knowledge_chunk import KnowledgeChunk
 from domain.models.knowledge_document import KnowledgeDocument
+from domain.models.knowledge_entry import KnowledgeEntry
 from domain.models.lead import Lead
 from domain.models.message import Message
 
@@ -14,6 +15,7 @@ __all__ = [
     "Conversation",
     "KnowledgeChunk",
     "KnowledgeDocument",
+    "KnowledgeEntry",
     "Lead",
     "Message",
 ]

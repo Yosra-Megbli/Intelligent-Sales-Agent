@@ -121,6 +121,7 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "retry": "Retry",
+    "save": "Save",
     "back": "Back",
     "refresh": "Refresh",
     "close": "Close",
@@ -257,6 +258,36 @@
     "anonymizationStatus": "Pre-LLM Anonymization: Planned (Phase 3)",
     "shieldHero": "Native Regulatory Compliance",
     "shieldHeroDesc": "Certified deterministic architecture: the language model makes zero contractual business decisions."
+  },
+  "knowledgePage": {
+    "title": "Knowledge Base",
+    "subtitle": "Facts and answers Sophie is allowed to give to questions and objections.",
+    "addButton": "Add an entry",
+    "editTitle": "Edit entry",
+    "searchPlaceholder": "Filter by question, category, keyword...",
+    "ragV1Banner": "Keyword RAG v1 — vector search with PDF documents (upload, versions, obsolescence) is coming in RAG v2 — see docs/RAG_BACKLOG.md.",
+    "createSuccess": "Entry created successfully",
+    "updateSuccess": "Entry updated",
+    "deleteSuccess": "Entry deleted",
+    "validationError": "Question, keywords and FR answer are required",
+    "deleteConfirmTitle": "Delete this entry?",
+    "deleteConfirmBody": "this action is irreversible.",
+    "empty": "No entries found.",
+    "table": {
+      "category": "Category",
+      "question": "Question",
+      "languages": "Languages",
+      "active": "Active",
+      "actions": "Actions"
+    },
+    "form": {
+      "category": "Category",
+      "question": "Question / label",
+      "keywords": "Keywords (comma-separated)",
+      "answerFr": "Answer (FR) *",
+      "answerNl": "Answer (NL) — optional, FR used otherwise",
+      "answerEn": "Answer (EN) — optional, FR used otherwise"
+    }
   },
   "settingsPage": {
     "title": "Console Settings",
