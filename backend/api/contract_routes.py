@@ -105,6 +105,9 @@ def create_contract(
         contract, pdf_bytes, yousign_res = service.create_contract_for_lead(payload.lead_id)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:
+        logger.exception("Failed to create contract for lead %s: %s", payload.lead_id, exc)
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la génération du contrat: {str(exc)}")
 
     res = _serialize_contract(contract)
     res.yousign_status = yousign_res.get("status")

@@ -102,9 +102,26 @@ app.add_middleware(
     allow_origins=_allowed_origins,
     allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["X-API-Key", "X-Telegram-Bot-Api-Secret-Token", "Content-Type", "Authorization"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logging.getLogger(__name__).exception("Unhandled server exception on %s %s: %s", request.method, request.url.path, exc)
+    from fastapi.responses import JSONResponse
+
+    origin = request.headers.get("origin")
+    cors_headers = {}
+    if origin:
+        cors_headers["Access-Control-Allow-Origin"] = origin
+        cors_headers["Access-Control-Allow-Credentials"] = "true"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc) or "Internal server error"},
+        headers=cors_headers,
+    )
 
 app.include_router(router)
 app.include_router(contract_router)

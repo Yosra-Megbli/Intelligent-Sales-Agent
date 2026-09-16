@@ -117,7 +117,11 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
       queryClient.invalidateQueries({ queryKey: ["leadDetail", lead.id] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["overview"] });
-      await apiClient.downloadContractPdf(contract.id, `contrat_specimen_${lead.last_name || "lead"}.pdf`);
+      try {
+        await apiClient.downloadContractPdf(contract.id, `contrat_specimen_${lead.last_name || "lead"}.pdf`);
+      } catch (pdfErr) {
+        console.warn("Could not auto-download PDF:", pdfErr);
+      }
     } catch (err: any) {
       toast.error(err?.message || "Erreur lors de la génération du contrat");
     } finally {
