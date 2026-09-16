@@ -98,17 +98,23 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 - `rag_v2/documents.py` — publish-explicit: `publish_document()`/`archive_document()`/`list_published_chunks()`. Ingesting never publishes; nothing is retrievable until this is called.
 - 37 new tests, all offline (fake `EmbeddingProvider`, monkeypatched PDF extraction, no network) — chunking correctness incl. a no-content-loss regression, ingestion, publish-explicit gating, and a static model/migration column-coherence check (`tests/test_rag_v2_migration_coherence.py`).
 
-**Phase 2 (similarity-search retrieval + chat wiring) is done:**
-- `rag_v2/retrieval.py` — Python cosine similarity over published chunks (`list_published_chunks_with_documents`), threshold `RAG_MIN_SIMILARITY` (0.30 default), `RAG_TOP_K` (20 default).
-- `application/conversation_service.py` — RAG v2 vector search attempted first before keyword RAG, with safe fallback on no match or provider failure.
+**Phase 2 (similarity-search retrieval + relevance gate + grounded generation + citations) is done:**
+- `rag_v2/search.py` — `VectorSearch` interface with `PgVectorSearch` (pgvector `<=>` cosine distance on PostgreSQL) and `InMemoryCosineSearch` (pure Python cosine on published chunks for SQLite/tests).
+- `rag_v2/retrieval.py` — threshold `RAG_MIN_SIMILARITY` (0.30 default), `RAG_TOP_K` (20 default), `valid_until` filtering, `ScoredChunk` dataclass.
+- `rag_v2/refusal.py` — deterministic legal trilingual refusal without LLM call if below threshold or no source.
+- `rag_v2/citations.py` — post-generation citation validation; invalid `[SOURCE n]` mentions stripped, `CITATION_STRIPPED` activity logged.
+- `application/conversation_service.py` — RAG v2 vector search attempted first before keyword RAG, safe fallback, grounded prompt formatting `[SOURCE n]`, citation validation, output guard layer 5.
 - Channels & API: `channels/web.py`, `channels/telegram.py`, `channels/whatsapp.py`, `channels/sms.py`, and `api/routes.py` with `get_embedding_provider()` dependency.
-- Tests: unit retrieval tests, conversation service wiring, channel passthrough tests, and end-to-end API test.
-- **Not built yet (Phase 3+):** citation validator, obsolescence scheduler, admin API/UI for documents/chunks. No PDF from `knowledge_corpus/` has actually been ingested with a real key — cost so far is €0.
+
+**Phase 3 (obsolescence - ZEN W3 pattern) is done:**
+- `rag_v2/obsolescence.py` — `review_due_documents` (7d default), `auto_archive_expired` (grace period 30d default, idempotent archive), `detect_version_conflict` (warnings on duplicate product keys), CLI `python -m rag_v2.obsolescence --run`.
+- API: `GET /api/knowledge/obsolescence` (due_soon, overdue, archived_today_count) routed through `KnowledgeService`.
+- Tests: 7 new tests covering auto-archive, grace periods, idempotency, version conflict detection, API endpoint.
 
 ## Priority order
 
 1. **Sprint 4:** make the remaining admin surfaces real — manual Leads CRUD (`POST /api/leads`; campaign channel-activation guard + launch preview already done, see Sprint 5 note below), Knowledge management (`knowledge_base.yaml` → `knowledge_entries` table + CRUD + active toggle — this is the *keyword* RAG's admin surface, separate from RAG v2). Remove stubs that become real; keep honest stubs for WhatsApp/Voice, real Yousign, and RAG v2's retrieval/admin UI.
-2. **RAG v2:** Phase 1 (schema + ingestion) & Phase 2 (retrieval + chat wiring) done — see above. Citations next, then obsolescence + admin API/UI.
+2. **RAG v2:** Phase 1 (schema + ingestion), Phase 2 (retrieval + gate + citations), Phase 3 (obsolescence) done. Phase 4 (admin API + UI: documents table, upload PDF, stats, QA test box) next.
 3. Optional: real WhatsApp/Voice, EU hosting region instead of US.
 
 **Sprint 4c / Campaigns are real** (Sprint 5's own Phase 1 backend + a scoped-down frontend, done together): channel-activation guard (`WHATSAPP`/`VOICE` → 422 `channel_not_activated`, `SMS` allowed), `POST /api/campaigns/{id}/preview` (dry-run launch count + disclosure preview), and the Campagnes screen itself — list with real data, create (name + channel + optional region target_rules), two-step launch (preview modal → start), pause/resume. **Fixed while wiring this up**: the previous CampaignsPage.tsx rendered fabricated numbers (hardcoded `34.2%` response rate, `1.8%` opt-out rate, `14 protégés`, `c.leads_count || 120`) instead of real API data — a compliance-adjacent honesty bug (AGENTS.md's own "no invented stats" rule), not just a stub; the frontend `CampaignSummary` type also didn't match the real backend schema at all (`status: "ACTIVE"` isn't a real value — it's `RUNNING`). Both fixed. **Not built**: the 3-step wizard (multi-select leads / CSV import with row-level validation), SSE live-supervisor layer, "Annuler" (no `CANCELLED` `CampaignStatus` value exists), a `campaign_member` mapping table (deliberately not added — `get_campaign_analytics` already derives sent/responded/qualified/opted-out live from `Lead.status`, a mapping table would just re-shadow that). Creation targets one optional region instead of a lead multi-select/CSV wizard — documented tradeoff, not an oversight.

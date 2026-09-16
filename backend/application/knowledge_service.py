@@ -62,3 +62,7 @@ class KnowledgeService:
         entry = self.get_entry(entry_id)
         self.repo.delete(entry)
         self.db.commit()
+
+    def get_obsolescence_status(self) -> dict:
+        from rag_v2.obsolescence import get_obsolescence_status
+        return get_obsolescence_status(self.db)

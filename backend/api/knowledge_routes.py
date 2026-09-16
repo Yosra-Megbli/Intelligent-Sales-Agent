@@ -41,6 +41,11 @@ def create_entry(payload: CreateKnowledgeEntryRequest, db: Session = Depends(get
     return KnowledgeEntryResponse.from_model(entry)
 
 
+@router.get("/obsolescence")
+def get_obsolescence(db: Session = Depends(get_db_session)) -> dict:
+    return KnowledgeService(db).get_obsolescence_status()
+
+
 @router.get("/{entry_id}", response_model=KnowledgeEntryResponse)
 def get_entry(entry_id: UUID, db: Session = Depends(get_db_session)) -> KnowledgeEntryResponse:
     entry = _require(lambda: KnowledgeService(db).get_entry(entry_id))
