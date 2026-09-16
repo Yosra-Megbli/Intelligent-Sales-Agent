@@ -24,6 +24,7 @@ from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID
 
+from conversation_engine.compliance import disclosure_for
 from crm.campaign_repository import CampaignRepository
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
@@ -31,6 +32,16 @@ from domain.enums import CampaignStatus, ConversationChannel, ConversationState,
 from domain.models.campaign import Campaign
 from domain.models.lead import Lead
 from outbound.scheduler import OutboundScheduler
+
+# Channels a campaign may actually send on. WhatsApp and Voice are built
+# end-to-end (see AGENTS.md) but not activated in this deployment - no
+# Twilio WhatsApp/Voice credentials configured - so a campaign created on
+# either would compute replies that are never sent. SMS is deliberately
+# NOT in this set: AGENTS.md documents it as complete and live, same tier
+# as Telegram/Web, not a "built but not activated" channel.
+_ACTIVATED_CAMPAIGN_CHANNELS = frozenset(
+    {ConversationChannel.TELEGRAM, ConversationChannel.WEB, ConversationChannel.SMS}
+)
 
 
 @dataclass
@@ -84,6 +95,33 @@ class InvalidCampaignTransitionError(Exception):
     pass
 
 
+class ChannelNotActivatedError(Exception):
+    """Raised by `create_campaign` for a channel that is built but not
+    activated in this deployment (see `_ACTIVATED_CAMPAIGN_CHANNELS`).
+    `api/campaign_routes.py` turns this into a 422 with a typed error code
+    ("channel_not_activated") the frontend can key off of to show its
+    honest-stub tooltip, rather than a generic validation error."""
+
+    def __init__(self, channel: ConversationChannel):
+        self.channel = channel
+        super().__init__(f"Channel {channel.value} is not activated in this deployment.")
+
+
+@dataclass
+class CampaignPreview:
+    """Read-only projection of what starting this campaign would do -
+    computed the same way `CampaignEngine.select_and_assign_leads` selects
+    leads (NEW status, unassigned, matching target_rules), but without
+    assigning anything. Opted-out leads never appear here: they are never
+    LeadStatus.NEW to begin with, so there is no separate "excluded" count
+    to compute - they simply never entered the candidate pool."""
+
+    campaign_id: UUID
+    matched_leads: int
+    channel: ConversationChannel
+    disclosure_preview: str
+
+
 class CampaignService:
     """The Application layer's write+read side for Campaigns: everything
     the Dashboard's campaign management UI needs, without ever reaching
@@ -100,12 +138,32 @@ class CampaignService:
         *,
         name: str,
         target_rules: Optional[dict] = None,
-        channel: ConversationChannel = ConversationChannel.WHATSAPP,
+        channel: ConversationChannel = ConversationChannel.TELEGRAM,
     ) -> Campaign:
+        if channel not in _ACTIVATED_CAMPAIGN_CHANNELS:
+            raise ChannelNotActivatedError(channel)
         rules_json = json.dumps(target_rules) if target_rules else None
         campaign = self.campaign_repo.create(name=name, target_rules=rules_json, channel=channel)
         self.db.commit()
         return campaign
+
+    def preview_campaign(self, campaign_id: UUID, *, limit: int = 100) -> CampaignPreview:
+        """Dry run of what `start_campaign`/`resume_campaign` would select
+        and send, for the Dashboard's launch-confirmation step - never
+        assigns or sends anything. Language for the disclosure preview is
+        French: campaigns don't carry a per-campaign language today (leads
+        do, individually), so this shows the FR disclosure as the
+        representative sample the confirmation modal quotes."""
+        campaign = self._require_campaign(campaign_id)
+        target_rules = json.loads(campaign.target_rules) if campaign.target_rules else {}
+        region = target_rules.get("region")
+        matched = self.lead_repo.list_new_for_campaign(region=region, limit=limit)
+        return CampaignPreview(
+            campaign_id=campaign_id,
+            matched_leads=len(matched),
+            channel=campaign.channel,
+            disclosure_preview=disclosure_for("fr"),
+        )
 
     def list_campaigns(self, *, limit: int = 50, offset: int = 0) -> CampaignPage:
         campaigns, total = self.campaign_repo.list_all(limit=limit, offset=offset)

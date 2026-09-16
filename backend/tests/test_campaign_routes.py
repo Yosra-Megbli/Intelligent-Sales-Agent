@@ -104,3 +104,60 @@ def test_delete_campaign_blocked_while_running(client):
 
     assert res.status_code == 409
     assert client.get(f"/api/campaigns/{campaign_id}").status_code == 200
+
+
+# --- channel activation guard -------------------------------------------------------
+
+
+def test_create_campaign_rejects_whatsapp_with_typed_422(client):
+    res = client.post("/api/campaigns", json={"name": "Wallonie", "channel": "WHATSAPP"})
+
+    assert res.status_code == 422
+    assert res.json()["detail"] == {"code": "channel_not_activated", "channel": "WHATSAPP"}
+
+
+def test_create_campaign_rejects_voice_with_typed_422(client):
+    res = client.post("/api/campaigns", json={"name": "Wallonie", "channel": "VOICE"})
+
+    assert res.status_code == 422
+    assert res.json()["detail"] == {"code": "channel_not_activated", "channel": "VOICE"}
+
+
+def test_create_campaign_defaults_to_telegram_via_route(client):
+    campaign_id = _create_campaign(client)
+
+    res = client.get(f"/api/campaigns/{campaign_id}")
+
+    assert res.json()["campaign"]["channel"] == "TELEGRAM"
+
+
+# --- launch preview ------------------------------------------------------------------
+
+
+def test_preview_campaign_returns_matched_count_and_disclosure(client):
+    campaign_id = _create_campaign(client, target_rules={"region": "Wallonie"})
+
+    res = client.post(f"/api/campaigns/{campaign_id}/preview")
+
+    assert res.status_code == 200
+    body = res.json()
+    assert body["campaign_id"] == campaign_id
+    assert body["channel"] == "TELEGRAM"
+    assert isinstance(body["matched_leads"], int)
+    assert "Sophie" in body["disclosure_preview"]
+
+
+def test_preview_campaign_404_when_missing(client):
+    res = client.post("/api/campaigns/00000000-0000-0000-0000-000000000000/preview")
+    assert res.status_code == 404
+
+
+def test_preview_campaign_does_not_assign_leads(client):
+    """Dry run: calling preview must never change total_leads - only
+    start/resume actually assign via CampaignEngine.select_and_assign_leads."""
+    campaign_id = _create_campaign(client, target_rules={"region": "Wallonie"})
+
+    client.post(f"/api/campaigns/{campaign_id}/preview")
+
+    res = client.get(f"/api/campaigns/{campaign_id}")
+    assert res.json()["campaign"]["total_leads"] == 0
