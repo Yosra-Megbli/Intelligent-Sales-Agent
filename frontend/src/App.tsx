@@ -9,6 +9,7 @@ import { ConversationsPage } from "@/pages/ConversationsPage";
 import { CampaignsPage } from "@/pages/CampaignsPage";
 import { CompliancePage } from "@/pages/CompliancePage";
 import { KnowledgePage } from "@/pages/KnowledgePage";
+import { LiveCockpitPage } from "@/pages/LiveCockpitPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { ChatSimulatorPage, HandoffsPage } from "@/pages/Placeholders";
 import { Toaster } from "sonner";
@@ -55,6 +56,7 @@ const DashboardContent: React.FC = () => {
       {currentTab === "campaigns" && <CampaignsPage />}
       {currentTab === "compliance" && <CompliancePage />}
       {currentTab === "knowledge" && <KnowledgePage />}
+      {currentTab === "live" && <LiveCockpitPage />}
       {currentTab === "settings" && <SettingsPage />}
     </AppShell>
   );

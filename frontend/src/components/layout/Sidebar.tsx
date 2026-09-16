@@ -13,6 +13,7 @@ import {
   Zap,
   Settings,
   BookOpen,
+  Radio,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/Badge";
@@ -73,6 +74,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: "knowledge",
       label: t("knowledgePage.title"),
       icon: BookOpen,
+      isPhase2: false,
+    },
+    {
+      id: "live",
+      label: t("livePage.title") || "Supervision Live",
+      icon: Radio,
       isPhase2: false,
     },
     {

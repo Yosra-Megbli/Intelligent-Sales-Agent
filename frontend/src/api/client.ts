@@ -58,11 +58,11 @@ export class ApiClient {
     this.apiKey = apiKey;
   }
 
-  private getApiKey(): string | null {
+  getApiKey(): string | null {
     return this.apiKey;
   }
 
-  private async request<T>(
+  async request<T>(
     endpoint: string,
     options: RequestInit = {},
     retries = 2

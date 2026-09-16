@@ -52,7 +52,7 @@ Verified against the Sept 2026 tariff card on 2026-09-16. **Tariff cards change 
 
 ## Tests & CI
 
-752 tests green (`tests/` + `golden_tests/`, including `scenarios/conversations.yaml`). Separate real-LLM eval against Groq (`golden_tests/run_real_llm_eval.py`) — never collected by pytest, never gating.
+896 tests green (`tests/` + `golden_tests/`, including `scenarios/conversations.yaml`). Separate real-LLM eval against Groq (`golden_tests/run_real_llm_eval.py`) — never collected by pytest, never gating.
 
 CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus the frontend build on every push/PR to main. The real-LLM eval is `workflow_dispatch` opt-in.
 
@@ -70,14 +70,17 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 - **Sprint 3 (contract lifecycle):** `contracts` table, states `CONTRACT_DRAFT → SENT → SIGNED/WITHDRAWN`, `CONTRACT_MODE=full|handoff` env switch, ReportLab PDF (`contracts/pdf_generator.py` — preamble quotes the AI Act disclosure verbatim, withdrawal annex, CRM data only), Yousign sandbox v3 integration (`integrations/yousign.py`, HMAC webhook, graceful degradation without a key, `POST /api/contracts/{id}/simulate-sign`), frontend wired (contract card in drawer, SIGNED chip, "Contrats signés" KPI).
 - **Engine fix:** `ASK_LOCATION` loop resolved (flandre → `ASK_CITY_ONLY`, generalized `consecutive_same_state_ask ≥ 2` guard → field-by-field collection). Verified live in the Simulator.
 - **Frontend Phase 1 + login redesign:** navy/teal/lavender (oklch), full fr/nl/en i18n, dark mode.
+- **RAG v2 (Phases 1-4):** Phase 1 schema & ingestion (migration `0011`), Phase 2 retrieval + relevance gate + refusal + citation validator, Phase 3 obsolescence (ZEN W3 pattern, auto-archive, duplicate warning), Phase 4 Admin API + UI ("Base de Connaissances" screen with documents table, upload zone, tester QA box, obsolescence alerts, stats).
+- **Sprint 5 (Live Cockpit SSE):** C1 backend broker (`InProcessAsyncBroker`, Redis pub/sub seam), signed HMAC token (`/api/live/token`), `/api/live/stream`, rate-limiter, emission hooks; C2 frontend "Supervision Live" screen (`LiveCockpitPage.tsx`), EventSource client (`api/live.ts`), live active conversations cards, replay drawer, live in/out rate counters, 60s down detection with automatic 30s polling fallback.
 
 ### Known gaps (never claim "done")
 
 - WhatsApp and Voice are built but NOT activated (API keys missing).
-- Yousign is sandbox-only; no real e-signature key.
-- Campaigns admin screen is real (list, create, two-step launch, pause/resume) but scoped down from the original vision: no lead multi-select/CSV-import wizard, no SSE live cockpit, no cancel. See "Sprint 4c / Campaigns are real" below.
+- Yousign is sandbox-only; no real e-signature production key.
+- Real-corpus ingestion pending `GOOGLE_AI_API_KEY` configuration in Render.
+- `RAG_MIN_SIMILARITY` calibration on real prospect queries (default 0.30).
+- Campaigns admin screen is real (list, create, two-step launch, pause/resume) but scoped down from the original vision: no lead multi-select/CSV-import wizard, no cancel.
 - No manual lead creation endpoint (`POST /api/leads`) — only CSV import; `PATCH` and `DELETE` already exist.
-- RAG v2 retrieval is wired into the chat as first tier (`rag_v2/retrieval.py` + `application/conversation_service.py` + all channels: Web, Telegram, WhatsApp, SMS); degrades cleanly to keyword RAG if no `GOOGLE_AI_API_KEY` or no chunk clears similarity threshold.
 - NL copy has never been field-tested.
 - README content has stale sections (it still claims contract generation is unimplemented) and carries a UTF-8 double-encoding corruption in its prose.
 
@@ -122,12 +125,18 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 - Emission hooks: `conversation_updated` and `lead_state_changed` emitted non-blocking in `ConversationService.handle_message`; `campaign_progress` emitted in `CampaignService`; failure tolerance guaranteed.
 - Tests: 9 tests in `test_live_backend.py` covering token issuance, expiration, tampering, concurrency limits, streaming, and broker distribution.
 
+**Sprint 5 C2 (Cockpit Frontend) is done:**
+- `api/live.ts` — EventSource SSE wrapper with auto-reconnect, HMAC token management, reconnection state exposure, and 60s stream-down watchdog.
+- `pages/LiveCockpitPage.tsx` — "Supervision Live" sidebar screen with active conversation cards (status badge, channel icon, last message preview, direction arrow, relative timestamp), global strip (active count, in/min and out/min rate counters, key health status), channel/state filters, and full Replay drawer integration (`ConversationReplayDrawer.tsx`).
+- Resilience: on stream down >60s, automatically activates 30s polling fallback with an honest "Mode rafraîchissement" indicator and stale marker.
+- Navigation & i18n: added "Supervision Live" (`live`) above Paramètres with `Radio` icon; trilingual fr/nl/en keys (vouvoiement FR, u-form NL).
+
 ## Priority order
 
-1. **Sprint 4:** make the remaining admin surfaces real — manual Leads CRUD (`POST /api/leads`; campaign channel-activation guard + launch preview already done, see Sprint 5 note below), Knowledge management (`knowledge_base.yaml` → `knowledge_entries` table + CRUD + active toggle — this is the *keyword* RAG's admin surface, separate from RAG v2). Remove stubs that become real; keep honest stubs for WhatsApp/Voice, real Yousign, and RAG v2's retrieval/admin UI.
+1. **Sprint 4:** Admin surfaces (Knowledge v1 done, Campaigns real done; manual lead creation `POST /api/leads` remaining).
 2. **RAG v2:** Complete (Phases 1, 2, 3, 4 done).
-3. **Sprint 5 (Live Cockpit SSE):** Backend broker + SSE stream (C1) done. Cockpit frontend supervision screen (C2) next.
-4. Optional: real WhatsApp/Voice, EU hosting region instead of US.
+3. **Sprint 5 (Live Cockpit SSE):** Complete (C1 backend broker + stream, C2 cockpit frontend done).
+4. Optional: real WhatsApp/Voice activation (when keys provided), EU hosting region instead of US.
 
 **Sprint 4c / Campaigns are real** (Sprint 5's own Phase 1 backend + a scoped-down frontend, done together): channel-activation guard (`WHATSAPP`/`VOICE` → 422 `channel_not_activated`, `SMS` allowed), `POST /api/campaigns/{id}/preview` (dry-run launch count + disclosure preview), and the Campagnes screen itself — list with real data, create (name + channel + optional region target_rules), two-step launch (preview modal → start), pause/resume. **Fixed while wiring this up**: the previous CampaignsPage.tsx rendered fabricated numbers (hardcoded `34.2%` response rate, `1.8%` opt-out rate, `14 protégés`, `c.leads_count || 120`) instead of real API data — a compliance-adjacent honesty bug (AGENTS.md's own "no invented stats" rule), not just a stub; the frontend `CampaignSummary` type also didn't match the real backend schema at all (`status: "ACTIVE"` isn't a real value — it's `RUNNING`). Both fixed. **Not built**: the 3-step wizard (multi-select leads / CSV import with row-level validation), SSE live-supervisor layer, "Annuler" (no `CANCELLED` `CampaignStatus` value exists), a `campaign_member` mapping table (deliberately not added — `get_campaign_analytics` already derives sent/responded/qualified/opted-out live from `Lead.status`, a mapping table would just re-shadow that). Creation targets one optional region instead of a lead multi-select/CSV wizard — documented tradeoff, not an oversight.
 

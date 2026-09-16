@@ -393,6 +393,27 @@
     "apiKeyDesc": "Clé d'accès utilisée pour interroger les services sécurisés de Sophie.",
     "languageTitle": "Langue par Défaut",
     "languageDesc": "Langue d'affichage de la console de supervision commerciale."
+  },
+  "livePage": {
+    "title": "Supervision Live",
+    "subtitle": "Cockpit temps réel des conversations actives de Sophie, flux SSE et métriques instantanées.",
+    "activeCount": "Conversations Actives",
+    "inPerMin": "Messages reçus / min",
+    "outPerMin": "Messages émis / min",
+    "systemHealth": "Santé des Clés API",
+    "statusLive": "En direct (SSE)",
+    "statusReconnecting": "Reconnexion...",
+    "statusPolling": "Mode rafraîchissement (30s)",
+    "statusDown": "Flux interrompu (>60s)",
+    "staleNotice": "Données potentiellement non actualisées — tentative de reconnexion en cours.",
+    "empty": "Aucune conversation active — lancez une campagne ou attendez un inbound.",
+    "filterAll": "Tous",
+    "filterChannel": "Canal",
+    "filterState": "État",
+    "filterCampaign": "Campagne",
+    "openReplay": "Ouvrir le Replay",
+    "directionIn": "Entrant (Client)",
+    "directionOut": "Sortant (Sophie)"
   }
 }
 

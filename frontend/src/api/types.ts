@@ -338,3 +338,9 @@ export interface TestQueryResponse {
   would_refuse: boolean;
 }
 
+export interface KeyHealthPayload {
+  provider: string;
+  status: string;
+  percent_used: number | null;
+}
+

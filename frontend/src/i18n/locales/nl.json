@@ -393,5 +393,26 @@
     "apiKeyDesc": "Toegangssleutel gebruikt om de beveiligde Sophie-diensten te bevragen.",
     "languageTitle": "Standaardtaal",
     "languageDesc": "Weergavetaal van de commerciële supervisieconsole."
+  },
+  "livePage": {
+    "title": "Live Supervisie",
+    "subtitle": "Realtime toezichtcockpit voor de actieve gesprekken van Sophie, SSE-stream en actuele statistieken.",
+    "activeCount": "Actieve Gesprekken",
+    "inPerMin": "Berichten in / min",
+    "outPerMin": "Berichten uit / min",
+    "systemHealth": "Status API-sleutels",
+    "statusLive": "Live (SSE)",
+    "statusReconnecting": "Opnieuw verbinden...",
+    "statusPolling": "Vernieuwingsmodus (30s)",
+    "statusDown": "Verbinding onderbroken (>60s)",
+    "staleNotice": "Gegevens zijn mogelijk verouderd — poging tot herstel van de verbinding.",
+    "empty": "Geen actieve gesprekken — start een campagne of wacht op een inkomend contact.",
+    "filterAll": "Alle",
+    "filterChannel": "Kanaal",
+    "filterState": "Status",
+    "filterCampaign": "Campagne",
+    "openReplay": "Replay openen",
+    "directionIn": "Inkomend (Klant)",
+    "directionOut": "Uitgaand (Sophie)"
   }
 }
