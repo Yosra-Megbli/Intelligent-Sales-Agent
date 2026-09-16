@@ -183,3 +183,170 @@ def test_withdrawal_conversation_flow(db_session):
     # Verify lead status updated to CLOSED
     updated_lead = lead_repo.get_by_id(lead.id)
     assert updated_lead.status == LeadStatus.CLOSED
+
+
+def test_contract_service_create_and_simulate_sign(db_session):
+    from application.contract_service import ContractService
+
+    lead_repo = LeadRepository(db_session)
+    lead = lead_repo.create(
+        source=LeadSource.WEBSITE,
+        first_name="David",
+        last_name="Willems",
+        email="david@test.be",
+        phone="0471234567",
+        language="nl",
+    )
+    lead.has_heat_pump = True
+    db_session.flush()
+
+    service = ContractService(db_session)
+    contract, pdf_bytes, yousign_res = service.create_contract_for_lead(lead.id)
+
+    # 1. Product rule: heat_pump -> Motion
+    assert contract.product == "Motion"
+    assert len(pdf_bytes) > 2000
+    assert lead.status == LeadStatus.CONTRACT
+
+    # 2. Simulate signature
+    signed_contract = service.simulate_signature(contract.id)
+    assert signed_contract.status == ContractStatus.SIGNED
+    assert signed_contract.signed_at is not None
+    assert lead.status == LeadStatus.CUSTOMER
+
+
+def test_yousign_hmac_webhook_verification(db_session):
+    import hmac
+    import hashlib
+    import json
+    from application.contract_service import ContractService
+    from integrations.yousign import verify_yousign_webhook_signature
+
+    secret = "super_webhook_secret_123"
+    payload = {
+        "event_name": "signature_request.done",
+        "data": {
+            "signature_request": {
+                "id": "sig_req_test_999",
+            }
+        },
+    }
+    raw_body = json.dumps(payload).encode("utf-8")
+
+    # 1. Invalid signature
+    assert verify_yousign_webhook_signature(raw_body, "bad_signature", secret=secret) is False
+
+    # 2. Valid signature
+    valid_sig = hmac.new(secret.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    assert verify_yousign_webhook_signature(raw_body, valid_sig, secret=secret) is True
+    assert verify_yousign_webhook_signature(raw_body, f"sha256={valid_sig}", secret=secret) is True
+
+    # 3. Process webhook event
+    lead_repo = LeadRepository(db_session)
+    contract_repo = ContractRepository(db_session)
+    lead = lead_repo.create(
+        source=LeadSource.WEBSITE,
+        first_name="Elena",
+        last_name="Vandamme",
+        email="elena@test.be",
+        language="en",
+    )
+    lead.status = LeadStatus.CONTRACT
+    contract = contract_repo.create(
+        lead_id=lead.id,
+        product="Flexy",
+        status=ContractStatus.SENT,
+        yousign_signature_request_id="sig_req_test_999",
+    )
+    db_session.flush()
+
+    service = ContractService(db_session)
+    res = service.handle_yousign_webhook(
+        payload_bytes=raw_body,
+        signature_header=valid_sig,
+        parsed_payload=payload,
+    )
+    assert res.get("status") == "success"
+    assert contract.status == ContractStatus.SIGNED
+    assert lead.status == LeadStatus.CUSTOMER
+
+
+def test_contract_api_endpoints():
+    from fastapi.testclient import TestClient
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from sqlalchemy.pool import StaticPool
+    from api.main import app
+    from api.routes import get_db_session
+    from database.postgres import Base
+
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+        future=True,
+    )
+    Base.metadata.create_all(engine)
+    TestingSession = sessionmaker(bind=engine, future=True)
+
+    def override_get_db_session():
+        db = TestingSession()
+        try:
+            yield db
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+
+    app.dependency_overrides[get_db_session] = override_get_db_session
+
+    # Seed lead
+    db = TestingSession()
+    lead_repo = LeadRepository(db)
+    lead = lead_repo.create(
+        source=LeadSource.WEBSITE,
+        first_name="Thomas",
+        last_name="Bernard",
+        email="thomas@test.be",
+        phone="0489998877",
+    )
+    db.commit()
+    lead_id_str = str(lead.id)
+    db.close()
+
+    client = TestClient(app)
+    headers = {"X-API-Key": "test-api-key"}
+
+    # 1. POST /api/contracts
+    post_res = client.post("/api/contracts", json={"lead_id": lead_id_str}, headers=headers)
+    assert post_res.status_code == 201
+    contract_data = post_res.json()
+    contract_id = contract_data["id"]
+    assert contract_data["product"] == "Flexy"
+
+    # 2. GET /api/contracts
+    list_res = client.get("/api/contracts", headers=headers)
+    assert list_res.status_code == 200
+    assert list_res.json()["total"] >= 1
+
+    # 3. GET /api/contracts/{id}
+    detail_res = client.get(f"/api/contracts/{contract_id}", headers=headers)
+    assert detail_res.status_code == 200
+    assert detail_res.json()["id"] == contract_id
+
+    # 4. GET /api/contracts/{id}/pdf
+    pdf_res = client.get(f"/api/contracts/{contract_id}/pdf", headers=headers)
+    assert pdf_res.status_code == 200
+    assert pdf_res.headers["content-type"] == "application/pdf"
+    assert pdf_res.content.startswith(b"%PDF-")
+
+    # 5. POST /api/contracts/{id}/simulate-sign
+    sign_res = client.post(f"/api/contracts/{contract_id}/simulate-sign", headers=headers)
+    assert sign_res.status_code == 200
+    assert sign_res.json()["status"] == "SIGNED"
+
+    app.dependency_overrides.clear()
+
+

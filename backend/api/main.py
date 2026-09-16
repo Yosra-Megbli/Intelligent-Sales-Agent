@@ -17,10 +17,12 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from api.campaign_routes import router as campaign_router
+from api.contract_routes import router as contract_router
 from api.dashboard_routes import router as dashboard_router
 from api.leads_routes import router as leads_router
 from api.routes import router
 from api.voice_routes import router as voice_router
+
 from database.postgres import engine, init_db
 from database.redis import get_redis
 
@@ -102,10 +104,12 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(contract_router)
 app.include_router(dashboard_router)
 app.include_router(leads_router)
 app.include_router(campaign_router)
 app.include_router(voice_router)
+
 
 _DASHBOARD_DIR = Path(__file__).resolve().parent.parent / "dashboard"
 if _DASHBOARD_DIR.is_dir():

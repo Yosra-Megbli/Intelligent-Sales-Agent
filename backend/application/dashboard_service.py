@@ -25,6 +25,7 @@ from uuid import UUID
 
 from crm.activity_repository import ActivityRepository
 from crm.campaign_repository import CampaignRepository
+from crm.contract_repository import ContractRepository
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
 from domain.enums import ActivityType, ConversationChannel, ConversationState, LeadSource, LeadStatus
@@ -119,6 +120,7 @@ class OverviewStats:
     cost_per_sale: float = 0.0
     estimated_ca: float = 0.0
     currency: str = "EUR"
+    signed_contracts: int = 0
 
 
 @dataclass
@@ -159,6 +161,7 @@ class DashboardService:
         self.conversation_repo = ConversationRepository(db_session)
         self.activity_repo = ActivityRepository(db_session)
         self.campaign_repo = CampaignRepository(db_session)
+        self.contract_repo = ContractRepository(db_session)
 
     def list_leads(
         self,
@@ -219,6 +222,8 @@ class DashboardService:
         cost_per_sale = round(total_ai_cost / qualified, 2) if qualified > 0 else 0.0
         estimated_ca = round(qualified * 120.0, 2)
 
+        signed_contracts = self.contract_repo.count_signed()
+
         return OverviewStats(
             total_leads=total_leads,
             active_conversations=active_conversations,
@@ -232,6 +237,7 @@ class DashboardService:
             cost_per_sale=cost_per_sale,
             estimated_ca=estimated_ca,
             currency="EUR",
+            signed_contracts=signed_contracts,
         )
 
     # --- Reason labels for the Handoff Queue's "why" column ---------------

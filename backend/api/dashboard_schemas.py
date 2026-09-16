@@ -244,6 +244,7 @@ class OverviewResponse(BaseModel):
     cost_per_sale: float = 0.0
     estimated_ca: float = 0.0
     currency: str = "EUR"
+    signed_contracts: int = 0
 
 
 class ConversationDetailItemResponse(BaseModel):
