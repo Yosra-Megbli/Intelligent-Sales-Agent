@@ -1,16 +1,17 @@
 # Sophie â€” Agent IA de vente Ecofix
 
+[![CI](https://github.com/Yosra-Megbli/Intelligent-Sales-Agent/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Yosra-Megbli/Intelligent-Sales-Agent/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB?logo=react&logoColor=black)
-![Tests](https://img.shields.io/badge/tests-733%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-752%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'أ©lectricitأ© et de gaz Ecofix : elle engage la conversation, rأ©pond aux objections, collecte et valide les informations nأ©cessaires, puis transmet les leads qualifiأ©s أ  l'أ©quipe commerciale humaine.
 
 ## In short (EN)
 
-A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision â€” the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, a React ops dashboard, API-key/webhook-signature security, and **655 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs â€” this project is built for a real French-speaking client.
+A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision â€” the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, a React ops dashboard, API-key/webhook-signature security, and **752 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs â€” this project is built for a real French-speaking client.
 
 ## Statut du projet
 
