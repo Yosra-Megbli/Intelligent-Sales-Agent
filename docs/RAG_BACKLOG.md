@@ -111,13 +111,21 @@ interface KnowledgeChunkMetadata {
 - During migration, the retrieval pipeline will query the vector index and fall back to `knowledge_base.yaml` if the vector query is unavailable or times out.
 - Extensively regression-tested using the existing 103+ golden scenarios and the dedicated pricing truth test suite (`test_pricing_truth.py`).
 
+### 5. ZEN Knowledge Architectural Port Reference
+Vision: Port proven patterns from the user's `zen-knowledge` project in a phased, spec-first approach:
+1. **Publish-Explicit**: Knowledge items cannot be queried by the live sales agent until an explicit publication state (`status='active'`, approval timestamp) is set. Drafts and raw scraped notes remain quarantined.
+2. **W3 Obsolescence Model**: Automated validity windows (`valid_from`, `valid_until`) with deprecation rules. Chunks expired past `valid_until` (e.g. outdated tariff cards) are automatically excluded from retrieval queries without requiring database deletions.
+3. **Citations Validator**: Any LLM-synthesized sentence citing an entity or rule must match an retrieved chunk reference (`document_id`, page/section). If the validator detects an unsupported claim, the output is intercepted by the Output Guard before delivery.
+4. **Refusal-Before-LLM**: Deterministic gate evaluating semantic distance prior to invoking Groq. If score < threshold, Sophie triggers a hard fallback refusal without incurring LLM token cost or hallucination risk.
+5. **Phased Rollout**: Phased execution with zero regressions, starting with a comprehensive specification document (`RAG_Implementation_Spec_v2.md`) before writing any ingestion or vector query code.
+
 ---
 
 ## 5. Execution Roadmap
 
 1. **Gate 1 (Completed)**: Raw official sources gathered in `knowledge_corpus/` (12 tariff PDFs Sept 2026, web notes, regulatory citations).
 2. **Gate 2 (Current)**: Vercel frontend deployment and production environment secrets rotation.
-3. **Gate 3 (Future)**: Draft, review, and approve `RAG_Implementation_Spec_v2.md`.
+3. **Gate 3 (Future)**: Draft, review, and approve `RAG_Implementation_Spec_v2.md` with ZEN Knowledge patterns.
 4. **Gate 4 (Future)**: Database migration adding `pgvector` extension and `knowledge_embeddings` table.
 5. **Gate 5 (Future)**: Ingestion script with automated chunking, metadata extraction, and embedding generation.
 6. **Gate 6 (Future)**: End-to-end evaluation against golden conversation tests.
