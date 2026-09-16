@@ -1,4 +1,4 @@
-﻿# --- Core / API / Database ---
+# --- Core / API / Database ---
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
 sqlalchemy==2.0.35
@@ -14,3 +14,6 @@ pyyaml==6.0.2
 # --- LLM Adapter & HTTP client ---
 groq==0.11.0
 httpx<0.28
+
+# --- Contract & PDF Generation ---
+reportlab>=4.0.0
