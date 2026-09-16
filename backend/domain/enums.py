@@ -113,6 +113,18 @@ class ContractStatus(str, Enum):
     CANCELLED = "CANCELLED"
 
 
+class KnowledgeDocumentStatus(str, Enum):
+    """RAG v2 publish-explicit lifecycle (docs/RAG_BACKLOG.md, ZEN Knowledge
+    pattern): a document's chunks are retrievable only while the document
+    itself is PUBLISHED. DRAFT = ingested but not yet reviewed/published;
+    ARCHIVED = deliberately withdrawn (obsolescence, superseded version) -
+    both are excluded from retrieval by the same rule, not two rules."""
+
+    DRAFT = "DRAFT"
+    PUBLISHED = "PUBLISHED"
+    ARCHIVED = "ARCHIVED"
+
+
 class MessageRole(str, Enum):
     USER = "USER"
     ASSISTANT = "ASSISTANT"

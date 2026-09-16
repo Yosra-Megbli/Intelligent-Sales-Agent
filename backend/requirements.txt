@@ -17,3 +17,12 @@ httpx<0.28
 
 # --- Contract & PDF Generation ---
 reportlab>=4.0.0
+
+# --- RAG v2: embeddings, vector storage, PDF text extraction ---
+# google-generativeai / pgvector are optional at import time (see
+# ai/providers/embeddings/google.py, database/vector_types.py) - only
+# actually instantiating a real provider or running against PostgreSQL
+# requires them, so `pytest tests/` still works without a Google AI key.
+google-generativeai>=0.8.0
+pgvector>=0.3.0
+pypdf>=5.0.0
