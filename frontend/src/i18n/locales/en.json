@@ -138,6 +138,19 @@
     "allRegions": "All regions",
     "allGrds": "All grid operators",
     "resultsCount": "{{count}} prospects displayed",
+    "addModal": {
+      "button": "Add a prospect",
+      "title": "Add a prospect",
+      "submit": "Add prospect",
+      "success": "Prospect added successfully",
+      "errorDuplicate": "A prospect with this email/phone already exists",
+      "errorRrn": "This field looks like a national register number — never collected",
+      "errorGeneric": "Error while creating the prospect",
+      "invalidEmail": "Invalid email",
+      "invalidPhone": "Expected Belgian format: 0XXXXXXXXX",
+      "invalidEan": "18 digits expected",
+      "invalidRegion": "Out of coverage area (Brussels not served)"
+    },
     "table": {
       "name": "Prospect",
       "status": "Status",
@@ -186,7 +199,16 @@
         "downloadSuccess": "SPECIMEN PDF contract successfully downloaded",
         "createSuccess": "Contract successfully generated!",
         "signSuccess": "Yousign sandbox signature simulated successfully! Customer status activated."
-      }
+      },
+      "editButton": "Edit",
+      "deleteButton": "Delete",
+      "editTitle": "Edit contact details",
+      "saveButton": "Save",
+      "editSuccess": "Prospect updated",
+      "deleteSuccess": "Prospect deleted",
+      "deleteConfirmTitle": "Delete this prospect",
+      "deleteConfirmWord": "DELETE",
+      "deleteConfirmBody": "This action is irreversible: {{name}} and their conversations and history will be permanently deleted. Type {{word}} to confirm."
     }
   },
   "conversations": {

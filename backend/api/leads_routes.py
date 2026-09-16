@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 from api.dashboard_schemas import ActivitySummary, ConversationSummary, LeadDetailResponse, LeadSummary
 from api.dependencies import require_api_key
 from api.leads_schemas import (
+    CreateLeadRequest,
     ImportCsvRequest,
     ImportPreviewResponse,
     ImportPreviewRowResponse,
@@ -37,9 +38,36 @@ from api.leads_schemas import (
 from api.routes import get_db_session
 from application.dashboard_service import DashboardService
 from application.lead_import_service import LeadImportService
-from application.lead_service import InvalidLeadFieldError, LeadNotFoundError, LeadService
+from application.lead_service import (
+    DuplicateLeadError,
+    InvalidLeadFieldError,
+    LeadNotFoundError,
+    LeadService,
+    RijksregisternummerRejectedError,
+)
 
+# Router-level guard (require_api_key on the APIRouter itself, not per-route)
+# already covers every route below, including the ones added here - see
+# leads_routes.py's own module docstring and test_leads_routes.py's guard
+# test. Never duplicate it per-route.
 router = APIRouter(prefix="/api/leads", tags=["leads"], dependencies=[Depends(require_api_key)])
+
+
+@router.post("", response_model=LeadSummary, status_code=201)
+def create_lead(payload: CreateLeadRequest, db: Session = Depends(get_db_session)) -> LeadSummary:
+    """Manual single-lead creation - the only real gap versus CSV import/
+    PATCH/DELETE, which already existed."""
+    try:
+        lead = LeadService(db).create_lead(**payload.model_dump())
+    except RijksregisternummerRejectedError as exc:
+        raise HTTPException(status_code=422, detail={"code": "rijksregisternummer_rejected", "message": str(exc)})
+    except DuplicateLeadError as exc:
+        raise HTTPException(
+            status_code=409, detail={"code": "duplicate_lead", "existing_lead_id": str(exc.existing_lead_id)}
+        )
+    except InvalidLeadFieldError as exc:
+        raise HTTPException(status_code=422, detail={"code": "invalid_field", "message": str(exc)})
+    return LeadSummary.from_model(lead)
 
 
 @router.post("/import/preview", response_model=ImportPreviewResponse)

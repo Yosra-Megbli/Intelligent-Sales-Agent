@@ -138,6 +138,19 @@
     "allRegions": "Alle regio's",
     "allGrds": "Alle netbeheerders",
     "resultsCount": "{{count}} prospects weergegeven",
+    "addModal": {
+      "button": "Prospect toevoegen",
+      "title": "Prospect toevoegen",
+      "submit": "Prospect toevoegen",
+      "success": "Prospect succesvol toegevoegd",
+      "errorDuplicate": "Er bestaat al een prospect met dit e-mailadres/telefoonnummer",
+      "errorRrn": "Dit veld lijkt op een rijksregisternummer — nooit verzameld",
+      "errorGeneric": "Fout bij het aanmaken van de prospect",
+      "invalidEmail": "Ongeldig e-mailadres",
+      "invalidPhone": "Belgisch formaat verwacht: 0XXXXXXXXX",
+      "invalidEan": "18 cijfers verwacht",
+      "invalidRegion": "Buiten dekkingsgebied (Brussel niet bediend)"
+    },
     "table": {
       "name": "Prospect",
       "status": "Status",
@@ -186,7 +199,16 @@
         "downloadSuccess": "PDF SPECIMEN-contract succesvol gedownload",
         "createSuccess": "Contract succesvol gegenereerd!",
         "signSuccess": "Yousign-handtekening succesvol gesimuleerd! Klantstatus geactiveerd."
-      }
+      },
+      "editButton": "Bewerken",
+      "deleteButton": "Verwijderen",
+      "editTitle": "Contactgegevens bewerken",
+      "saveButton": "Opslaan",
+      "editSuccess": "Prospect bijgewerkt",
+      "deleteSuccess": "Prospect verwijderd",
+      "deleteConfirmTitle": "Deze prospect verwijderen",
+      "deleteConfirmWord": "VERWIJDEREN",
+      "deleteConfirmBody": "Deze actie is onomkeerbaar: {{name}} en al zijn/haar gesprekken en geschiedenis worden definitief verwijderd. Typ {{word}} om te bevestigen."
     }
   },
   "conversations": {

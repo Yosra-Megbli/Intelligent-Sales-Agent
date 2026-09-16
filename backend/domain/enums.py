@@ -19,6 +19,7 @@ class LeadSource(str, Enum):
     CRM_IMPORT = "CRM_IMPORT"
     CAMPAIGN = "CAMPAIGN"
     SMS = "SMS"
+    MANUAL = "MANUAL"
 
 
 class LeadStatus(str, Enum):
@@ -141,6 +142,7 @@ class ActivityType(str, Enum):
     REJECTED = "REJECTED"
     HUMAN_HANDOFF = "HUMAN_HANDOFF"
     LEAD_IMPORTED = "LEAD_IMPORTED"
+    LEAD_CREATED = "LEAD_CREATED"  # Manual creation from the Dashboard (POST /api/leads)
     OPT_OUT = "OPT_OUT"  # STOP/STOPT/ARRET handler
     GUARD_TRIGGERED = "GUARD_TRIGGERED"  # Output guard intercepted forbidden claims / missing disclosure
     CONTRACT_DRAFTED = "CONTRACT_DRAFTED"

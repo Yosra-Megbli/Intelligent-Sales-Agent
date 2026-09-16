@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { LeadDrawer } from "@/components/leads/LeadDrawer";
+import { AddLeadModal } from "@/components/leads/AddLeadModal";
 import {
   Search,
   Download,
@@ -28,6 +29,7 @@ import {
   ShieldAlert,
   ArrowUpDown,
   Filter,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -66,6 +68,7 @@ export const LeadsPage: React.FC = () => {
   const [grdFilter, setGrdFilter] = useState<string>("ALL");
   const [sorting, setSorting] = useState<SortingState>([]);
   const [selectedLead, setSelectedLead] = useState<LeadSummary | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const {
     data: leadsData,
@@ -335,6 +338,10 @@ export const LeadsPage: React.FC = () => {
             <Download className="w-3.5 h-3.5 mr-1" />
             <span>{t("leads.exportCsv")}</span>
           </Button>
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="text-xs">
+            <UserPlus className="w-3.5 h-3.5 mr-1" />
+            <span>{t("leads.addModal.button") || "Ajouter un prospect"}</span>
+          </Button>
         </div>
       </div>
 
@@ -546,6 +553,8 @@ export const LeadsPage: React.FC = () => {
         isOpen={Boolean(selectedLead)}
         onClose={() => setSelectedLead(null)}
       />
+
+      <AddLeadModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
     </div>
   );
 };

@@ -9,6 +9,7 @@ import {
   HandoffListResponse,
   LeadDetailResponse,
   LeadListResponse,
+  LeadSummary,
   OverviewResponse,
   StatsSummaryResponse,
 } from "./types";
@@ -77,16 +78,36 @@ export class ApiClient {
         if (response.status === 401 || response.status === 403) {
           throw new Error("UNAUTHORIZED");
         }
-        let detail = `HTTP ${response.status}: ${response.statusText}`;
+        let message = `HTTP ${response.status}: ${response.statusText}`;
+        let code: string | undefined;
         try {
           const body = await response.json();
-          if (body.detail) detail = body.detail;
+          // FastAPI's `detail` is either a plain string (most routes) or a
+          // structured {code, ...} object (e.g. leads_routes.py's
+          // duplicate_lead/invalid_field/rijksregisternummer_rejected,
+          // campaign_routes.py's channel_not_activated) - `new Error(obj)`
+          // would silently stringify it to "[object Object]" otherwise.
+          if (body?.detail && typeof body.detail === "object") {
+            code = body.detail.code;
+            message = body.detail.message || body.detail.code || message;
+          } else if (body?.detail) {
+            message = body.detail;
+          }
         } catch {
           // ignore non-json error responses
         }
-        throw new Error(detail);
+        const error = new Error(message) as Error & { code?: string };
+        if (code) error.code = code;
+        throw error;
       }
 
+      // 204 No Content (leads/campaigns DELETE) has no body - calling
+      // .json() on it throws a SyntaxError ("Unexpected end of JSON
+      // input"), which the retry logic below would then treat as a
+      // transient failure and retry a DELETE that already succeeded.
+      if (response.status === 204) {
+        return undefined as T;
+      }
       return (await response.json()) as T;
     } catch (err: unknown) {
       const isAuthError = err instanceof Error && err.message === "UNAUTHORIZED";
@@ -144,6 +165,35 @@ export class ApiClient {
 
   async getLeadDetail(leadId: string): Promise<LeadDetailResponse> {
     return this.request<LeadDetailResponse>(`/api/dashboard/leads/${leadId}`);
+  }
+
+  async createLead(payload: {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone?: string;
+    region?: string;
+    city?: string;
+    customer_type?: string;
+    current_supplier?: string;
+    ean?: string;
+    date_of_birth?: string;
+  }): Promise<LeadSummary> {
+    return this.request<LeadSummary>("/api/leads", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async updateLead(leadId: string, payload: Record<string, string | null>): Promise<LeadSummary> {
+    return this.request<LeadSummary>(`/api/leads/${leadId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async deleteLead(leadId: string): Promise<void> {
+    await this.request<void>(`/api/leads/${leadId}`, { method: "DELETE" });
   }
 
   async getHandoffs(params?: { limit?: number; offset?: number }): Promise<HandoffListResponse> {

@@ -23,6 +23,10 @@ import {
   Download,
   CheckCircle2,
   Loader2,
+  Pencil,
+  Trash2,
+  Save,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,12 +36,50 @@ interface LeadDrawerProps {
   onClose: () => void;
 }
 
+// LeadService._EDITABLE_FIELDS (backend) - a lead's status/qualification is
+// never editable from the Dashboard, only these CRM-correction fields.
+interface EditableFields {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  region: string;
+  city: string;
+  current_supplier: string;
+}
+
+const toEditableFields = (lead: LeadSummary): EditableFields => ({
+  first_name: lead.first_name || "",
+  last_name: lead.last_name || "",
+  email: lead.email || "",
+  phone: lead.phone || "",
+  region: lead.region || "",
+  city: lead.city || "",
+  current_supplier: lead.current_supplier || "",
+});
+
+const editInputClass =
+  "w-full px-2.5 py-1.5 text-xs rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] focus:outline-none focus:border-[var(--color-teal)] transition-smooth";
+
+const EditField: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div>
+    <label className="block text-[10px] font-semibold text-[var(--ink-muted)] mb-1">{label}</label>
+    {children}
+  </div>
+);
+
 export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isSimulatingSign, setIsSimulatingSign] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<EditableFields | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const { data: detailData, isLoading: isDetailLoading } = useQuery({
     queryKey: ["leadDetail", lead?.id],
@@ -102,6 +144,66 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
   if (!lead) return null;
 
   const isOptOut = lead.status === "OPT_OUT" || Boolean(lead.opt_out_at);
+
+  const handleStartEdit = () => {
+    setEditForm(toEditableFields(lead));
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditForm(null);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editForm) return;
+    try {
+      setIsSaving(true);
+      await apiClient.updateLead(lead.id, {
+        first_name: editForm.first_name || null,
+        last_name: editForm.last_name || null,
+        email: editForm.email || null,
+        phone: editForm.phone || null,
+        region: editForm.region || null,
+        city: editForm.city || null,
+        current_supplier: editForm.current_supplier || null,
+      });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leadDetail", lead.id] });
+      toast.success(t("leads.drawer.editSuccess") || "Prospect mis à jour");
+      setIsEditing(false);
+      setEditForm(null);
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la mise à jour du prospect");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Must match the word shown in the confirmation input below exactly -
+  // derived from the same t() call in both places so an English or Dutch
+  // speaker is never told to type a word ("DELETE"/"VERWIJDEREN") the
+  // check would then silently reject because it only compared against
+  // the French literal.
+  const deleteConfirmWord = t("leads.drawer.deleteConfirmWord") || "SUPPRIMER";
+
+  const handleDelete = async () => {
+    if (deleteConfirmText !== deleteConfirmWord) return;
+    try {
+      setIsDeleting(true);
+      await apiClient.deleteLead(lead.id);
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["overview"] });
+      toast.success(t("leads.drawer.deleteSuccess") || "Prospect supprimé");
+      setShowDeleteConfirm(false);
+      setDeleteConfirmText("");
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la suppression du prospect");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const copyEan = (ean: string) => {
     navigator.clipboard.writeText(ean);
@@ -244,17 +346,125 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-[0.5rem] text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--border)]/40 transition-smooth cursor-pointer"
-            aria-label={t("common.close")}
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            {!isOptOut && !isEditing && (
+              <>
+                <button
+                  onClick={handleStartEdit}
+                  className="p-1.5 rounded-[0.5rem] text-[var(--ink-muted)] hover:text-[var(--color-teal)] hover:bg-[var(--border)]/40 transition-smooth cursor-pointer"
+                  aria-label={t("leads.drawer.editButton") || "Modifier"}
+                  title={t("leads.drawer.editButton") || "Modifier"}
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="p-1.5 rounded-[0.5rem] text-[var(--ink-muted)] hover:text-danger hover:bg-[var(--border)]/40 transition-smooth cursor-pointer"
+                  aria-label={t("leads.drawer.deleteButton") || "Supprimer"}
+                  title={t("leads.drawer.deleteButton") || "Supprimer"}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </>
+            )}
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-[0.5rem] text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--border)]/40 transition-smooth cursor-pointer"
+              aria-label={t("common.close")}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Body content */}
         <div className="flex-1 overflow-y-auto p-5 space-y-6 text-xs">
+          {/* Inline edit panel - LeadService._EDITABLE_FIELDS only, never status/qualification */}
+          {isEditing && editForm && (
+            <div className="p-3.5 rounded-[0.75rem] border border-[var(--color-teal-soft-border)] bg-[var(--color-teal-soft)]/30 space-y-3">
+              <div className="flex items-center gap-2 font-bold text-xs text-[var(--ink)]">
+                <Pencil className="w-3.5 h-3.5 text-[var(--color-teal)]" />
+                <span>{t("leads.drawer.editTitle") || "Modifier les coordonnées"}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                <EditField label={t("leads.drawer.fields.fullName") + " (prénom)"}>
+                  <input
+                    value={editForm.first_name}
+                    onChange={(e) => setEditForm({ ...editForm, first_name: e.target.value })}
+                    className={editInputClass}
+                  />
+                </EditField>
+                <EditField label={t("leads.drawer.fields.fullName") + " (nom)"}>
+                  <input
+                    value={editForm.last_name}
+                    onChange={(e) => setEditForm({ ...editForm, last_name: e.target.value })}
+                    className={editInputClass}
+                  />
+                </EditField>
+                <EditField label={t("leads.drawer.fields.email")}>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    className={editInputClass}
+                  />
+                </EditField>
+                <EditField label={t("leads.drawer.fields.phone")}>
+                  <input
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className={editInputClass}
+                  />
+                </EditField>
+                <EditField label={t("leads.drawer.fields.location") + " (région)"}>
+                  <select
+                    value={editForm.region}
+                    onChange={(e) => setEditForm({ ...editForm, region: e.target.value })}
+                    className={editInputClass}
+                  >
+                    <option value="">—</option>
+                    <option value="Wallonie">Wallonie</option>
+                    <option value="Flandre">Flandre</option>
+                  </select>
+                </EditField>
+                <EditField label={t("leads.drawer.fields.location") + " (ville)"}>
+                  <input
+                    value={editForm.city}
+                    onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                    className={editInputClass}
+                  />
+                </EditField>
+                <EditField label={t("leads.drawer.fields.supplier")}>
+                  <input
+                    value={editForm.current_supplier}
+                    onChange={(e) => setEditForm({ ...editForm, current_supplier: e.target.value })}
+                    className={editInputClass}
+                  />
+                </EditField>
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] text-xs font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-hover)] transition-smooth cursor-pointer disabled:opacity-50"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>{t("common.close")}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEdit}
+                  disabled={isSaving}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-[var(--color-teal)] text-white hover:bg-[var(--color-teal-hover)] text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50"
+                >
+                  {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  <span>{t("leads.drawer.saveButton") || "Enregistrer"}</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* RGPD Purged banner if opted out */}
           {isOptOut && (
             <div className="p-3.5 rounded-[0.75rem] bg-pink-50 dark:bg-pink-950/30 border border-pink-200 dark:border-pink-900/60 text-pink-900 dark:text-pink-200 space-y-1.5">
@@ -527,6 +737,66 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
           </div>
         </div>
       </aside>
+
+      {/* Delete confirmation - typed confirmation required, no accidental hard-delete */}
+      {showDeleteConfirm && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs z-[60]"
+            onClick={() => !isDeleting && setShowDeleteConfirm(false)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-label={t("leads.drawer.deleteConfirmTitle") || "Supprimer ce prospect"}
+              className="w-full max-w-sm bg-[var(--surface)] border border-danger rounded-2xl shadow-2xl p-5 space-y-3"
+            >
+              <div className="flex items-center gap-2 text-danger font-bold text-sm">
+                <Trash2 className="w-4 h-4" />
+                <span>{t("leads.drawer.deleteConfirmTitle") || "Supprimer ce prospect"}</span>
+              </div>
+              <p className="text-xs text-[var(--ink-muted)] leading-relaxed">
+                {t("leads.drawer.deleteConfirmBody", {
+                  name: [lead.first_name, lead.last_name].filter(Boolean).join(" ") || lead.id,
+                  word: deleteConfirmWord,
+                }) ||
+                  `Cette action est irréversible : le prospect, ses conversations et son historique seront définitivement supprimés. Tapez ${deleteConfirmWord} pour confirmer.`}
+              </p>
+              <input
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder={deleteConfirmWord}
+                autoFocus
+                className="w-full px-3 py-2 text-xs font-mono rounded-[0.5rem] border border-danger bg-[var(--surface)] text-[var(--ink)] focus:outline-none"
+              />
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    setDeleteConfirmText("");
+                  }}
+                  disabled={isDeleting}
+                  className="px-3 py-1.5 rounded-[0.5rem] text-xs font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-hover)] transition-smooth cursor-pointer disabled:opacity-50"
+                >
+                  {t("common.close")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleteConfirmText !== deleteConfirmWord || isDeleting}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-danger text-white hover:opacity-90 text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {isDeleting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{t("leads.drawer.deleteButton") || "Supprimer"}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </>
   );
 };

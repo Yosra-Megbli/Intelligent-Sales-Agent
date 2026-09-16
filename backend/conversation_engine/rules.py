@@ -24,16 +24,42 @@ calls anything here itself, and nothing here imports an LLM client.
 
 from __future__ import annotations
 
-import re
-from datetime import date, datetime
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
+from business_rules.validators import (
+    ALLOWED_REGIONS,
+    is_adult,
+    is_region_covered,
+    parse_date_of_birth,
+    validate_date_of_birth,
+    validate_ean,
+    validate_email,
+    validate_phone,
+)
 from conversation_engine.actions import Action, ActionType
 from domain.enums import RejectionReason
 from domain.models.lead import Lead
+
+__all__ = [
+    "Action",
+    "ActionType",
+    "FIELD_GROUP_TO_LEAD_ATTRS",
+    "REQUIRED_FIELD_ORDER",
+    "ALLOWED_REGIONS",
+    "is_field_group_complete",
+    "missing_field_groups",
+    "next_qualification_action",
+    "validate_ean",
+    "validate_email",
+    "validate_phone",
+    "parse_date_of_birth",
+    "validate_date_of_birth",
+    "is_adult",
+    "is_region_covered",
+    "decide_validation",
+]
 
 _RULES_DIR = Path(__file__).resolve().parent.parent / "business_rules"
 
@@ -69,15 +95,11 @@ FIELD_GROUP_TO_LEAD_ATTRS: dict[str, tuple[str, ...]] = {
 }
 
 REQUIRED_FIELD_ORDER: list[str] = _QUALIFICATION_CONFIG["required_fields_order"]
-ALLOWED_REGIONS: list[str] = _QUALIFICATION_CONFIG["coverage"]["allowed_regions"]
-
-_EAN_LENGTH: int = _VALIDATION_CONFIG["ean"]["length"]
-_EAN_NUMERIC_ONLY: bool = _VALIDATION_CONFIG["ean"]["numeric_only"]
-_EMAIL_MUST_CONTAIN: str = _VALIDATION_CONFIG["email"]["must_contain"]
-_PHONE_PATTERN: str = _VALIDATION_CONFIG["phone"]["pattern"]
-
-_DOB_CONFIG = _QUALIFICATION_CONFIG.get("date_of_birth") or _VALIDATION_CONFIG.get("date_of_birth", {})
-_DOB_MIN_AGE: int = int(_DOB_CONFIG.get("min_age", 18))
+# ALLOWED_REGIONS, validate_ean/email/phone/date_of_birth, parse_date_of_birth,
+# is_adult and is_region_covered all now live in business_rules/validators.py
+# (imported above) - business_rules/qualification_rules.yaml and
+# validation_rules.yaml are still this module's own concern for everything
+# else below, so both YAML files stay loaded here too.
 
 
 def is_field_group_complete(lead: Lead, field_group: str) -> bool:
@@ -99,65 +121,6 @@ def next_qualification_action(lead: Lead) -> Action:
     if not missing:
         return Action(type=ActionType.VALIDATE)
     return Action(type=ActionType.ASK_FIELD, field=missing[0])
-
-
-def validate_ean(ean: Optional[str]) -> bool:
-    if not ean:
-        return False
-    if _EAN_NUMERIC_ONLY and not ean.isdigit():
-        return False
-    return len(ean) == _EAN_LENGTH
-
-
-def validate_email(email: Optional[str]) -> bool:
-    return bool(email) and _EMAIL_MUST_CONTAIN in email
-
-
-def validate_phone(phone: Optional[str]) -> bool:
-    return bool(phone) and re.match(_PHONE_PATTERN, phone) is not None
-
-
-def parse_date_of_birth(dob: Optional[str | datetime | date]) -> Optional[date]:
-    """Parse date of birth strictly in DD/MM/YYYY format."""
-    if not dob:
-        return None
-    if isinstance(dob, datetime):
-        return dob.date()
-    if isinstance(dob, date):
-        return dob
-    if not isinstance(dob, str):
-        return None
-    dob = dob.strip()
-    if not re.match(r"^\d{2}/\d{2}/\d{4}$", dob):
-        return None
-    try:
-        return datetime.strptime(dob, "%d/%m/%Y").date()
-    except ValueError:
-        return None
-
-
-def validate_date_of_birth(dob: Optional[str | datetime | date]) -> bool:
-    """Validate format strictly as DD/MM/YYYY."""
-    return parse_date_of_birth(dob) is not None
-
-
-def is_adult(
-    dob: Optional[str | datetime | date],
-    min_age: int = _DOB_MIN_AGE,
-    *,
-    reference_date: Optional[date] = None,
-) -> bool:
-    """True if age is at least min_age years old."""
-    parsed = parse_date_of_birth(dob)
-    if not parsed:
-        return False
-    today = reference_date or date.today()
-    age = today.year - parsed.year - ((today.month, today.day) < (parsed.month, parsed.day))
-    return age >= min_age
-
-
-def is_region_covered(region: Optional[str]) -> bool:
-    return region in ALLOWED_REGIONS
 
 
 def decide_validation(lead: Lead, *, is_duplicate: bool = False) -> Action:

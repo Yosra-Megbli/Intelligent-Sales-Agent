@@ -138,6 +138,19 @@
     "allRegions": "Toutes les régions",
     "allGrds": "Tous les GRD",
     "resultsCount": "{{count}} prospects affichés",
+    "addModal": {
+      "button": "Ajouter un prospect",
+      "title": "Ajouter un prospect",
+      "submit": "Ajouter le prospect",
+      "success": "Prospect ajouté avec succès",
+      "errorDuplicate": "Un prospect avec cet email/téléphone existe déjà",
+      "errorRrn": "Ce champ ressemble à un numéro de registre national — jamais collecté",
+      "errorGeneric": "Erreur lors de la création du prospect",
+      "invalidEmail": "Email invalide",
+      "invalidPhone": "Format belge attendu : 0XXXXXXXXX",
+      "invalidEan": "18 chiffres attendus",
+      "invalidRegion": "Zone hors couverture (Bruxelles non desservi)"
+    },
     "table": {
       "name": "Prospect",
       "status": "Statut",
@@ -186,7 +199,16 @@
         "downloadSuccess": "Contrat PDF SPÉCIMEN téléchargé avec succès",
         "createSuccess": "Contrat généré avec succès !",
         "signSuccess": "Signature Yousign simulée avec succès ! Statut client activé."
-      }
+      },
+      "editButton": "Modifier",
+      "deleteButton": "Supprimer",
+      "editTitle": "Modifier les coordonnées",
+      "saveButton": "Enregistrer",
+      "editSuccess": "Prospect mis à jour",
+      "deleteSuccess": "Prospect supprimé",
+      "deleteConfirmTitle": "Supprimer ce prospect",
+      "deleteConfirmWord": "SUPPRIMER",
+      "deleteConfirmBody": "Cette action est irréversible : {{name}} ainsi que ses conversations et son historique seront définitivement supprimés. Tapez {{word}} pour confirmer."
     }
   },
   "conversations": {

@@ -12,6 +12,27 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class CreateLeadRequest(BaseModel):
+    """Manual single-lead creation ("Ajouter un prospect" on the Prospects
+    page). Server-side validation (application/lead_service.py, reusing
+    business_rules/validators.py) is authoritative; the frontend mirrors
+    the same rules for instant feedback, never the other way around."""
+
+    model_config = {"extra": "forbid"}
+
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    region: Optional[str] = None
+    city: Optional[str] = None
+    customer_type: Optional[str] = None
+    current_supplier: Optional[str] = None
+    ean: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    language: Optional[str] = "fr"
+
+
 class UpdateLeadRequest(BaseModel):
     """All fields optional and unset-by-default (not defaulted to None) so
     a PATCH only ever touches the fields the caller actually included -

@@ -182,3 +182,52 @@ def test_delete_lead_via_route(client):
 def test_delete_lead_404_when_missing(client):
     res = client.delete("/api/leads/00000000-0000-0000-0000-000000000000")
     assert res.status_code == 404
+
+
+# --- POST /api/leads (manual creation) ------------------------------------------------
+
+
+def test_create_lead_via_route(client):
+    res = client.post(
+        "/api/leads",
+        json={"first_name": "Marie", "last_name": "Lambert", "email": "marie@example.com", "phone": "0491234567"},
+    )
+
+    assert res.status_code == 201
+    body = res.json()
+    assert body["first_name"] == "Marie"
+    assert body["source"] == "MANUAL"
+
+
+def test_create_lead_rejects_invalid_email_with_422(client):
+    res = client.post("/api/leads", json={"email": "not-an-email"})
+    assert res.status_code == 422
+    assert res.json()["detail"]["code"] == "invalid_field"
+
+
+def test_create_lead_rejects_a_duplicate_with_409(client):
+    client.post("/api/leads", json={"email": "dup@example.com"})
+
+    res = client.post("/api/leads", json={"email": "dup@example.com"})
+
+    assert res.status_code == 409
+    assert res.json()["detail"]["code"] == "duplicate_lead"
+
+
+def test_create_lead_rejects_a_rijksregisternummer_with_422(client):
+    res = client.post("/api/leads", json={"first_name": "85073003328"})  # valid RRN checksum
+
+    assert res.status_code == 422
+    assert res.json()["detail"]["code"] == "rijksregisternummer_rejected"
+
+
+def test_create_lead_requires_api_key_once_configured(client, monkeypatch):
+    monkeypatch.setenv("API_KEY", "s3cret")
+
+    unauthenticated = client.post("/api/leads", json={"first_name": "Marie"})
+    assert unauthenticated.status_code == 401
+
+    authenticated = client.post(
+        "/api/leads", json={"first_name": "Marie"}, headers={"X-API-Key": "s3cret"}
+    )
+    assert authenticated.status_code == 201
