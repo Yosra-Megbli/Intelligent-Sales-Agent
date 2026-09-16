@@ -15,6 +15,8 @@ import {
   KnowledgeEntry,
   KnowledgeEntryListResponse,
   KnowledgeStatsResponse,
+  ImportPreviewResponse,
+  ImportReportResponse,
   LeadDetailResponse,
   LeadListResponse,
   LeadSummary,
@@ -466,6 +468,20 @@ export class ApiClient {
         body: JSON.stringify({ text }),
       }
     );
+  }
+
+  async previewImportLeads(csvText: string): Promise<ImportPreviewResponse> {
+    return this.request<ImportPreviewResponse>("/api/leads/import/preview", {
+      method: "POST",
+      body: JSON.stringify({ csv_text: csvText }),
+    });
+  }
+
+  async importLeads(csvText: string): Promise<ImportReportResponse> {
+    return this.request<ImportReportResponse>("/api/leads/import", {
+      method: "POST",
+      body: JSON.stringify({ csv_text: csvText }),
+    });
   }
 }
 

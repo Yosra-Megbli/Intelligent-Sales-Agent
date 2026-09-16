@@ -18,9 +18,11 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Button } from "@/components/ui/Button";
 import { LeadDrawer } from "@/components/leads/LeadDrawer";
 import { AddLeadModal } from "@/components/leads/AddLeadModal";
+import { CsvUploadModal } from "@/components/leads/CsvUploadModal";
 import {
   Search,
   Download,
+  UploadCloud,
   Copy,
   UserCheck,
   RotateCcw,
@@ -69,6 +71,7 @@ export const LeadsPage: React.FC = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [selectedLead, setSelectedLead] = useState<LeadSummary | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
 
   const {
     data: leadsData,
@@ -334,6 +337,15 @@ export const LeadsPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsCsvModalOpen(true)}
+            className="text-xs font-semibold text-[var(--color-teal)] hover:text-[var(--color-teal-hover)]"
+          >
+            <UploadCloud className="w-3.5 h-3.5 mr-1" />
+            <span>{t("leads.importCsv") || "Importer CSV"}</span>
+          </Button>
           <Button variant="secondary" size="sm" onClick={handleExportCsv} className="text-xs">
             <Download className="w-3.5 h-3.5 mr-1" />
             <span>{t("leads.exportCsv")}</span>
@@ -499,11 +511,11 @@ export const LeadsPage: React.FC = () => {
             className="overflow-auto max-h-[640px] relative"
           >
             <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-[var(--surface-hover)] border-b border-[var(--border)] text-[var(--ink-muted)] uppercase tracking-wider text-[10px] sticky top-0 z-10">
+              <thead className="bg-[var(--surface-hover)] border-b-2 border-[var(--border)] text-[var(--ink)] uppercase tracking-wider text-[11px] font-bold sticky top-0 z-10 shadow-xs">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <th key={header.id} className="px-4 py-3 font-semibold whitespace-nowrap">
+                      <th key={header.id} className="px-4 py-3 font-bold whitespace-nowrap text-[var(--ink)]">
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}
@@ -555,6 +567,13 @@ export const LeadsPage: React.FC = () => {
       />
 
       <AddLeadModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <CsvUploadModal
+        isOpen={isCsvModalOpen}
+        onClose={() => setIsCsvModalOpen(false)}
+        onSuccess={() => {
+          refetch();
+        }}
+      />
     </div>
   );
 };

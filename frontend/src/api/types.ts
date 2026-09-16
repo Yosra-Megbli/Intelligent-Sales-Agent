@@ -344,3 +344,33 @@ export interface KeyHealthPayload {
   percent_used: number | null;
 }
 
+export interface ImportPreviewRowResponse {
+  row_number: number;
+  data: Record<string, any>;
+  would_be_duplicate: boolean;
+  missing_identifier: boolean;
+}
+
+export interface ImportPreviewResponse {
+  headers: string[];
+  rows: ImportPreviewRowResponse[];
+  total_rows: number;
+  rows_missing_identifier: number;
+}
+
+export interface ImportRowErrorResponse {
+  row_number: number;
+  message: string;
+}
+
+export interface ImportReportResponse {
+  rows_read: number;
+  created: number;
+  updated: number;
+  duplicates: number;
+  skipped: number;
+  errors: number;
+  duration_seconds: number;
+  error_details: ImportRowErrorResponse[];
+}
+
