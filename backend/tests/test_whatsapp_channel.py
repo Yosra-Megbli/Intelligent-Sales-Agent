@@ -136,15 +136,19 @@ def test_send_message_callback_is_invoked_with_the_reply(db_session):
 
 
 def test_handle_update_with_a_provider_still_reaches_the_llm(db_session):
+    compliant_greeting = (
+        "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix -- "
+        "un conseiller humain reste disponible à tout moment. Comment puis-je vous aider ?"
+    )
     provider = ScriptedProvider(
         extraction_payload={"event_type": "CUSTOMER_MESSAGE", "entities": {}},
-        response_text="Bonjour, comment puis-je vous aider ?",
+        response_text=compliant_greeting,
     )
     channel = WhatsAppChannel(db_session, provider=provider)
 
     response = channel.handle_update(_payload("+15557778888", "Bonjour"))
 
-    assert response.response_text == "Bonjour, comment puis-je vous aider ?"
+    assert response.response_text == compliant_greeting
 
 
 def test_get_history_delegates_to_conversation_service(db_session):

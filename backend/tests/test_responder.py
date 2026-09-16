@@ -43,12 +43,17 @@ def make_conversation(language: str = "fr") -> Conversation:
 
 @pytest.mark.parametrize("required_action", sorted(_TALKING_POINTS.keys()))
 def test_every_talking_point_action_produces_llm_text(required_action):
-    provider = FakeProvider(content="Bonjour, comment puis-je vous aider ?")
+    greeting_content = (
+        "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix -- "
+        "un conseiller humain reste disponible à tout moment. Comment puis-je vous aider ?"
+    )
+    expected = greeting_content if required_action == "SEND_GREETING" else "Bonjour, comment puis-je vous aider ?"
+    provider = FakeProvider(content=expected)
     responder = Responder(provider)
 
     result = responder.respond(required_action, conversation=make_conversation())
 
-    assert result == "Bonjour, comment puis-je vous aider ?"
+    assert result == expected
     assert provider.calls[0]["json_mode"] is False
     assert provider.calls[0]["temperature"] == 0.7
 

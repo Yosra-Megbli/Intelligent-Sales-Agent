@@ -119,6 +119,7 @@ class ActivityType(str, Enum):
     HUMAN_HANDOFF = "HUMAN_HANDOFF"
     LEAD_IMPORTED = "LEAD_IMPORTED"
     OPT_OUT = "OPT_OUT"  # STOP/STOPT/ARRET handler
+    GUARD_TRIGGERED = "GUARD_TRIGGERED"  # Output guard intercepted forbidden claims / missing disclosure
 
 
 class CampaignStatus(str, Enum):

@@ -23,8 +23,14 @@ from database.postgres import Base
 from domain import models  # noqa: F401 - registers models on Base.metadata
 
 
+_COMPLIANT_GREETING = (
+    "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix -- "
+    "un conseiller humain reste disponible à tout moment."
+)
+
+
 class ScriptedProvider(LLMProvider):
-    def __init__(self, extraction_payload: dict, response_text: str = "Bonjour !"):
+    def __init__(self, extraction_payload: dict, response_text: str = _COMPLIANT_GREETING):
         self.extraction_payload = extraction_payload
         self.response_text = response_text
 
@@ -209,7 +215,7 @@ def test_send_message_advances_state_and_returns_reply(client):
     assert response.status_code == 200
     body = response.json()
     assert body["state"] == "GREETING"
-    assert body["reply"] == "Bonjour !"
+    assert body["reply"] == _COMPLIANT_GREETING
 
 
 def test_send_message_to_unknown_conversation_returns_404(client):
@@ -277,7 +283,7 @@ def test_telegram_webhook_processes_an_update_and_returns_ok(client):
 def test_telegram_webhook_sends_the_reply_via_the_injected_sender(client):
     client.post("/api/telegram/webhook", json=_telegram_update(456, "Bonjour"))
 
-    assert client.sent_messages == [("456", "Bonjour !")]
+    assert client.sent_messages == [("456", _COMPLIANT_GREETING)]
 
 
 def test_telegram_webhook_resumes_the_same_conversation_across_requests(client):
@@ -344,7 +350,7 @@ def test_whatsapp_webhook_processes_a_message_and_returns_ok(client):
 def test_whatsapp_webhook_sends_the_reply_via_the_injected_sender(client):
     client.post("/api/whatsapp/webhook", data=_whatsapp_payload("+15559998888", "Bonjour"))
 
-    assert client.sent_whatsapp_messages == [("+15559998888", "Bonjour !")]
+    assert client.sent_whatsapp_messages == [("+15559998888", _COMPLIANT_GREETING)]
 
 
 def test_whatsapp_webhook_resumes_the_same_conversation_across_requests(client):

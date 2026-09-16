@@ -89,16 +89,20 @@ def test_get_history_returns_persisted_messages_in_order(db_session):
 
 
 def test_handle_message_with_a_provider_still_reaches_the_llm(db_session):
+    compliant_greeting = (
+        "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix -- "
+        "un conseiller humain reste disponible à tout moment. Comment puis-je vous aider ?"
+    )
     provider = ScriptedProvider(
         extraction_payload={"event_type": "CUSTOMER_MESSAGE", "entities": {}},
-        response_text="Bonjour, comment puis-je vous aider ?",
+        response_text=compliant_greeting,
     )
     channel = WebChannel(db_session, provider=provider)
     _, conversation = channel.start_conversation()
 
     reply = channel.handle_message(conversation.id, "Bonjour")
 
-    assert reply.response_text == "Bonjour, comment puis-je vous aider ?"
+    assert reply.response_text == compliant_greeting
     assert reply.engine_result.next_state == ConversationState.GREETING
 
 

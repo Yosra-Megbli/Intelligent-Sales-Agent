@@ -429,10 +429,19 @@ class ConversationService:
         if rag_category:
             rag_answer = self.rag.answer(raw_text, category=rag_category)
 
-        return self.responder.respond(
+        response_text = self.responder.respond(
             result.required_action,
             conversation=conversation,
             lead=conversation.lead,
             rejection_reason=result.rejection_reason,
             rag_answer=rag_answer,
         )
+
+        if getattr(self.responder, "last_guard_violation", None) and conversation.lead_id:
+            self.activity_repo.log(
+                conversation.lead_id,
+                ActivityType.GUARD_TRIGGERED,
+                details=self.responder.last_guard_violation,
+            )
+
+        return response_text

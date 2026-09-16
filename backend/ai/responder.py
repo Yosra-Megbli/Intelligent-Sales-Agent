@@ -34,13 +34,17 @@ Sophie must always be able to reply, even if the phrasing layer is down.
 
 from __future__ import annotations
 
+import logging
 from typing import Optional
 
 from ai.prompt_loader import load_text, load_yaml
 from ai.providers.interface import LLMError, LLMMessage, LLMProvider, LLMRole
+from conversation_engine.compliance import verify_output_guard
 from domain.enums import RejectionReason
 from domain.models.conversation import Conversation
 from domain.models.lead import Lead
+
+logger = logging.getLogger(__name__)
 
 # What Sophie should communicate for each `required_action`, in plain English
 # instructions to the phrasing model - never the customer-facing text itself.
@@ -103,6 +107,7 @@ class Responder:
 
     def __init__(self, provider: Optional[LLMProvider] = None):
         self._provider = provider
+        self.last_guard_violation: Optional[str] = None
 
     def respond(
         self,
@@ -122,6 +127,8 @@ class Responder:
         ANSWER_OBJECTION; without it those two actions fall back to a
         generic "handing this to a colleague" message.
         """
+        self.last_guard_violation = None
+
         if required_action in _SILENT_ACTIONS:
             return None
 
@@ -159,7 +166,7 @@ class Responder:
         if talking_point is None:
             return fallback
 
-        return self._generate(talking_point, conversation, fallback)
+        return self._generate(talking_point, conversation, fallback, required_action=required_action)
 
     def _respond_with_rag_answer(
         self, required_action: str, conversation: Conversation, rag_answer: Optional[str]
@@ -171,9 +178,15 @@ class Responder:
             "Convey the following answer to the customer's question in your own natural "
             f"words, without adding new facts: {rag_answer.strip()}"
         )
-        return self._generate(talking_point, conversation, fallback)
+        return self._generate(talking_point, conversation, fallback, required_action=required_action)
 
-    def _generate(self, talking_point: str, conversation: Conversation, fallback: str) -> str:
+    def _generate(
+        self,
+        talking_point: str,
+        conversation: Conversation,
+        fallback: str,
+        required_action: Optional[str] = None,
+    ) -> str:
         if self._provider is None:
             return fallback
 
@@ -186,5 +199,21 @@ class Responder:
             return fallback
 
         text = (response.content or "").strip()
-        return text or fallback
+        if not text:
+            return fallback
+
+        # Output Guard (Layer 5): deterministic anti-hallucination and compliance linter
+        is_valid, violation = verify_output_guard(text, required_action=required_action, language=language)
+        if not is_valid:
+            self.last_guard_violation = violation
+            logger.warning(
+                "Output guard triggered (%s) for action %s: '%s' -> discarded and replaced with fallback.",
+                violation,
+                required_action,
+                text,
+            )
+            return fallback
+
+        self.last_guard_violation = None
+        return text
 

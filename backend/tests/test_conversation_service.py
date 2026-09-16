@@ -1,4 +1,4 @@
-﻿"""
+"""
 Integration tests for ConversationService.handle_message() (Application
 layer, Phase 4A).
 
@@ -71,23 +71,31 @@ def _new_conversation(db_session, language: str = "fr"):
 
 def test_handle_message_advances_state_and_returns_response_text(db_session):
     _, conversation = _new_conversation(db_session)
+    compliant_greeting = (
+        "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix -- "
+        "un conseiller humain reste disponible à tout moment. Comment puis-je vous aider ?"
+    )
     provider = ScriptedProvider(
         extraction_payload={"event_type": "CUSTOMER_MESSAGE", "entities": {}},
-        response_text="Bonjour ! Comment puis-je vous aider ?",
+        response_text=compliant_greeting,
     )
     service = ConversationService(db_session, provider=provider)
 
     reply = service.handle_message(ConversationRequest(conversation_id=conversation.id, text="Bonjour"))
 
     assert reply.engine_result.next_state == ConversationState.GREETING
-    assert reply.response_text == "Bonjour ! Comment puis-je vous aider ?"
+    assert reply.response_text == compliant_greeting
 
 
 def test_handle_message_persists_both_customer_and_assistant_messages(db_session):
     _, conversation = _new_conversation(db_session)
+    compliant_greeting = (
+        "Bonjour, ici Sophie, assistante virtuelle (intelligence artificielle) d'Ecofix -- "
+        "un conseiller humain reste disponible à tout moment."
+    )
     provider = ScriptedProvider(
         extraction_payload={"event_type": "CUSTOMER_MESSAGE", "entities": {}},
-        response_text="Bonjour !",
+        response_text=compliant_greeting,
     )
     service = ConversationService(db_session, provider=provider)
 
@@ -96,7 +104,7 @@ def test_handle_message_persists_both_customer_and_assistant_messages(db_session
     history = ConversationRepository(db_session).get_history(conversation)
     assert [m.role for m in history] == [MessageRole.USER, MessageRole.ASSISTANT]
     assert history[0].content == "Bonjour"
-    assert history[1].content == "Bonjour !"
+    assert history[1].content == compliant_greeting
 
 
 def test_extraction_entities_are_applied_to_the_lead(db_session):
@@ -264,14 +272,14 @@ def test_question_event_triggers_rag_lookup_and_llm_phrasing(db_session):
     _, conversation = _new_conversation(db_session)
     provider = ScriptedProvider(
         extraction_payload={"event_type": "QUESTION", "entities": {}},
-        response_text="Le changement est gratuit chez Ecofix.",
+        response_text="Le changement de fournisseur s'effectue simplement chez Ecofix.",
     )
     service = ConversationService(db_session, provider=provider)
 
     reply = service.handle_message(ConversationRequest(conversation_id=conversation.id, text="C'est gratuit ou il y a des frais ?"))
 
     assert reply.engine_result.next_state == ConversationState.FAQ
-    assert reply.response_text == "Le changement est gratuit chez Ecofix."
+    assert reply.response_text == "Le changement de fournisseur s'effectue simplement chez Ecofix."
     phrasing_call = next(c for c in provider.calls if c["json_mode"] is False)
     assert "gratuit" in phrasing_call["messages"][0].content.lower()
 
