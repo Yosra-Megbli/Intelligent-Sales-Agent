@@ -115,6 +115,10 @@ class OverviewStats:
     rejected: int
     human_handoff: int
     conversion_rate: float
+    cost_per_conversation: float = 0.02
+    cost_per_sale: float = 0.0
+    estimated_ca: float = 0.0
+    currency: str = "EUR"
 
 
 @dataclass
@@ -207,6 +211,14 @@ class DashboardService:
 
         conversion_rate = (qualified / total_leads * 100) if total_leads else 0.0
 
+        # Unit Economics & Estimated Annual Turnover (CA)
+        # Platform fee €5.99/mo (€71.88/yr) + average contract margin (~€48.12/yr) = ~€120.00 / year / contract
+        cost_per_conversation = 0.02
+        total_conversations = self.conversation_repo.count_total()
+        total_ai_cost = round(total_conversations * cost_per_conversation, 2)
+        cost_per_sale = round(total_ai_cost / qualified, 2) if qualified > 0 else 0.0
+        estimated_ca = round(qualified * 120.0, 2)
+
         return OverviewStats(
             total_leads=total_leads,
             active_conversations=active_conversations,
@@ -216,6 +228,10 @@ class DashboardService:
             rejected=rejected,
             human_handoff=human_handoff,
             conversion_rate=conversion_rate,
+            cost_per_conversation=cost_per_conversation,
+            cost_per_sale=cost_per_sale,
+            estimated_ca=estimated_ca,
+            currency="EUR",
         )
 
     # --- Reason labels for the Handoff Queue's "why" column ---------------

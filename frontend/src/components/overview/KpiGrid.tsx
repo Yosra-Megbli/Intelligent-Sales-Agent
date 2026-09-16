@@ -31,14 +31,25 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
     ? (overview.conversion_rate > 1 ? overview.conversion_rate : overview.conversion_rate * 100).toFixed(1)
     : "0.0";
 
-  // Cost per sale: analytical metric (Sprint 2 placeholder/model e.g. ~€12.50)
-  const costPerSale = totalSales > 0 ? (245 / totalSales).toFixed(2) : "12.50";
+  // Cost per sale: analytical metric computed by backend (total conversation AI cost / qualified leads)
+  const costPerSale =
+    overview?.cost_per_sale !== undefined && overview?.cost_per_sale !== null
+      ? overview.cost_per_sale.toFixed(2)
+      : totalSales > 0
+        ? (245 / totalSales).toFixed(2)
+        : "0.00";
 
-  // Estimated Monthly Recurring Revenue (Platform fee €5.99/mo + broker margin)
-  const estimatedMrr = (totalSales * 5.99 * 1.5).toLocaleString("fr-BE", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  // Estimated Annual Revenue (CA) from platform fee (€5.99/mo) & energy margin
+  const estimatedRevenue =
+    overview?.estimated_ca !== undefined && overview?.estimated_ca !== null
+      ? overview.estimated_ca.toLocaleString("fr-BE", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      : (totalSales * 120).toLocaleString("fr-BE", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -102,11 +113,11 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
       <div className="sm:col-span-2 lg:col-span-2">
         <KpiCard
           title={t("overview.kpi.estimatedRevenue")}
-          value={estimatedMrr}
+          value={estimatedRevenue}
           prefix="€"
-          suffix="/mois"
+          suffix="/an"
           delta={{ value: 28.3, label: t("overview.delta.target"), isPositive: true }}
-          sparklineData={[120, 180, 240, 310, 420, 560, parseFloat(estimatedMrr.replace(/\s/g, "").replace(",", ".")) || 650]}
+          sparklineData={[120, 180, 240, 310, 420, 560, parseFloat(estimatedRevenue.replace(/\s/g, "").replace(",", ".")) || 650]}
           isLoading={isLoading}
         />
       </div>

@@ -1,4 +1,4 @@
-﻿"""
+"""
 Lead model - the CRM's source of truth for a prospect.
 
 IMPORTANT (architecture rule): this model only stores data. It never decides
@@ -68,8 +68,9 @@ class Lead(Base):
     dedup_email = Column(String(255), nullable=True)
     dedup_phone = Column(String(32), nullable=True)
 
-    # --- Source ---
+    # --- Source & Preferences ---
     source = Column(SAEnum(LeadSource, name="lead_source"), nullable=False)
+    language = Column(String(8), nullable=True, default="fr", index=True)
 
     # Telegram cannot be cold-outreached by phone number - a bot may only
     # message a `chat_id` belonging to a user who has already started a

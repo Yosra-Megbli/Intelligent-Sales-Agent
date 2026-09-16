@@ -76,6 +76,26 @@ def build_whatsapp_sender() -> Optional[Callable[[str, str], None]]:
     return TwilioWhatsAppSender(account_sid, auth_token, from_number).send
 
 
+def build_sms_sender() -> Optional[Callable[[str, str], None]]:
+    """Returns a `TwilioSmsSender.send`-compatible callable, or None if
+    `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_SMS_NUMBER` aren't
+    all configured.
+    """
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+    from_number = os.getenv("TWILIO_SMS_NUMBER") or os.getenv("TWILIO_PHONE_NUMBER")
+    if not (account_sid and auth_token and from_number):
+        logger.warning(
+            "TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_SMS_NUMBER not "
+            "fully configured - outbound SMS messages will be computed "
+            "but not sent."
+        )
+        return None
+    from channels.sms import TwilioSmsSender
+
+    return TwilioSmsSender(account_sid, auth_token, from_number).send
+
+
 def build_default_senders() -> dict[ConversationChannel, Callable[[str, str], None]]:
     """Every real, currently-configured outbound sender, keyed by channel -
     the dict `OutboundSender` expects. A channel is present in the result
@@ -92,5 +112,9 @@ def build_default_senders() -> dict[ConversationChannel, Callable[[str, str], No
     whatsapp_sender = build_whatsapp_sender()
     if whatsapp_sender is not None:
         senders[ConversationChannel.WHATSAPP] = whatsapp_sender
+
+    sms_sender = build_sms_sender()
+    if sms_sender is not None:
+        senders[ConversationChannel.SMS] = sms_sender
 
     return senders

@@ -1,9 +1,9 @@
-﻿# Sophie â€” Agent IA de vente Ecofix
+# Sophie â€” Agent IA de vente Ecofix
 
 ![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB?logo=react&logoColor=black)
-![Tests](https://img.shields.io/badge/tests-655%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-733%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'أ©lectricitأ© et de gaz Ecofix : elle engage la conversation, rأ©pond aux objections, collecte et valide les informations nأ©cessaires, puis transmet les leads qualifiأ©s أ  l'أ©quipe commerciale humaine.
@@ -119,8 +119,9 @@ pytest tests/ golden_tests/ -v
 | Telegram | Actif et testأ© â€” canal du pilote |
 | Web (widget) | Actif et testأ© |
 | WhatsApp Business | Architecturأ© et testأ© (`channels/whatsapp.py`, signature Twilio), non activأ© pour le pilote actuel |
-| Appel vocal | Pipeline complet cأ¢blأ© (`application/voice_inbound_service.py` + `channels/voice/session_manager.py`, STT/TTS Twilio) ; il ne manque qu'un compte Twilio Voice rأ©el (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_VOICE_NUMBER`/`PUBLIC_BASE_URL`) pour un appel en conditions rأ©elles â€” voir `docs/architecture/voice_agent_architecture.md` |
-| SMS, Messenger, Instagram | Non implأ©mentأ©s â€” roadmap |
+| Appel vocal | Pipeline complet câblé (`application/voice_inbound_service.py` + `channels/voice/session_manager.py`, STT/TTS Twilio) ; il ne manque qu'un compte Twilio Voice réel (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_VOICE_NUMBER`/`PUBLIC_BASE_URL`) pour un appel en conditions réelles — voir `docs/architecture/voice_agent_architecture.md` |
+| SMS | Architecturé et testé (`channels/sms.py`, signature Twilio), prêt pour déploiement |
+| Messenger, Instagram | Non implémentés — roadmap |
 
 ## Sأ©curitأ©
 

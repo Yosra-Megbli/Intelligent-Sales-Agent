@@ -156,6 +156,9 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
                 )}
               </h2>
               <Badge variant={lead.status as LeadStatus} />
+              <span className="inline-flex items-center text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--ink-muted)] uppercase">
+                {lead.language || "FR"}
+              </span>
               {isOptOut && (
                 <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-100 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300 border border-pink-300 dark:border-pink-800">
                   <ShieldAlert className="w-3 h-3" />

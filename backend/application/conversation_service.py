@@ -35,6 +35,7 @@ from ai.providers.interface import LLMProvider
 from ai.rag import Rag
 from ai.responder import Responder
 from conversation_engine.engine import ConversationEngine, EngineResult
+from conversation_engine.language_detector import detect_language
 from conversation_engine.memory import ConversationMemory
 from conversation_engine.transitions import Event, EventType
 from conversation_engine.opt_out import is_opt_out
@@ -84,6 +85,7 @@ _LEAD_SOURCE_BY_CHANNEL: dict[ConversationChannel, LeadSource] = {
     ConversationChannel.TELEGRAM: LeadSource.TELEGRAM,
     ConversationChannel.WHATSAPP: LeadSource.WHATSAPP,
     ConversationChannel.VOICE: LeadSource.VOICE,
+    ConversationChannel.SMS: LeadSource.SMS,
 }
 
 
@@ -162,7 +164,12 @@ class ConversationService:
         if lead is None:
             try:
                 lead = self.lead_repo.create(
-                    source=source, first_name=first_name, last_name=last_name, email=email, phone=phone
+                    source=source,
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    phone=phone,
+                    language=language,
                 )
             except IntegrityError:
                 # P1-2 fallback: a concurrent request won the race between
@@ -185,6 +192,8 @@ class ConversationService:
         # instead of only via a Conversation lookup.
         if channel == ConversationChannel.TELEGRAM and external_id:
             self.lead_repo.update_fields(lead, telegram_chat_id=external_id)
+        if language and getattr(lead, "language", None) != language:
+            self.lead_repo.update_fields(lead, language=language)
         conversation = self.conversation_repo.create(
             lead_id=lead.id, channel=channel, language=language, external_id=external_id
         )
@@ -236,6 +245,8 @@ class ConversationService:
             lead = self.lead_repo.get_by_id(existing_lead_id)
             if lead is None:
                 raise ValueError(f"No lead found for existing_lead_id={existing_lead_id}")
+            if language and getattr(lead, "language", None) != language:
+                self.lead_repo.update_fields(lead, language=language)
             conversation = self.conversation_repo.create(
                 lead_id=lead.id, channel=channel, language=language, external_id=external_id
             )
@@ -291,6 +302,15 @@ class ConversationService:
 
     def handle_message(self, request: ConversationRequest) -> ConversationResponse:
         context = self.memory.load(request.conversation_id)
+
+        # Detect language update from incoming message if applicable
+        detected_lang = detect_language(request.text, fallback=context.conversation.language or "fr")
+        if detected_lang != context.conversation.language:
+            context.conversation.language = detected_lang
+            if context.conversation.lead_id:
+                lead = self.lead_repo.get_by_id(context.conversation.lead_id)
+                if lead:
+                    self.lead_repo.update_fields(lead, language=detected_lang)
 
         # COMPLIANCE: STOP/STOPT/ARRET = immediate opt-out (AGENTS.md golden rules).
         if is_opt_out(request.text):

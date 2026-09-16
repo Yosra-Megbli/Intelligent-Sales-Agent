@@ -38,6 +38,7 @@ class LeadRepository:
         last_name: Optional[str] = None,
         email: Optional[str] = None,
         phone: Optional[str] = None,
+        language: Optional[str] = "fr",
     ) -> Lead:
         lead = Lead(
             id=uuid.uuid4(),
@@ -47,6 +48,7 @@ class LeadRepository:
             last_name=last_name,
             email=email,
             phone=phone,
+            language=language or "fr",
             # See Lead.dedup_email/dedup_phone's comment (domain/models/
             # lead.py): only ever set here, at creation time - this is what
             # the unique indexes and find_duplicate()/get_by_email() below
@@ -163,6 +165,7 @@ class LeadRepository:
         status: Optional[LeadStatus] = None,
         region: Optional[str] = None,
         source: Optional[LeadSource] = None,
+        language: Optional[str] = None,
         search: Optional[str] = None,
         limit: int = 50,
         offset: int = 0,
@@ -180,6 +183,8 @@ class LeadRepository:
             stmt = stmt.where(Lead.region == region)
         if source is not None:
             stmt = stmt.where(Lead.source == source)
+        if language is not None:
+            stmt = stmt.where(Lead.language == language)
         if search:
             pattern = f"%{search.lower()}%"
             stmt = stmt.where(

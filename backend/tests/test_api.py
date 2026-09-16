@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from ai.providers.interface import LLMProvider, LLMResponse
-from api.dependencies import get_llm_provider, get_telegram_sender, get_whatsapp_sender
+from api.dependencies import get_llm_provider, get_sms_sender, get_telegram_sender, get_whatsapp_sender
 from api.main import app
 from api.routes import get_db_session
 from database.postgres import Base
@@ -107,10 +107,15 @@ def client():
     app.dependency_overrides[get_whatsapp_sender] = lambda: (
         lambda phone, text: sent_whatsapp_messages.append((phone, text))
     )
+    sent_sms_messages: list[tuple[str, str]] = []
+    app.dependency_overrides[get_sms_sender] = lambda: (
+        lambda phone, text: sent_sms_messages.append((phone, text))
+    )
 
     with TestClient(app) as test_client:
         test_client.sent_messages = sent_messages  # type: ignore[attr-defined]
         test_client.sent_whatsapp_messages = sent_whatsapp_messages  # type: ignore[attr-defined]
+        test_client.sent_sms_messages = sent_sms_messages  # type: ignore[attr-defined]
         yield test_client
 
     app.dependency_overrides.clear()
@@ -382,6 +387,63 @@ def test_whatsapp_webhook_requires_valid_twilio_signature_once_configured(client
     valid_signature = _compute_twilio_signature("twilio-secret", url, payload)
     authenticated = client.post(
         "/api/whatsapp/webhook", data=payload, headers={"X-Twilio-Signature": valid_signature}
+    )
+    assert authenticated.status_code == 200
+
+
+def _sms_payload(phone: str, text: str) -> dict:
+    return {
+        "MessageSid": "SM_API_SMS_123",
+        "From": phone,
+        "To": "+32488000000",
+        "Body": text,
+    }
+
+
+def test_sms_webhook_processes_a_message_and_returns_ok(client):
+    response = client.post("/api/sms/webhook", data=_sms_payload("+32488123456", "Bonjour"))
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["ok"] is True
+    assert body["state"] == "GREETING"
+
+
+def test_sms_webhook_sends_the_reply_via_the_injected_sender(client):
+    client.post("/api/sms/webhook", data=_sms_payload("+32488987654", "Bonjour"))
+
+    assert client.sent_sms_messages == [("+32488987654", _COMPLIANT_GREETING)]
+
+
+def test_sms_webhook_resumes_the_same_conversation_across_requests(client):
+    client.post("/api/sms/webhook", data=_sms_payload("+32488111222", "Bonjour"))
+    second = client.post("/api/sms/webhook", data=_sms_payload("+32488111222", "encore"))
+
+    assert second.json()["state"] == "DISCOVERY"
+    assert len(client.sent_sms_messages) == 2
+
+
+def test_sms_webhook_ignores_payloads_with_no_body(client):
+    response = client.post(
+        "/api/sms/webhook", data={"MessageSid": "SM_STATUS", "MessageStatus": "delivered"}
+    )
+    assert response.status_code == 200
+    assert response.json() == {"ok": True}
+
+
+def test_sms_webhook_requires_valid_twilio_signature_once_configured(client, monkeypatch):
+    from api.dependencies import _compute_twilio_signature
+
+    monkeypatch.setenv("TWILIO_AUTH_TOKEN", "twilio-secret")
+    payload = _sms_payload("+32488777999", "Bonjour")
+
+    unauthenticated = client.post("/api/sms/webhook", data=payload)
+    assert unauthenticated.status_code == 403
+
+    url = "http://testserver/api/sms/webhook"
+    valid_signature = _compute_twilio_signature("twilio-secret", url, payload)
+    authenticated = client.post(
+        "/api/sms/webhook", data=payload, headers={"X-Twilio-Signature": valid_signature}
     )
     assert authenticated.status_code == 200
 

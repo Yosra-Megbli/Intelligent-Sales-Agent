@@ -179,6 +179,11 @@ class ConversationRepository:
         )
         return self.db.scalar(stmt) or 0
 
+    def count_total(self) -> int:
+        """Total number of conversations created across all channels."""
+        stmt = select(func.count()).select_from(Conversation)
+        return self.db.scalar(stmt) or 0
+
     def count_distinct_leads_in_state(self, state: ConversationState) -> int:
         """Dashboard Priority 2 (Overview): global version of
         `count_distinct_leads_in_state_for_campaign` below, without the

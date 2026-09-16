@@ -18,6 +18,7 @@ class LeadSource(str, Enum):
     CSV = "CSV"
     CRM_IMPORT = "CRM_IMPORT"
     CAMPAIGN = "CAMPAIGN"
+    SMS = "SMS"
 
 
 class LeadStatus(str, Enum):
@@ -67,6 +68,7 @@ class ConversationChannel(str, Enum):
     TELEGRAM = "TELEGRAM"
     WHATSAPP = "WHATSAPP"
     VOICE = "VOICE"
+    SMS = "SMS"
 
 
 class ConversationState(str, Enum):

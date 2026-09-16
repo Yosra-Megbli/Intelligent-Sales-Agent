@@ -67,6 +67,7 @@ export const LeadsPage: React.FC = () => {
 
   // Helper to determine language chip
   const resolveLang = (lead: LeadSummary): string => {
+    if (lead.language) return lead.language.toUpperCase();
     const r = (lead.region || "").toLowerCase();
     if (r.includes("fland") || r.includes("vl")) return "NL";
     if (r.includes("wallon") || r.includes("wa")) return "FR";

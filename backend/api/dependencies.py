@@ -88,6 +88,26 @@ def get_whatsapp_sender():
 
 
 @lru_cache(maxsize=1)
+def get_sms_sender():
+    """Returns a `TwilioSmsSender.send`-compatible callable, or None if
+    `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_SMS_NUMBER`
+    aren't all configured - same degrade-gracefully pattern.
+    """
+    account_sid = os.getenv("TWILIO_ACCOUNT_SID")
+    auth_token = os.getenv("TWILIO_AUTH_TOKEN")
+    from_number = os.getenv("TWILIO_SMS_NUMBER") or os.getenv("TWILIO_PHONE_NUMBER")
+    if not (account_sid and auth_token and from_number):
+        logger.warning(
+            "TWILIO_ACCOUNT_SID/TWILIO_AUTH_TOKEN/TWILIO_SMS_NUMBER not fully configured - "
+            "SMS replies will be computed but not sent."
+        )
+        return None
+    from channels.sms import TwilioSmsSender
+
+    return TwilioSmsSender(account_sid, auth_token, from_number).send
+
+
+@lru_cache(maxsize=1)
 def get_telephony_provider():
     """Returns a `TelephonyProvider` (currently `TwilioTelephonyProvider`)
     for placing outbound voice calls, or None if `TWILIO_ACCOUNT_SID` /

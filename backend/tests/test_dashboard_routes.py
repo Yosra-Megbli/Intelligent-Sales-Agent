@@ -210,6 +210,10 @@ def test_get_overview_empty_database(client):
         "rejected": 0,
         "human_handoff": 0,
         "conversion_rate": 0.0,
+        "cost_per_conversation": 0.02,
+        "cost_per_sale": 0.0,
+        "estimated_ca": 0.0,
+        "currency": "EUR",
     }
 
 

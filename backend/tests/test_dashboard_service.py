@@ -208,6 +208,10 @@ def test_get_overview_on_empty_database(db_session):
     assert overview.rejected == 0
     assert overview.human_handoff == 0
     assert overview.conversion_rate == 0.0
+    assert overview.cost_per_conversation == 0.02
+    assert overview.cost_per_sale == 0.0
+    assert overview.estimated_ca == 0.0
+    assert overview.currency == "EUR"
 
 
 def test_get_overview_computes_headline_metrics(db_session):
@@ -255,6 +259,10 @@ def test_get_overview_computes_headline_metrics(db_session):
     assert overview.rejected == 1
     assert overview.human_handoff == 1
     assert overview.conversion_rate == 40.0  # 2 qualified / 5 total leads
+    assert overview.cost_per_conversation == 0.02
+    assert overview.cost_per_sale == 0.03
+    assert overview.estimated_ca == 240.0
+    assert overview.currency == "EUR"
 
 
 # --- list_handoffs (P04, Handoff Queue) --------------------------------------

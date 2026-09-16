@@ -38,6 +38,7 @@ export interface LeadSummary {
   campaign_id: string | null;
   campaign_name: string | null;
   last_contact_date: string | null;
+  language?: string | null;
 }
 
 
@@ -120,6 +121,10 @@ export interface OverviewResponse {
   rejected: number;
   human_handoff: number;
   conversion_rate: number;
+  cost_per_conversation?: number;
+  cost_per_sale?: number;
+  estimated_ca?: number;
+  currency?: string;
 }
 
 export interface CampaignSummary {

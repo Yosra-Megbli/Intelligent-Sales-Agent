@@ -28,6 +28,7 @@ from sqlalchemy.orm import Session
 from api.dependencies import (
     enforce_rate_limit,
     get_llm_provider,
+    get_sms_sender,
     get_telegram_sender,
     get_whatsapp_sender,
     require_api_key,
@@ -41,6 +42,7 @@ from api.schemas import (
     StartConversationRequest,
     StartConversationResponse,
 )
+from channels.sms import SmsChannel
 from channels.telegram import TelegramChannel
 from channels.web import WebChannel
 from channels.whatsapp import WhatsAppChannel
@@ -184,6 +186,37 @@ async def whatsapp_webhook(
         enforce_rate_limit(f"whatsapp:{phone}")
 
     channel = WhatsAppChannel(db, provider=provider, send_message=send_message)
+    response = channel.handle_update(payload)
+    if response is None:
+        return {"ok": True}
+    return {"ok": True, "state": response.state, "required_action": response.required_action}
+
+
+@router.post("/sms/webhook", status_code=200)
+async def sms_webhook(
+    request: Request,
+    db: Session = Depends(get_db_session),
+    provider=Depends(get_llm_provider),
+    send_message=Depends(get_sms_sender),
+) -> dict:
+    """Twilio calls this with every inbound SMS message as an
+    `application/x-www-form-urlencoded` body.
+    Guarded by `verify_twilio_signature`.
+    """
+    form = await request.form()
+    payload = dict(form)
+
+    verify_twilio_signature(
+        url=str(request.url),
+        params=payload,
+        signature=request.headers.get("X-Twilio-Signature"),
+    )
+
+    phone = SmsChannel.extract_phone(payload)
+    if phone is not None:
+        enforce_rate_limit(f"sms:{phone}")
+
+    channel = SmsChannel(db, provider=provider, send_message=send_message)
     response = channel.handle_update(payload)
     if response is None:
         return {"ok": True}

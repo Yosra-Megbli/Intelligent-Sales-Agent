@@ -54,6 +54,7 @@ class LeadSummary(BaseModel):
     # team had no way to see "when did we last actually reach this person"
     # without opening raw activity logs.
     last_contact_date: Optional[datetime]
+    language: Optional[str] = "fr"
 
     @classmethod
     def from_model(cls, lead, campaign_name: Optional[str] = None) -> "LeadSummary":
@@ -87,6 +88,7 @@ class LeadSummary(BaseModel):
             campaign_id=lead.campaign_id,
             campaign_name=campaign_name,
             last_contact_date=lead.last_contact_date,
+            language=getattr(lead, "language", None) or "fr",
         )
 
 
@@ -238,6 +240,10 @@ class OverviewResponse(BaseModel):
     rejected: int
     human_handoff: int
     conversion_rate: float
+    cost_per_conversation: float = 0.02
+    cost_per_sale: float = 0.0
+    estimated_ca: float = 0.0
+    currency: str = "EUR"
 
 
 class ConversationDetailItemResponse(BaseModel):
