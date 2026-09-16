@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
+import { useAuth } from "@/context/AuthContext";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -33,8 +34,11 @@ export const SettingsPage: React.FC = () => {
   const [isSigning, setIsSigning] = useState(false);
   const [lastGeneratedContract, setLastGeneratedContract] = useState<{ id: string; product: string } | null>(null);
 
-  const storedApiKey = localStorage.getItem("sophie_api_key") || "sk-live-ecofix-demo-key-2026";
-  const maskedApiKey = storedApiKey.slice(0, 7) + "••••••••••••••••" + storedApiKey.slice(-4);
+  const { apiKey } = useAuth();
+  // apiKey is only ever set for the active session (see AuthContext) - a
+  // fallback here would be misleading, since it would show as "your key"
+  // even before login.
+  const maskedApiKey = apiKey ? apiKey.slice(0, 7) + "••••••••••••••••" + apiKey.slice(-4) : "—";
 
   const { data: leadsData } = useQuery({
     queryKey: ["leadsForContract"],
@@ -90,7 +94,8 @@ export const SettingsPage: React.FC = () => {
   };
 
   const handleCopyApiKey = () => {
-    navigator.clipboard.writeText(storedApiKey);
+    if (!apiKey) return;
+    navigator.clipboard.writeText(apiKey);
     toast.success(t("toast.copied"));
   };
 
@@ -340,7 +345,7 @@ export const SettingsPage: React.FC = () => {
                 <input
                   type={showApiKey ? "text" : "password"}
                   readOnly
-                  value={storedApiKey}
+                  value={apiKey || ""}
                   className="w-full pl-3 pr-9 py-1.5 text-xs font-mono rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface-hover)] text-[var(--ink)] focus:outline-none select-all"
                 />
                 <button

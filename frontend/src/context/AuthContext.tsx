@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { apiClient } from "@/api/client";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -15,35 +15,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { t } = useTranslation();
-  const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem("sophie_api_key"));
+  const [apiKey, setApiKey] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const stored = localStorage.getItem("sophie_api_key");
-      if (!stored) {
-        setIsLoading(false);
-        setIsAuthenticated(false);
-        return;
-      }
-      try {
-        const valid = await apiClient.verifyApiKey(stored);
-        if (valid) {
-          setApiKey(stored);
-          setIsAuthenticated(true);
-        } else {
-          // If server is unreachable or key invalid
-          setIsAuthenticated(false);
-        }
-      } catch {
-        setIsAuthenticated(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAuth();
+  // Deliberately no persistence (no localStorage/sessionStorage): every
+  // fresh load of the console lands on the login screen, so a demo always
+  // opens on it rather than silently resuming a prior visitor's session.
+  // The key lives only in this state and in apiClient's in-memory field
+  // (set below) - both reset to nothing on any reload. A leftover key from
+  // before this change existed is purged once so old browsers don't stay
+  // auto-logged-in via the API client's old localStorage read.
+  React.useEffect(() => {
+    localStorage.removeItem("sophie_api_key");
   }, []);
 
   const login = async (key: string): Promise<boolean> => {
@@ -53,7 +37,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const valid = await apiClient.verifyApiKey(trimmed);
       if (valid) {
-        localStorage.setItem("sophie_api_key", trimmed);
+        apiClient.setApiKey(trimmed);
         setApiKey(trimmed);
         setIsAuthenticated(true);
         toast.success(t("toast.authSuccess"));
@@ -67,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = () => {
-    localStorage.removeItem("sophie_api_key");
+    apiClient.setApiKey(null);
     setApiKey(null);
     setIsAuthenticated(false);
     toast.info(t("toast.loggedOut"));

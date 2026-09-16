@@ -19,6 +19,10 @@ export const DEFAULT_API_BASE = "https://intelligent-sales-agent.onrender.com";
 
 export class ApiClient {
   private baseUrl: string;
+  // In-memory only, deliberately not persisted: the console shows the login
+  // screen on every fresh load (see context/AuthContext.tsx), so nothing
+  // here should survive a reload on its own.
+  private apiKey: string | null = null;
 
   constructor(baseUrl?: string) {
     const envUrl =
@@ -38,8 +42,12 @@ export class ApiClient {
     }
   }
 
+  setApiKey(apiKey: string | null): void {
+    this.apiKey = apiKey;
+  }
+
   private getApiKey(): string | null {
-    return localStorage.getItem("sophie_api_key");
+    return this.apiKey;
   }
 
   private async request<T>(
