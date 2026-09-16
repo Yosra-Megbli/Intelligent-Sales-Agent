@@ -28,6 +28,7 @@ from api.campaign_schemas import (
     CampaignAnalyticsResponse,
     CampaignDetailResponse,
     CampaignListResponse,
+    CampaignPreviewResponse,
     CampaignSummary,
     CreateCampaignRequest,
     UpdateCampaignRequest,
@@ -38,6 +39,7 @@ from api.routes import get_db_session
 from application.campaign_service import (
     CampaignNotFoundError,
     CampaignService,
+    ChannelNotActivatedError,
     InvalidCampaignTransitionError,
 )
 
@@ -46,10 +48,29 @@ router = APIRouter(prefix="/api/campaigns", tags=["campaigns"], dependencies=[De
 
 @router.post("", response_model=CampaignSummary, status_code=201)
 def create_campaign(payload: CreateCampaignRequest, db: Session = Depends(get_db_session)) -> CampaignSummary:
-    campaign = CampaignService(db).create_campaign(
-        name=payload.name, target_rules=payload.target_rules, channel=payload.channel
-    )
+    try:
+        campaign = CampaignService(db).create_campaign(
+            name=payload.name, target_rules=payload.target_rules, channel=payload.channel
+        )
+    except ChannelNotActivatedError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "channel_not_activated", "channel": exc.channel.value},
+        )
     return CampaignSummary.from_model(campaign)
+
+
+@router.post("/{campaign_id}/preview", response_model=CampaignPreviewResponse)
+def preview_campaign(campaign_id: UUID, db: Session = Depends(get_db_session)) -> CampaignPreviewResponse:
+    """Dry run for the launch-confirmation modal - call this before
+    POST /{campaign_id}/start, never assigns or sends anything."""
+    preview = _apply_transition(CampaignService(db).preview_campaign, campaign_id)
+    return CampaignPreviewResponse(
+        campaign_id=preview.campaign_id,
+        matched_leads=preview.matched_leads,
+        channel=preview.channel.value,
+        disclosure_preview=preview.disclosure_preview,
+    )
 
 
 @router.get("", response_model=CampaignListResponse)

@@ -24,9 +24,13 @@ class CreateCampaignRequest(BaseModel):
     target_rules: Optional[dict] = None
     # Which channel every lead in this campaign is contacted on - see
     # domain/models/campaign.py's Campaign.channel and
-    # outbound/scheduler.py's OutboundScheduler. Defaults to WhatsApp,
-    # unchanged from this endpoint's behaviour before this field existed.
-    channel: ConversationChannel = ConversationChannel.WHATSAPP
+    # outbound/scheduler.py's OutboundScheduler. Defaults to Telegram, an
+    # activated channel - WhatsApp was the original default before this
+    # field existed, but WhatsApp/Voice are built and not activated in this
+    # deployment (no Twilio credentials), so that default silently created
+    # campaigns that could never send anything. See
+    # application/campaign_service.py's _ACTIVATED_CAMPAIGN_CHANNELS.
+    channel: ConversationChannel = ConversationChannel.TELEGRAM
 
 
 class UpdateCampaignRequest(BaseModel):
@@ -92,6 +96,18 @@ class CampaignDetailResponse(BaseModel):
     leads_total: int
     leads_limit: int
     leads_offset: int
+
+
+class CampaignPreviewResponse(BaseModel):
+    """Dry-run launch preview - what POST /{campaign_id}/start would select
+    and send, without sending anything. The Dashboard's launch-confirmation
+    modal ("X messages seront envoyés avec l'énoncé IA obligatoire") reads
+    matched_leads and disclosure_preview directly from this."""
+
+    campaign_id: UUID
+    matched_leads: int
+    channel: str
+    disclosure_preview: str
 
 
 class CampaignAnalyticsResponse(BaseModel):

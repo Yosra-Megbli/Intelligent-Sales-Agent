@@ -3,6 +3,7 @@ import pytest
 from application.campaign_service import (
     CampaignNotFoundError,
     CampaignService,
+    ChannelNotActivatedError,
     InvalidCampaignTransitionError,
 )
 from crm.lead_repository import LeadRepository
@@ -145,10 +146,58 @@ def test_unknown_campaign_raises_not_found(db_session):
 # --- channel selection ---------------------------------------------------------------
 
 
-def test_create_campaign_defaults_to_whatsapp(db_session):
+def test_create_campaign_defaults_to_telegram(db_session):
+    """Telegram, not WhatsApp: WhatsApp/Voice are built but not activated
+    in this deployment (no Twilio credentials), so defaulting to WhatsApp
+    used to silently create campaigns that could never send anything."""
     service = CampaignService(db_session)
     campaign = service.create_campaign(name="Wallonie")
-    assert campaign.channel == ConversationChannel.WHATSAPP
+    assert campaign.channel == ConversationChannel.TELEGRAM
+
+
+def test_create_campaign_rejects_whatsapp_as_not_activated(db_session):
+    service = CampaignService(db_session)
+    with pytest.raises(ChannelNotActivatedError):
+        service.create_campaign(name="Wallonie", channel=ConversationChannel.WHATSAPP)
+
+
+def test_create_campaign_rejects_voice_as_not_activated(db_session):
+    service = CampaignService(db_session)
+    with pytest.raises(ChannelNotActivatedError):
+        service.create_campaign(name="Wallonie", channel=ConversationChannel.VOICE)
+
+
+def test_create_campaign_accepts_sms(db_session):
+    """SMS is complete and live (AGENTS.md), unlike WhatsApp/Voice - not
+    blocked even though it's also Twilio-backed."""
+    service = CampaignService(db_session)
+    campaign = service.create_campaign(name="Wallonie", channel=ConversationChannel.SMS)
+    assert campaign.channel == ConversationChannel.SMS
+
+
+def test_preview_campaign_counts_matching_leads_without_assigning(db_session):
+    _seed_lead(db_session, region="Wallonie")
+    _seed_lead(db_session, region="Wallonie")
+    _seed_lead(db_session, region="Flandre")
+    service = CampaignService(db_session)
+    campaign = service.create_campaign(name="Wallonie", target_rules={"region": "Wallonie"})
+
+    preview = service.preview_campaign(campaign.id)
+
+    assert preview.matched_leads == 2
+    assert preview.channel == ConversationChannel.TELEGRAM
+    assert "Sophie" in preview.disclosure_preview
+    assert "assistante virtuelle" in preview.disclosure_preview
+    # Dry run: nothing assigned, nothing sent.
+    assert campaign.total_leads == 0
+
+
+def test_preview_campaign_404_when_missing(db_session):
+    import uuid
+
+    service = CampaignService(db_session)
+    with pytest.raises(CampaignNotFoundError):
+        service.preview_campaign(uuid.uuid4())
 
 
 def test_starting_a_telegram_campaign_creates_a_telegram_conversation(db_session):

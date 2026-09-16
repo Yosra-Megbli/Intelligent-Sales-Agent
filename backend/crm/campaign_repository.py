@@ -16,7 +16,7 @@ class CampaignRepository:
         self,
         name: str,
         target_rules: Optional[str] = None,
-        channel: ConversationChannel = ConversationChannel.WHATSAPP,
+        channel: ConversationChannel = ConversationChannel.TELEGRAM,
     ) -> Campaign:
         campaign = Campaign(id=uuid.uuid4(), name=name, target_rules=target_rules, channel=channel)
         self.db.add(campaign)
