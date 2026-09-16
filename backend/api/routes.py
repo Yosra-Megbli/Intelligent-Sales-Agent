@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 
 from api.dependencies import (
     enforce_rate_limit,
+    get_embedding_provider,
     get_llm_provider,
     get_sms_sender,
     get_telegram_sender,
@@ -70,8 +71,9 @@ def start_conversation(
     payload: StartConversationRequest,
     db: Session = Depends(get_db_session),
     provider=Depends(get_llm_provider),
+    embedding_provider=Depends(get_embedding_provider),
 ) -> StartConversationResponse:
-    channel = WebChannel(db, provider=provider)
+    channel = WebChannel(db, provider=provider, embedding_provider=embedding_provider)
     lead, conversation = channel.start_conversation(
         first_name=payload.first_name,
         last_name=payload.last_name,
@@ -91,8 +93,9 @@ def send_message(
     payload: SendMessageRequest,
     db: Session = Depends(get_db_session),
     provider=Depends(get_llm_provider),
+    embedding_provider=Depends(get_embedding_provider),
 ) -> SendMessageResponse:
-    channel = WebChannel(db, provider=provider)
+    channel = WebChannel(db, provider=provider, embedding_provider=embedding_provider)
     if channel.get_conversation(conversation_id) is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
 
@@ -134,6 +137,7 @@ def telegram_webhook(
     db: Session = Depends(get_db_session),
     provider=Depends(get_llm_provider),
     send_message=Depends(get_telegram_sender),
+    embedding_provider=Depends(get_embedding_provider),
 ) -> dict:
     """Telegram calls this with every Update as its webhook body. Always
     returns 200 (Telegram retries aggressively on non-2xx) even for updates
@@ -146,7 +150,12 @@ def telegram_webhook(
     if chat_id is not None:
         enforce_rate_limit(f"telegram:{chat_id}")
 
-    channel = TelegramChannel(db, provider=provider, send_message=send_message)
+    channel = TelegramChannel(
+        db,
+        provider=provider,
+        send_message=send_message,
+        embedding_provider=embedding_provider,
+    )
     response = channel.handle_update(update)
     if response is None:
         return {"ok": True}
@@ -159,6 +168,7 @@ async def whatsapp_webhook(
     db: Session = Depends(get_db_session),
     provider=Depends(get_llm_provider),
     send_message=Depends(get_whatsapp_sender),
+    embedding_provider=Depends(get_embedding_provider),
 ) -> dict:
     """Twilio calls this with every inbound WhatsApp message as an
     `application/x-www-form-urlencoded` body (NOT JSON, unlike Telegram) -
@@ -185,7 +195,12 @@ async def whatsapp_webhook(
     if phone is not None:
         enforce_rate_limit(f"whatsapp:{phone}")
 
-    channel = WhatsAppChannel(db, provider=provider, send_message=send_message)
+    channel = WhatsAppChannel(
+        db,
+        provider=provider,
+        send_message=send_message,
+        embedding_provider=embedding_provider,
+    )
     response = channel.handle_update(payload)
     if response is None:
         return {"ok": True}
@@ -198,6 +213,7 @@ async def sms_webhook(
     db: Session = Depends(get_db_session),
     provider=Depends(get_llm_provider),
     send_message=Depends(get_sms_sender),
+    embedding_provider=Depends(get_embedding_provider),
 ) -> dict:
     """Twilio calls this with every inbound SMS message as an
     `application/x-www-form-urlencoded` body.
@@ -216,7 +232,12 @@ async def sms_webhook(
     if phone is not None:
         enforce_rate_limit(f"sms:{phone}")
 
-    channel = SmsChannel(db, provider=provider, send_message=send_message)
+    channel = SmsChannel(
+        db,
+        provider=provider,
+        send_message=send_message,
+        embedding_provider=embedding_provider,
+    )
     response = channel.handle_update(payload)
     if response is None:
         return {"ok": True}

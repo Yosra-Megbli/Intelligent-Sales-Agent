@@ -67,3 +67,21 @@ def list_published_chunks(db_session, *, language: str | None = None) -> list[Kn
     if language:
         stmt = stmt.where(KnowledgeDocument.language == language)
     return list(db_session.scalars(stmt).all())
+
+
+def list_published_chunks_with_documents(
+    db_session, *, language: str | None = None
+) -> list[tuple[KnowledgeChunk, KnowledgeDocument]]:
+    """Same publish-explicit enforcement as list_published_chunks, but also
+    returns each chunk's parent document in the same query (one join, not
+    an N+1 lazy-load per chunk) - rag_v2/retrieval.py (Phase 2) needs the
+    document's title/version for citations, KnowledgeChunk has no
+    `document` relationship defined."""
+    stmt = (
+        select(KnowledgeChunk, KnowledgeDocument)
+        .join(KnowledgeDocument, KnowledgeChunk.document_id == KnowledgeDocument.id)
+        .where(KnowledgeDocument.status == KnowledgeDocumentStatus.PUBLISHED)
+    )
+    if language:
+        stmt = stmt.where(KnowledgeDocument.language == language)
+    return [(chunk, document) for chunk, document in db_session.execute(stmt).all()]

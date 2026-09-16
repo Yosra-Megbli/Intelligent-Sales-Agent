@@ -169,3 +169,19 @@ def test_extract_phone_returns_none_for_a_payload_with_no_body():
 
 def test_extract_phone_strips_the_whatsapp_prefix():
     assert WhatsAppChannel.extract_phone(_payload("+15551234567", "Bonjour")) == "+15551234567"
+
+
+def test_whatsapp_channel_passes_embedding_provider_to_service(db_session):
+    from ai.providers.embeddings.interface import EmbeddingProvider
+
+    class FakeEmbeddingProvider(EmbeddingProvider):
+        @property
+        def dimensions(self):
+            return 2
+
+        def embed(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+    emb = FakeEmbeddingProvider()
+    channel = WhatsAppChannel(db_session, embedding_provider=emb)
+    assert channel._service.embedding_provider is emb

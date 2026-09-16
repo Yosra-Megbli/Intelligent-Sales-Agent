@@ -1,4 +1,4 @@
-﻿services:
+services:
   - type: web
     name: ecofix-sophie-backend
     runtime: docker
@@ -38,4 +38,8 @@
       # service itself doesn't call this today (no admin API/retrieval
       # wired up yet - Phase 1 only).
       - key: GOOGLE_AI_API_KEY
+        sync: false
+      - key: RAG_TOP_K
+        sync: false
+      - key: RAG_MIN_SIMILARITY
         sync: false

@@ -336,6 +336,126 @@ def test_question_event_triggers_rag_lookup_and_llm_phrasing(db_session):
     assert "gratuit" in phrasing_call["messages"][0].content.lower()
 
 
+def test_rag_v2_match_is_used_ahead_of_the_keyword_rag(db_session):
+    """RAG v2 Phase 2: when an embedding_provider is injected and a
+    PUBLISHED chunk clears the similarity threshold, its content is used
+    as the rag_answer - ahead of the DB/YAML keyword tier, proven with a
+    keyword ("gratuit") that WOULD match the YAML switching_fees entry, so
+    a wrong test could pass for the wrong reason if RAG v2 weren't
+    actually taking priority."""
+    import uuid
+
+    from ai.providers.embeddings.interface import EmbeddingProvider
+    from domain.enums import KnowledgeDocumentStatus
+    from domain.models.knowledge_chunk import KnowledgeChunk
+    from domain.models.knowledge_document import KnowledgeDocument
+
+    class FakeEmbeddingProvider(EmbeddingProvider):
+        @property
+        def dimensions(self):
+            return 2
+
+        def embed(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+    document = KnowledgeDocument(
+        id=uuid.uuid4(), title="RAG v2 doc", source_type="tariff_card",
+        filename="x.pdf", language="fr", status=KnowledgeDocumentStatus.PUBLISHED, version=1,
+    )
+    db_session.add(document)
+    db_session.flush()
+    db_session.add(KnowledgeChunk(
+        id=uuid.uuid4(), document_id=document.id, chunk_index=0,
+        content="Reponse RAG v2 prioritaire.", embedding=[1.0, 0.0],
+    ))
+    db_session.commit()
+
+    _, conversation = _new_conversation(db_session)
+    provider = ScriptedProvider(extraction_payload={"event_type": "QUESTION", "entities": {}})
+    service = ConversationService(db_session, provider=provider, embedding_provider=FakeEmbeddingProvider())
+
+    service.handle_message(ConversationRequest(conversation_id=conversation.id, text="C'est gratuit ou il y a des frais ?"))
+
+    phrasing_call = next(c for c in provider.calls if c["json_mode"] is False)
+    assert "Reponse RAG v2 prioritaire." in phrasing_call["messages"][0].content
+    assert "changement de fournisseur" not in phrasing_call["messages"][0].content.lower()
+
+
+def test_rag_v2_miss_falls_through_to_the_keyword_rag(db_session):
+    """No published chunk clears the threshold -> falls through to the
+    existing keyword tier unchanged, same YAML match as
+    test_question_event_triggers_rag_lookup_and_llm_phrasing."""
+    from ai.providers.embeddings.interface import EmbeddingProvider
+
+    class FakeEmbeddingProvider(EmbeddingProvider):
+        @property
+        def dimensions(self):
+            return 2
+
+        def embed(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+    _, conversation = _new_conversation(db_session)
+    provider = ScriptedProvider(
+        extraction_payload={"event_type": "QUESTION", "entities": {}},
+        response_text="Le changement de fournisseur s'effectue simplement chez Ecofix.",
+    )
+    service = ConversationService(db_session, provider=provider, embedding_provider=FakeEmbeddingProvider())
+
+    reply = service.handle_message(
+        ConversationRequest(conversation_id=conversation.id, text="C'est gratuit ou il y a des frais ?")
+    )
+
+    assert reply.response_text == "Le changement de fournisseur s'effectue simplement chez Ecofix."
+
+
+def test_rag_v2_embedding_failure_falls_through_gracefully(db_session):
+    """A real embedding API call can fail (network, rate limit, auth) -
+    that must never break the conversation turn. Falls through to the
+    keyword tier exactly as if RAG v2 found nothing."""
+    from ai.providers.embeddings.interface import EmbeddingError, EmbeddingProvider
+
+    class FailingEmbeddingProvider(EmbeddingProvider):
+        @property
+        def dimensions(self):
+            return 2
+
+        def embed(self, texts):
+            raise EmbeddingError("simulated network failure")
+
+    _, conversation = _new_conversation(db_session)
+    provider = ScriptedProvider(
+        extraction_payload={"event_type": "QUESTION", "entities": {}},
+        response_text="Le changement de fournisseur s'effectue simplement chez Ecofix.",
+    )
+    service = ConversationService(db_session, provider=provider, embedding_provider=FailingEmbeddingProvider())
+
+    reply = service.handle_message(
+        ConversationRequest(conversation_id=conversation.id, text="C'est gratuit ou il y a des frais ?")
+    )
+
+    assert reply.response_text == "Le changement de fournisseur s'effectue simplement chez Ecofix."
+
+
+def test_no_embedding_provider_injected_means_rag_v2_is_never_attempted(db_session):
+    """Default behavior (no embedding_provider passed) is byte-identical
+    to before RAG v2 Phase 2 existed - the exact same assertion as
+    test_question_event_triggers_rag_lookup_and_llm_phrasing, restated
+    here to pin that this constructor default never changes it."""
+    _, conversation = _new_conversation(db_session)
+    provider = ScriptedProvider(
+        extraction_payload={"event_type": "QUESTION", "entities": {}},
+        response_text="Le changement de fournisseur s'effectue simplement chez Ecofix.",
+    )
+    service = ConversationService(db_session, provider=provider)  # no embedding_provider
+
+    reply = service.handle_message(
+        ConversationRequest(conversation_id=conversation.id, text="C'est gratuit ou il y a des frais ?")
+    )
+
+    assert reply.response_text == "Le changement de fournisseur s'effectue simplement chez Ecofix."
+
+
 def test_db_backed_knowledge_entry_is_used_when_present(db_session):
     """Sprint 4b: an active knowledge_entries row is matched exactly like a
     YAML entry would be - proven with a keyword the YAML file does not
@@ -430,6 +550,70 @@ def test_question_with_no_rag_match_uses_generic_fallback_without_llm_call(db_se
     assert reply.engine_result.next_state == ConversationState.FAQ
     phrasing_calls = [c for c in provider.calls if c["json_mode"] is False]
     assert phrasing_calls == []  # generic fallback text, no LLM call needed
+
+
+def test_grounded_generation_and_citation_stripping_end_to_end(db_session):
+    import uuid
+    from ai.providers.embeddings.interface import EmbeddingProvider
+    from domain.enums import ActivityType, KnowledgeDocumentStatus
+    from domain.models.knowledge_chunk import KnowledgeChunk
+    from domain.models.knowledge_document import KnowledgeDocument
+
+    class FakeEmbeddingProvider(EmbeddingProvider):
+        @property
+        def dimensions(self):
+            return 2
+
+        def embed(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+    document = KnowledgeDocument(
+        id=uuid.uuid4(), title="Doc Tarifs", source_type="tariff_card",
+        filename="tarifs.pdf", language="fr", status=KnowledgeDocumentStatus.PUBLISHED, version=1,
+    )
+    db_session.add(document)
+    db_session.flush()
+    db_session.add(KnowledgeChunk(
+        id=uuid.uuid4(), document_id=document.id, chunk_index=0,
+        content="60 euros de redevance annuelle.", embedding=[1.0, 0.0],
+    ))
+    db_session.commit()
+
+    lead, conversation = _new_conversation(db_session)
+    provider = ScriptedProvider(
+        extraction_payload={"event_type": "QUESTION", "entities": {}},
+        response_text="Selon [SOURCE 1] la redevance est 60€. Par contre [SOURCE 99] invente un chiffre.",
+    )
+    service = ConversationService(db_session, provider=provider, embedding_provider=FakeEmbeddingProvider())
+
+    reply = service.handle_message(
+        ConversationRequest(conversation_id=conversation.id, text="Quels sont les frais ?")
+    )
+
+    assert "[SOURCE 1]" in reply.response_text
+    assert "[SOURCE 99]" not in reply.response_text
+    from crm.activity_repository import ActivityRepository
+    acts = ActivityRepository(db_session).list_for_lead(lead.id)
+    assert any(a.type == ActivityType.CITATION_STRIPPED for a in acts)
+
+
+def test_trilingual_deterministic_refusal_when_no_source_matches(db_session):
+    for lang, expected_snippet in [
+        ("fr", "Je n'ai pas d'information suffisante"),
+        ("nl", "Ik heb niet voldoende informatie"),
+        ("en", "I don't have sufficient information"),
+    ]:
+        _, conversation = _new_conversation(db_session, language=lang)
+        provider = ScriptedProvider(extraction_payload={"event_type": "QUESTION", "entities": {}})
+        service = ConversationService(db_session, provider=provider)
+
+        reply = service.handle_message(
+            ConversationRequest(conversation_id=conversation.id, text="unmatched question query")
+        )
+
+        assert expected_snippet in reply.response_text
+        phrasing_calls = [c for c in provider.calls if c["json_mode"] is False]
+        assert phrasing_calls == []  # NO LLM call made
 
 
 # --- degraded mode: no provider ------------------------------------------------------

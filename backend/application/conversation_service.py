@@ -31,6 +31,7 @@ from uuid import UUID
 from sqlalchemy.exc import IntegrityError
 
 from ai.extractor import Extractor
+from ai.providers.embeddings.interface import EmbeddingProvider
 from ai.providers.interface import LLMProvider
 from ai.rag import KnowledgeEntry as RagKnowledgeEntry
 from ai.rag import Rag
@@ -132,7 +133,13 @@ class ConversationService:
     mode, useful for tests or a deployment with no LLM configured yet.
     """
 
-    def __init__(self, db_session, provider: Optional[LLMProvider] = None, rag: Optional[Rag] = None):
+    def __init__(
+        self,
+        db_session,
+        provider: Optional[LLMProvider] = None,
+        rag: Optional[Rag] = None,
+        embedding_provider: Optional[EmbeddingProvider] = None,
+    ):
         self.db = db_session
         self.engine = ConversationEngine(db_session, provider=provider)
         self.memory = ConversationMemory(db_session)
@@ -142,6 +149,14 @@ class ConversationService:
         self.knowledge_repo = KnowledgeRepository(db_session)
         self.extractor = Extractor(provider) if provider is not None else None
         self.responder = Responder(provider)
+        # RAG v2 (Phase 2) vector search - opt-in only, never constructed
+        # automatically: unlike self.rag's YAML/DB keyword fallback, there is
+        # no safe automatic default here (a real GoogleEmbeddingProvider
+        # reads GOOGLE_AI_API_KEY from the environment and raises if it's
+        # missing). No embedding_provider injected => RAG v2 retrieval is
+        # skipped entirely in _generate_response, and behavior is byte-for-
+        # byte identical to before this parameter existed.
+        self.embedding_provider = embedding_provider
         # `rag` explicitly injected (e.g. by a test) always wins and is used
         # as-is, forever - no DB-backed override. Otherwise `_build_rag()`
         # re-queries knowledge_entries on every call (see its own docstring
@@ -562,12 +577,54 @@ class ConversationService:
         )
         return Rag(entries=entries)
 
+    def _try_rag_v2_matches(self, raw_text: str, conversation: Conversation):
+        """RAG v2 (Phase 2) - returns ScoredChunk list from vector retrieval,
+        or empty list if no provider, error, or no chunk clears threshold."""
+        if self.embedding_provider is None:
+            return []
+
+        from rag_v2.retrieval import retrieve_relevant_chunks
+
+        try:
+            return retrieve_relevant_chunks(
+                self.db,
+                raw_text,
+                embedding_provider=self.embedding_provider,
+                language=conversation.language or "fr",
+            )
+        except Exception:
+            return []
+
     def _generate_response(self, result: EngineResult, conversation: Conversation, raw_text: str) -> Optional[str]:
         rag_answer = None
+        valid_source_indices: set[int] = set()
         rag_category = _RAG_CATEGORY_BY_ACTION.get(result.required_action or "")
+
         if rag_category:
-            rag = self._build_rag(conversation.language or "fr")
-            rag_answer = rag.answer(raw_text, category=rag_category)
+            v2_matches = self._try_rag_v2_matches(raw_text, conversation)
+            if v2_matches:
+                source_blocks = []
+                for i, match in enumerate(v2_matches, start=1):
+                    valid_source_indices.add(i)
+                    doc = match.document
+                    rev_date = getattr(doc, "review_date", None)
+                    rev_str = rev_date.isoformat() if rev_date else "N/A"
+                    source_blocks.append(
+                        f"[SOURCE {i}] ({doc.title} v{doc.version} - {rev_str}):\n{match.chunk.content}"
+                    )
+                sources_text = "\n\n".join(source_blocks)
+                rag_answer = (
+                    f"Réponds STRICTEMENT à partir des sources fournies. Si les sources ne suffisent pas, dis-le.\n\n"
+                    f"{sources_text}"
+                )
+            else:
+                rag = self._build_rag(conversation.language or "fr")
+                rag_answer = rag.answer(raw_text, category=rag_category)
+
+            # Relevance gate: deterministic refusal without LLM call if no source found in either tier
+            if rag_answer is None:
+                from rag_v2.refusal import get_refusal_message
+                return get_refusal_message(conversation.language)
 
         response_text = self.responder.respond(
             result.required_action,
@@ -576,6 +633,16 @@ class ConversationService:
             rejection_reason=result.rejection_reason,
             rag_answer=rag_answer,
         )
+
+        if response_text and valid_source_indices:
+            from rag_v2.citations import validate_citations
+            response_text, stripped = validate_citations(response_text, valid_source_indices)
+            if stripped and conversation.lead_id:
+                self.activity_repo.log(
+                    conversation.lead_id,
+                    ActivityType.CITATION_STRIPPED,
+                    details=f"Stripped invalid citations: {stripped}",
+                )
 
         if getattr(self.responder, "last_guard_violation", None) and conversation.lead_id:
             self.activity_repo.log(

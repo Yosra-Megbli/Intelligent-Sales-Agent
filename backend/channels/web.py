@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
+from ai.providers.embeddings.interface import EmbeddingProvider
 from ai.providers.interface import LLMProvider
 from application.conversation_service import (
     ConversationRequest,
@@ -33,13 +34,20 @@ from domain.enums import ConversationChannel
 
 class WebChannel:
     """Handles one incoming web message end-to-end, by delegating to
-    `ConversationService`. `provider` is passed straight through - see
-    `ConversationService` for the degraded no-provider behaviour. (RAG has
-    no channel-specific concern, so `ConversationService` picks its own
-    default `Rag()` - the channel doesn't need to know it exists.)"""
+    `ConversationService`. `provider` and `embedding_provider` are passed
+    straight through - see `ConversationService` for the degraded
+    no-provider behaviour in both cases (keyword RAG picks its own
+    default `Rag()` regardless; RAG v2 vector search is simply skipped
+    with no `embedding_provider` - the channel doesn't need to know either
+    exists, only that it's allowed to not have one)."""
 
-    def __init__(self, db_session, provider: Optional[LLMProvider] = None):
-        self._service = ConversationService(db_session, provider=provider)
+    def __init__(
+        self,
+        db_session,
+        provider: Optional[LLMProvider] = None,
+        embedding_provider: Optional[EmbeddingProvider] = None,
+    ):
+        self._service = ConversationService(db_session, provider=provider, embedding_provider=embedding_provider)
 
     def start_conversation(
         self,

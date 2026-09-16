@@ -139,3 +139,19 @@ def test_sms_stop_keyword_triggers_immediate_opt_out(db_session):
 def test_sms_extract_phone_helper():
     assert SmsChannel.extract_phone({"From": "+32488111222", "Body": "Hello"}) == "+32488111222"
     assert SmsChannel.extract_phone({"MessageStatus": "delivered"}) is None
+
+
+def test_sms_channel_passes_embedding_provider_to_service(db_session):
+    from ai.providers.embeddings.interface import EmbeddingProvider
+
+    class FakeEmbeddingProvider(EmbeddingProvider):
+        @property
+        def dimensions(self):
+            return 2
+
+        def embed(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+    emb = FakeEmbeddingProvider()
+    channel = SmsChannel(db_session, embedding_provider=emb)
+    assert channel._service.embedding_provider is emb

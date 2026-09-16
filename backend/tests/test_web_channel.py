@@ -115,3 +115,19 @@ def test_messages_are_visible_via_the_repository_directly(db_session):
 
     history = ConversationRepository(db_session).get_history(conversation)
     assert len(history) == 2
+
+
+def test_web_channel_passes_embedding_provider_to_service(db_session):
+    from ai.providers.embeddings.interface import EmbeddingProvider
+
+    class FakeEmbeddingProvider(EmbeddingProvider):
+        @property
+        def dimensions(self):
+            return 2
+
+        def embed(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+    emb = FakeEmbeddingProvider()
+    channel = WebChannel(db_session, embedding_provider=emb)
+    assert channel._service.embedding_provider is emb

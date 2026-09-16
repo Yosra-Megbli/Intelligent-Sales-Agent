@@ -77,7 +77,7 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 - Yousign is sandbox-only; no real e-signature key.
 - Campaigns admin screen is real (list, create, two-step launch, pause/resume) but scoped down from the original vision: no lead multi-select/CSV-import wizard, no SSE live cockpit, no cancel. See "Sprint 4c / Campaigns are real" below.
 - No manual lead creation endpoint (`POST /api/leads`) — only CSV import; `PATCH` and `DELETE` already exist.
-- RAG v2 retrieval is not wired into the chat: `ai/rag.py` (chat-facing) is still keyword-only. RAG v2 Phase 1 (schema + ingestion) exists — see below — but nothing calls it from `application/conversation_service.py` yet.
+- RAG v2 retrieval is wired into the chat as first tier (`rag_v2/retrieval.py` + `application/conversation_service.py` + all channels: Web, Telegram, WhatsApp, SMS); degrades cleanly to keyword RAG if no `GOOGLE_AI_API_KEY` or no chunk clears similarity threshold.
 - NL copy has never been field-tested.
 - README content has stale sections (it still claims contract generation is unimplemented) and carries a UTF-8 double-encoding corruption in its prose.
 
@@ -97,12 +97,18 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 - `rag_v2/ingestion.py` (core, testable) + `rag_v2/ingest.py` (CLI: `python -m rag_v2.ingest --file ... --title ... --source-type ... --language ...`) — extract (pypdf) → clean → chunk → embed (batched) → persist, always `status=DRAFT`.
 - `rag_v2/documents.py` — publish-explicit: `publish_document()`/`archive_document()`/`list_published_chunks()`. Ingesting never publishes; nothing is retrievable until this is called.
 - 37 new tests, all offline (fake `EmbeddingProvider`, monkeypatched PDF extraction, no network) — chunking correctness incl. a no-content-loss regression, ingestion, publish-explicit gating, and a static model/migration column-coherence check (`tests/test_rag_v2_migration_coherence.py`).
-- **Not built yet (Phase 2+):** real similarity-search retrieval, relevance threshold/refusal-before-LLM, citation validator, chat integration, obsolescence scheduler, admin API/UI. No PDF from `knowledge_corpus/` has actually been ingested with a real key — cost so far is €0.
+
+**Phase 2 (similarity-search retrieval + chat wiring) is done:**
+- `rag_v2/retrieval.py` — Python cosine similarity over published chunks (`list_published_chunks_with_documents`), threshold `RAG_MIN_SIMILARITY` (0.30 default), `RAG_TOP_K` (20 default).
+- `application/conversation_service.py` — RAG v2 vector search attempted first before keyword RAG, with safe fallback on no match or provider failure.
+- Channels & API: `channels/web.py`, `channels/telegram.py`, `channels/whatsapp.py`, `channels/sms.py`, and `api/routes.py` with `get_embedding_provider()` dependency.
+- Tests: unit retrieval tests, conversation service wiring, channel passthrough tests, and end-to-end API test.
+- **Not built yet (Phase 3+):** citation validator, obsolescence scheduler, admin API/UI for documents/chunks. No PDF from `knowledge_corpus/` has actually been ingested with a real key — cost so far is €0.
 
 ## Priority order
 
 1. **Sprint 4:** make the remaining admin surfaces real — manual Leads CRUD (`POST /api/leads`; campaign channel-activation guard + launch preview already done, see Sprint 5 note below), Knowledge management (`knowledge_base.yaml` → `knowledge_entries` table + CRUD + active toggle — this is the *keyword* RAG's admin surface, separate from RAG v2). Remove stubs that become real; keep honest stubs for WhatsApp/Voice, real Yousign, and RAG v2's retrieval/admin UI.
-2. **RAG v2:** Phase 1 (schema + ingestion) done — see above. Phase 2 (retrieval + refusal gate + citations) next, then chat integration, then obsolescence + admin API/UI.
+2. **RAG v2:** Phase 1 (schema + ingestion) & Phase 2 (retrieval + chat wiring) done — see above. Citations next, then obsolescence + admin API/UI.
 3. Optional: real WhatsApp/Voice, EU hosting region instead of US.
 
 **Sprint 4c / Campaigns are real** (Sprint 5's own Phase 1 backend + a scoped-down frontend, done together): channel-activation guard (`WHATSAPP`/`VOICE` → 422 `channel_not_activated`, `SMS` allowed), `POST /api/campaigns/{id}/preview` (dry-run launch count + disclosure preview), and the Campagnes screen itself — list with real data, create (name + channel + optional region target_rules), two-step launch (preview modal → start), pause/resume. **Fixed while wiring this up**: the previous CampaignsPage.tsx rendered fabricated numbers (hardcoded `34.2%` response rate, `1.8%` opt-out rate, `14 protégés`, `c.leads_count || 120`) instead of real API data — a compliance-adjacent honesty bug (AGENTS.md's own "no invented stats" rule), not just a stub; the frontend `CampaignSummary` type also didn't match the real backend schema at all (`status: "ACTIVE"` isn't a real value — it's `RUNNING`). Both fixed. **Not built**: the 3-step wizard (multi-select leads / CSV import with row-level validation), SSE live-supervisor layer, "Annuler" (no `CANCELLED` `CampaignStatus` value exists), a `campaign_member` mapping table (deliberately not added — `get_campaign_analytics` already derives sent/responded/qualified/opted-out live from `Lead.status`, a mapping table would just re-shadow that). Creation targets one optional region instead of a lead multi-select/CSV wizard — documented tradeoff, not an oversight.

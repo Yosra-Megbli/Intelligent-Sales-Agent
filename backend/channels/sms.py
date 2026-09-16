@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import Callable, Optional
 from uuid import UUID
 
+from ai.providers.embeddings.interface import EmbeddingProvider
 from ai.providers.interface import LLMProvider
 from application.conversation_service import (
     ConversationRequest,
@@ -43,8 +44,11 @@ class SmsChannel:
         db_session,
         provider: Optional[LLMProvider] = None,
         send_message: Optional[Callable[[str, str], None]] = None,
+        embedding_provider: Optional[EmbeddingProvider] = None,
     ):
-        self._service = ConversationService(db_session, provider=provider)
+        self._service = ConversationService(
+            db_session, provider=provider, embedding_provider=embedding_provider
+        )
         self._send_message = send_message
 
     def handle_update(self, payload: dict[str, str]) -> Optional[ConversationResponse]:

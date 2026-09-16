@@ -145,6 +145,7 @@ class ActivityType(str, Enum):
     LEAD_CREATED = "LEAD_CREATED"  # Manual creation from the Dashboard (POST /api/leads)
     OPT_OUT = "OPT_OUT"  # STOP/STOPT/ARRET handler
     GUARD_TRIGGERED = "GUARD_TRIGGERED"  # Output guard intercepted forbidden claims / missing disclosure
+    CITATION_STRIPPED = "CITATION_STRIPPED"  # RAG v2 citation validator stripped fabricated [SOURCE n]
     CONTRACT_DRAFTED = "CONTRACT_DRAFTED"
     CONTRACT_SENT = "CONTRACT_SENT"
     CONTRACT_SIGNED = "CONTRACT_SIGNED"

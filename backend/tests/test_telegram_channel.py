@@ -150,3 +150,19 @@ def test_get_history_delegates_to_conversation_service(db_session):
     history = channel.get_history(conversation.id)
 
     assert [m.role for m in history] == [MessageRole.USER, MessageRole.ASSISTANT]
+
+
+def test_telegram_channel_passes_embedding_provider_to_service(db_session):
+    from ai.providers.embeddings.interface import EmbeddingProvider
+
+    class FakeEmbeddingProvider(EmbeddingProvider):
+        @property
+        def dimensions(self):
+            return 2
+
+        def embed(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+    emb = FakeEmbeddingProvider()
+    channel = TelegramChannel(db_session, embedding_provider=emb)
+    assert channel._service.embedding_provider is emb

@@ -29,6 +29,8 @@ from typing import Optional
 
 from fastapi import Header, HTTPException, status
 
+from ai.providers.embeddings.google import GoogleEmbeddingProvider
+from ai.providers.embeddings.interface import EmbeddingError, EmbeddingProvider
 from ai.providers.groq import GroqProvider
 from ai.providers.interface import LLMError, LLMProvider
 from database.redis import rate_limit_hit
@@ -43,6 +45,25 @@ def get_llm_provider() -> Optional[LLMProvider]:
     except LLMError as exc:
         logger.warning(
             "No LLM provider configured (%s) - Sophie will run in degraded, fallback-text-only mode.",
+            exc,
+        )
+        return None
+
+
+@lru_cache(maxsize=1)
+def get_embedding_provider() -> Optional[EmbeddingProvider]:
+    """RAG v2 (Phase 2) - same "degrade with a loud warning, don't crash"
+    philosophy as get_llm_provider above. No GOOGLE_AI_API_KEY configured
+    (true for this deployment as of Phase 2's own introduction - nothing
+    has been ingested/published yet) => None => ConversationService's
+    embedding_provider stays unset => RAG v2 retrieval is simply never
+    attempted, falling straight through to the existing keyword RAG tier."""
+    try:
+        return GoogleEmbeddingProvider()
+    except EmbeddingError as exc:
+        logger.info(
+            "No RAG v2 embedding provider configured (%s) - vector search stays off, "
+            "keyword RAG (knowledge_entries/YAML) still answers questions normally.",
             exc,
         )
         return None

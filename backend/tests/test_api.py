@@ -16,7 +16,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from ai.providers.interface import LLMProvider, LLMResponse
-from api.dependencies import get_llm_provider, get_sms_sender, get_telegram_sender, get_whatsapp_sender
+from api.dependencies import (
+    get_embedding_provider,
+    get_llm_provider,
+    get_sms_sender,
+    get_telegram_sender,
+    get_whatsapp_sender,
+)
 from api.main import app
 from api.routes import get_db_session
 from database.postgres import Base
@@ -33,8 +39,10 @@ class ScriptedProvider(LLMProvider):
     def __init__(self, extraction_payload: dict, response_text: str = _COMPLIANT_GREETING):
         self.extraction_payload = extraction_payload
         self.response_text = response_text
+        self.calls: list[dict] = []
 
     def generate(self, messages, *, temperature=0.0, max_tokens=1024, json_mode=False):
+        self.calls.append({"messages": messages, "json_mode": json_mode})
         if json_mode:
             return LLMResponse(content=json.dumps(self.extraction_payload), model="fake-model")
         return LLMResponse(content=self.response_text, model="fake-model")
@@ -480,3 +488,69 @@ def test_non_production_startup_never_fails_even_without_secrets(monkeypatch):
 
     monkeypatch.setenv("ENVIRONMENT", "staging")
     _fail_fast_if_misconfigured_for_production()  # must not raise
+
+
+def test_send_message_uses_rag_v2_vector_retrieval_when_embedding_provider_is_available(client):
+    import uuid
+    from ai.providers.embeddings.interface import EmbeddingProvider
+    from domain.enums import KnowledgeDocumentStatus
+    from domain.models.knowledge_chunk import KnowledgeChunk
+    from domain.models.knowledge_document import KnowledgeDocument
+
+    class FakeEmbeddingProvider(EmbeddingProvider):
+        @property
+        def dimensions(self):
+            return 2
+
+        def embed(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+    override = app.dependency_overrides[get_db_session]
+    gen = override()
+    db = next(gen)
+    doc_id = uuid.uuid4()
+    doc = KnowledgeDocument(
+        id=doc_id,
+        title="Document RAG v2",
+        source_type="tariff_card",
+        filename="test.pdf",
+        language="fr",
+        status=KnowledgeDocumentStatus.PUBLISHED,
+        version=1,
+    )
+    db.add(doc)
+    db.flush()
+    chunk = KnowledgeChunk(
+        id=uuid.uuid4(),
+        document_id=doc_id,
+        chunk_index=0,
+        content="Contenu RAG v2 de reference pour les tarifs.",
+        embedding=[1.0, 0.0],
+    )
+    db.add(chunk)
+    db.commit()
+
+    fake_llm = ScriptedProvider(
+        extraction_payload={"event_type": "QUESTION", "entities": {}},
+        response_text="Réponse formulée avec succès.",
+    )
+    app.dependency_overrides[get_embedding_provider] = lambda: FakeEmbeddingProvider()
+    app.dependency_overrides[get_llm_provider] = lambda: fake_llm
+
+    try:
+        res = client.post("/api/conversations", json={})
+        assert res.status_code == 201
+        conv_id = res.json()["conversation_id"]
+
+        msg_res = client.post(
+            f"/api/conversations/{conv_id}/messages",
+            json={"text": "Quels sont les tarifs ?"},
+        )
+        assert msg_res.status_code == 200
+        data = msg_res.json()
+        assert data["reply"] == "Réponse formulée avec succès."
+
+        phrasing_call = next(c for c in fake_llm.calls if not c["json_mode"])
+        assert "Contenu RAG v2 de reference pour les tarifs." in phrasing_call["messages"][0].content
+    finally:
+        app.dependency_overrides.pop(get_embedding_provider, None)
