@@ -5,7 +5,7 @@ import path from "path";
 export default defineConfig(async () => {
   const { default: tailwindcss } = await import("@tailwindcss/vite");
   return {
-    base: process.env.BASE_PATH || "/dashboard/",
+    base: process.env.BASE_PATH || "/",
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

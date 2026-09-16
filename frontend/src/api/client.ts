@@ -21,11 +21,16 @@ export class ApiClient {
   private baseUrl: string;
 
   constructor(baseUrl?: string) {
+    const envUrl =
+      typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL
+        ? String(import.meta.env.VITE_API_URL).trim()
+        : "";
+
     if (baseUrl) {
-      this.baseUrl = baseUrl;
-    } else if (import.meta.env.VITE_API_URL) {
-      this.baseUrl = import.meta.env.VITE_API_URL as string;
-    } else if (import.meta.env.DEV) {
+      this.baseUrl = baseUrl.replace(/\/$/, "");
+    } else if (envUrl) {
+      this.baseUrl = envUrl.replace(/\/$/, "");
+    } else if (import.meta.env?.DEV) {
       // In dev mode, fall back to relative path so Vite proxy forwards to Render without CORS issues
       this.baseUrl = "";
     } else {

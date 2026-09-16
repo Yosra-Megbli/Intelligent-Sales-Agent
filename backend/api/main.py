@@ -98,6 +98,7 @@ for _dev_origin in ("http://localhost:5173", "http://127.0.0.1:5173", "http://lo
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["X-API-Key", "X-Telegram-Bot-Api-Secret-Token", "Content-Type", "Authorization"],
