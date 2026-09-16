@@ -18,7 +18,8 @@ from ai.providers.interface import LLMError, LLMMessage, LLMProvider, LLMRespons
 from application.conversation_service import ConversationRequest, ConversationService
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
-from domain.enums import ConversationChannel, ConversationState, LeadSource, MessageRole
+from domain.enums import ConversationChannel, ConversationState, LeadSource, LeadStatus, MessageRole
+
 
 
 class ScriptedProvider(LLMProvider):
@@ -197,7 +198,7 @@ def test_ask_ean_state_threads_ean_as_expected_field(db_session):
     assert "ean" in extraction_call["messages"][0].content
 
 
-def test_reaching_qualified_also_notifies_sales_team_in_the_same_turn(db_session):
+def test_reaching_qualified_also_notifies_sales_team_in_the_same_turn(db_session, monkeypatch):
     """F-011 regression test.
 
     Before the fix, `state_machine.py`'s QUALIFIED -> HANDOFF
@@ -208,6 +209,7 @@ def test_reaching_qualified_also_notifies_sales_team_in_the_same_turn(db_session
     must now chain that second, server-triggered turn automatically within
     the same request.
     """
+    monkeypatch.setenv("CONTRACT_MODE", "handoff")
     lead, conversation = _new_conversation(db_session)
     setup_provider = ScriptedProvider(extraction_payload={"event_type": "CUSTOMER_MESSAGE", "entities": {}})
     service = ConversationService(db_session, provider=setup_provider)
@@ -263,6 +265,56 @@ def test_reaching_qualified_also_notifies_sales_team_in_the_same_turn(db_session
     assert len(assistant_messages) >= 2
     assert assistant_messages[-2] in reply.response_text
     assert assistant_messages[-1] in reply.response_text
+
+
+def test_reaching_qualified_chains_to_contract_draft_in_full_mode(db_session, monkeypatch):
+    """In CONTRACT_MODE=full, post-QUALIFIED chains straight to CONTRACT_DRAFT."""
+    monkeypatch.setenv("CONTRACT_MODE", "full")
+    lead, conversation = _new_conversation(db_session)
+    setup_provider = ScriptedProvider(extraction_payload={"event_type": "CUSTOMER_MESSAGE", "entities": {}})
+    service = ConversationService(db_session, provider=setup_provider)
+    service.handle_message(ConversationRequest(conversation_id=conversation.id, text="Bonjour"))
+    service.handle_message(ConversationRequest(conversation_id=conversation.id, text="changer"))
+
+    intent_provider = ScriptedProvider(extraction_payload={"event_type": "PROVIDE_INFORMATION", "entities": {}})
+    service = ConversationService(db_session, provider=intent_provider)
+    service.handle_message(ConversationRequest(conversation_id=conversation.id, text="je veux changer"))
+
+    yes_provider = ScriptedProvider(extraction_payload={"event_type": "CHANGE_INTENT_YES", "entities": {}})
+    service = ConversationService(db_session, provider=yes_provider)
+    service.handle_message(ConversationRequest(conversation_id=conversation.id, text="Oui"))
+
+    fill_provider = ScriptedProvider(
+        extraction_payload={
+            "event_type": "PROVIDE_INFORMATION",
+            "entities": {
+                "customer_type": "particulier",
+                "region": "Wallonie",
+                "city": "Namur",
+                "current_supplier": "Engie",
+                "first_name": "Jean",
+                "last_name": "Dupont",
+                "email": "jean@test.com",
+                "phone": "0470123456",
+                "date_of_birth": "15/05/1990",
+            },
+        }
+    )
+    service = ConversationService(db_session, provider=fill_provider)
+    service.handle_message(ConversationRequest(conversation_id=conversation.id, text="voici mes infos"))
+
+    ean_provider = ScriptedProvider(
+        extraction_payload={"event_type": "PROVIDE_INFORMATION", "entities": {"ean": "541234567890123456"[:18]}},
+        response_text="Merci, vous etes qualifie !",
+    )
+    service = ConversationService(db_session, provider=ean_provider)
+    reply = service.handle_message(ConversationRequest(conversation_id=conversation.id, text="541234567890123456"))
+
+    # Reaches CONTRACT_DRAFT
+    assert reply.engine_result.next_state == ConversationState.CONTRACT_DRAFT
+    assert reply.state == ConversationState.CONTRACT_DRAFT.value
+    assert lead.status == LeadStatus.CONTRACT
+
 
 
 # --- FAQ / objection via RAG ------------------------------------------------------

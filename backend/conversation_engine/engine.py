@@ -40,10 +40,12 @@ class EngineResult:
 # them means something happened in the sales journey, not just the dialogue.
 _CONVERSATION_STATE_TO_LEAD_STATUS = {
     ConversationState.QUALIFIED: LeadStatus.QUALIFIED,
+    ConversationState.CONTRACT_DRAFT: LeadStatus.CONTRACT,
     ConversationState.REJECTED: LeadStatus.REJECTED,
     ConversationState.HANDOFF: LeadStatus.APPOINTMENT,
     ConversationState.CLOSED: LeadStatus.CLOSED,
 }
+
 
 
 class ConversationEngine:
@@ -184,7 +186,10 @@ class ConversationEngine:
         )
         if next_state == ConversationState.QUALIFIED:
             self.activity_repo.log(lead.id, ActivityType.QUALIFIED)
+        if next_state == ConversationState.CONTRACT_DRAFT:
+            self.activity_repo.log(lead.id, ActivityType.CONTRACT_DRAFTED)
         if next_state == ConversationState.REJECTED:
             self.activity_repo.log(lead.id, ActivityType.REJECTED)
         if next_state == ConversationState.HANDOFF:
             self.activity_repo.log(lead.id, ActivityType.HUMAN_HANDOFF)
+

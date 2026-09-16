@@ -21,6 +21,7 @@ is `conversation_engine/engine.py`'s job, via ConversationRepository.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Optional
 
@@ -32,7 +33,14 @@ from domain.enums import ConversationState, RejectionReason
 from domain.models.conversation import Conversation
 from domain.models.lead import Lead
 
+
+def get_contract_mode() -> str:
+    """Retrieve CONTRACT_MODE (handoff | full, default: full)."""
+    return os.getenv("CONTRACT_MODE", "full").strip().lower()
+
+
 _intent_classifier = IntentClassifier()
+
 
 # Qualification sub-states, in the fixed order defined by the rules engine.
 QUALIFICATION_STATES = (
@@ -279,9 +287,18 @@ def decide(
         )
 
     if current_state == ConversationState.QUALIFIED:
-        return StateDecision(next_state=ConversationState.HANDOFF, required_action="NOTIFY_SALES_TEAM")
+        if get_contract_mode() == "handoff":
+
+            return StateDecision(next_state=ConversationState.HANDOFF, required_action="NOTIFY_SALES_TEAM")
+        product = rules.select_contract_product(lead)
+        required_action = "DRAFT_CONTRACT_MOTION" if product == "Motion" else "DRAFT_CONTRACT_FLEXY"
+        return StateDecision(next_state=ConversationState.CONTRACT_DRAFT, required_action=required_action)
+
+    if current_state == ConversationState.CONTRACT_DRAFT:
+        return StateDecision(next_state=current_state, required_action="WAITING_SIGNATURE")
 
     if current_state == ConversationState.HANDOFF:
+
         # Bug fix (F-016, BAT SC-090): this used to unconditionally close
         # the conversation - silently, with no reply at all - on ANY
         # message received while waiting for a human, including a customer

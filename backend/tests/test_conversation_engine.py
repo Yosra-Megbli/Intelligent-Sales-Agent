@@ -123,9 +123,39 @@ def test_full_happy_path_reaches_handoff(db_session):
     assert lead.status == LeadStatus.QUALIFIED
     assert lead.qualified_at is not None
 
+    # In full mode (default), transitions to CONTRACT_DRAFT and LeadStatus.CONTRACT
     result = engine.process_turn(conversation.id, Event(EventType.PROVIDE_INFORMATION))
-    assert result.next_state == ConversationState.HANDOFF
+    assert result.next_state == ConversationState.CONTRACT_DRAFT
+    assert lead.status == LeadStatus.CONTRACT
+
+
+def test_full_happy_path_reaches_handoff_in_handoff_mode(db_session, monkeypatch):
+    monkeypatch.setenv("CONTRACT_MODE", "handoff")
+    lead, conversation = _new_conversation(db_session)
+    engine = ConversationEngine(db_session)
+
+    # Fast forward to QUALIFIED
+    lead.customer_type = "particulier"
+    lead.region = "Wallonie"
+    lead.city = "Namur"
+    lead.current_supplier = "Engie"
+    lead.first_name = "Jean"
+    lead.last_name = "Dupont"
+    lead.email = "jean@test.com"
+    lead.phone = "0488112233"
+    lead.date_of_birth = "15/05/1990"
+    lead.ean = "541234567890123456"
+    lead.change_intent = True
+    conversation.current_state = ConversationState.DATA_VALIDATION
+    db_session.flush()
+
+    res_qual = engine.process_turn(conversation.id, Event(EventType.PROVIDE_INFORMATION))
+    assert res_qual.next_state == ConversationState.QUALIFIED
+
+    res_handoff = engine.process_turn(conversation.id, Event(EventType.PROVIDE_INFORMATION))
+    assert res_handoff.next_state == ConversationState.HANDOFF
     assert lead.status == LeadStatus.APPOINTMENT
+
 
 
 def test_handoff_does_not_silently_close_on_a_customer_checking_in_regression_f016(db_session):

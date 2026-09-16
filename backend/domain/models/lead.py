@@ -114,10 +114,17 @@ class Lead(Base):
     ean = Column(String(18), nullable=True)
     consumption = Column(String(64), nullable=True)  # kept as free text at MVP stage
 
-    # Required by cahier de charges آ§5 (qualification data) for contract
+    # Required by cahier de charges §5 (qualification data) for contract
     # generation later - not currently read or validated by
     # conversation_engine/business_rules; collected and stored only.
     date_of_birth = Column(String(64), nullable=True)
+
+    # --- Energy assets (Sprint 3 / Package C) ---
+    has_ev = Column(Boolean, nullable=True, default=False)
+    has_heat_pump = Column(Boolean, nullable=True, default=False)
+    has_battery = Column(Boolean, nullable=True, default=False)
+
+    contracts = relationship("Contract", back_populates="lead", cascade="all, delete-orphan")
 
     # --- CRM import bookkeeping (added for CSV Import, Feature 1) ---
     # `provider` is who supplied/referred this lead (e.g. a marketing partner

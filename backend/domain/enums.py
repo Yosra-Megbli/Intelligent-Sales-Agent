@@ -93,6 +93,7 @@ class ConversationState(str, Enum):
 
     DATA_VALIDATION = "DATA_VALIDATION"
     QUALIFIED = "QUALIFIED"
+    CONTRACT_DRAFT = "CONTRACT_DRAFT"
     HANDOFF = "HANDOFF"
     CLOSED = "CLOSED"
 
@@ -102,6 +103,14 @@ class ConversationState(str, Enum):
     OBJECTION = "OBJECTION"
     REJECTED = "REJECTED"
     ERROR_RECOVERY = "ERROR_RECOVERY"
+
+
+class ContractStatus(str, Enum):
+    DRAFT = "DRAFT"
+    SENT = "SENT"
+    SIGNED = "SIGNED"
+    WITHDRAWN = "WITHDRAWN"
+    CANCELLED = "CANCELLED"
 
 
 class MessageRole(str, Enum):
@@ -122,6 +131,10 @@ class ActivityType(str, Enum):
     LEAD_IMPORTED = "LEAD_IMPORTED"
     OPT_OUT = "OPT_OUT"  # STOP/STOPT/ARRET handler
     GUARD_TRIGGERED = "GUARD_TRIGGERED"  # Output guard intercepted forbidden claims / missing disclosure
+    CONTRACT_DRAFTED = "CONTRACT_DRAFTED"
+    CONTRACT_SENT = "CONTRACT_SENT"
+    CONTRACT_SIGNED = "CONTRACT_SIGNED"
+    CONTRACT_WITHDRAWN = "CONTRACT_WITHDRAWN"
 
 
 class CampaignStatus(str, Enum):
@@ -129,3 +142,4 @@ class CampaignStatus(str, Enum):
     RUNNING = "RUNNING"
     PAUSED = "PAUSED"
     COMPLETED = "COMPLETED"
+

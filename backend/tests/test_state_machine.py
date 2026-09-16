@@ -230,12 +230,34 @@ def test_data_validation_is_duplicate_defaults_to_false(db_session):
     assert decision.next_state == ConversationState.QUALIFIED
 
 
-def test_qualified_moves_to_handoff(db_session):
+def test_qualified_moves_to_handoff_in_handoff_mode(db_session, monkeypatch):
+    monkeypatch.setenv("CONTRACT_MODE", "handoff")
     lead = _lead(db_session)
     decision = state_machine.decide(
         ConversationState.QUALIFIED, Event(EventType.PROVIDE_INFORMATION), lead
     )
     assert decision.next_state == ConversationState.HANDOFF
+    assert decision.required_action == "NOTIFY_SALES_TEAM"
+
+
+def test_qualified_moves_to_contract_draft_in_full_mode(db_session, monkeypatch):
+    monkeypatch.setenv("CONTRACT_MODE", "full")
+    lead = _lead(db_session)
+    # Default without EV/heat_pump/battery -> Flexy
+    decision = state_machine.decide(
+        ConversationState.QUALIFIED, Event(EventType.PROVIDE_INFORMATION), lead
+    )
+    assert decision.next_state == ConversationState.CONTRACT_DRAFT
+    assert decision.required_action == "DRAFT_CONTRACT_FLEXY"
+
+    # With EV -> Motion
+    lead.has_ev = True
+    decision_ev = state_machine.decide(
+        ConversationState.QUALIFIED, Event(EventType.PROVIDE_INFORMATION), lead
+    )
+    assert decision_ev.next_state == ConversationState.CONTRACT_DRAFT
+    assert decision_ev.required_action == "DRAFT_CONTRACT_MOTION"
+
 
 
 def test_handoff_stays_handoff_and_reassures_regression_f016(db_session):

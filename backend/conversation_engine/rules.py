@@ -1,4 +1,4 @@
-﻿"""
+"""
 Qualification Rules Engine.
 
 This is "the real brain" the design docs kept referring to: it reads the
@@ -197,3 +197,25 @@ def decide_validation(lead: Lead, *, is_duplicate: bool = False) -> Action:
         return Action(type=ActionType.CORRECT_FIELD, field="ean")
 
     return Action(type=ActionType.QUALIFY)
+
+
+def select_contract_product(lead: Lead) -> str:
+    """Deterministic product selection (Sprint 3 / Package C):
+    Product rule: has_ev/heat_pump/battery -> Motion else Flexy.
+    """
+    has_ev = bool(getattr(lead, "has_ev", False))
+    has_heat_pump = bool(getattr(lead, "has_heat_pump", False))
+    has_battery = bool(getattr(lead, "has_battery", False))
+
+    notes_lower = (getattr(lead, "notes", None) or "").lower()
+    if not has_ev and any(k in notes_lower for k in ("ev", "ve", "électrique", "electrique", "tesla")):
+        has_ev = True
+    if not has_heat_pump and any(k in notes_lower for k in ("pompe", "chaleur", "pac")):
+        has_heat_pump = True
+    if not has_battery and any(k in notes_lower for k in ("batterie", "stockage")):
+        has_battery = True
+
+    if has_ev or has_heat_pump or has_battery:
+        return "Motion"
+    return "Flexy"
+
