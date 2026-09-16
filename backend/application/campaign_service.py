@@ -210,6 +210,7 @@ class CampaignService:
         self.db.commit()
         OutboundScheduler(self.db, channel=campaign.channel).process_campaign(campaign, sleep_between_sends=False)
         self.db.commit()
+        self._emit_campaign_progress(campaign_id)
         return campaign
 
     def pause_campaign(self, campaign_id: UUID) -> Campaign:
@@ -237,7 +238,27 @@ class CampaignService:
         self.db.commit()
         OutboundScheduler(self.db, channel=campaign.channel).process_campaign(campaign, sleep_between_sends=False)
         self.db.commit()
+        self._emit_campaign_progress(campaign_id)
         return campaign
+
+    def _emit_campaign_progress(self, campaign_id: UUID) -> None:
+        try:
+            import logging
+            from live.broker import get_live_broker
+            analytics = self.get_campaign_analytics(campaign_id)
+            if analytics:
+                get_live_broker().publish_sync(
+                    "campaign_progress",
+                    {
+                        "campaign_id": str(campaign_id),
+                        "sent": analytics.contacted,
+                        "responded": analytics.replied,
+                        "qualified": analytics.qualified,
+                        "opted_out": analytics.rejected,
+                    },
+                )
+        except Exception as exc:  # noqa: BLE001
+            logging.getLogger(__name__).warning("Failed to emit campaign_progress (non-blocking): %s", exc)
 
     def update_campaign(
         self, campaign_id: UUID, *, name: Optional[str] = None, target_rules: Optional[dict] = None

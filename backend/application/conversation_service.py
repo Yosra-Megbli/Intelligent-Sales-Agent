@@ -24,11 +24,14 @@ decisions), and persists messages.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Optional
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
+
+logger = logging.getLogger(__name__)
 
 from ai.extractor import Extractor
 from ai.providers.embeddings.interface import EmbeddingProvider
@@ -397,12 +400,71 @@ class ConversationService:
 
             result = chained_result
 
+        prev_state = context.conversation.current_state.value if context.conversation.current_state else None
+        self._emit_live_turn(
+            conversation,
+            last_message_preview=response_text or request.text,
+            direction="out" if response_text else "in",
+            from_state=prev_state,
+            to_state=conversation.current_state.value,
+        )
+
         return ConversationResponse(
             response_text=response_text,
             state=conversation.current_state.value,
             required_action=result.required_action,
             engine_result=result,
         )
+
+    def _emit_live_turn(
+        self,
+        conversation: Conversation,
+        *,
+        last_message_preview: str,
+        direction: str,
+        from_state: Optional[str] = None,
+        to_state: Optional[str] = None,
+    ) -> None:
+        """Sprint 5 Live Cockpit emission hook (post-processing, non-blocking).
+        
+        Failures are caught and logged - emission must NEVER break a conversation.
+        """
+        try:
+            from live.broker import get_live_broker
+            broker = get_live_broker()
+
+            channel_val = (
+                conversation.channel.value if hasattr(conversation.channel, "value") else str(conversation.channel)
+            )
+            state_val = (
+                conversation.current_state.value
+                if hasattr(conversation.current_state, "value")
+                else str(conversation.current_state)
+            )
+
+            broker.publish_sync(
+                "conversation_updated",
+                {
+                    "lead_id": str(conversation.lead_id) if conversation.lead_id else None,
+                    "conversation_id": str(conversation.id),
+                    "channel": channel_val,
+                    "state": state_val,
+                    "last_message_preview": last_message_preview[:120] if last_message_preview else "",
+                    "direction": direction,
+                },
+            )
+
+            if from_state and to_state and from_state != to_state:
+                broker.publish_sync(
+                    "lead_state_changed",
+                    {
+                        "lead_id": str(conversation.lead_id) if conversation.lead_id else None,
+                        "from_state": from_state,
+                        "to_state": to_state,
+                    },
+                )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("Live event emission failed (non-blocking): %s", exc)
 
     def _handle_opt_out(self, conversation: Conversation, raw_text: str) -> ConversationResponse:
         """Immediately opt the lead out (STOP/STOPT/ARRET handler).
