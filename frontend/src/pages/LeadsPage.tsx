@@ -31,6 +31,32 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+const CSV_FORMULA_PREFIX = /^[=+\-@\t\r]/;
+
+// OWASP CSV injection guard: a field opened by Excel/Sheets that starts with
+// = + - @ is executed as a formula. Lead names/emails/suppliers are
+// user-entered (web, Telegram, manual creation), never trust them raw here.
+const sanitizeCsvField = (value: string): string =>
+  CSV_FORMULA_PREFIX.test(value) ? `'${value}` : value;
+
+// Belgian EANs are 18 digits; Excel's numeric precision caps at 15
+// significant digits, so a plain numeric CSV cell gets silently rounded or
+// shown in scientific notation. Wrapping it as a text-literal formula keeps
+// every digit exact on open, with no extra dependency.
+const forceExcelText = (digits: string): string => (digits ? `="${digits}"` : "");
+
+const formatCsvDate = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const CSV_REGION_LABELS: Record<string, string> = {
+  VL: "Flandre (VL)",
+  WA: "Wallonie (WA)",
+};
+
 export const LeadsPage: React.FC = () => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,26 +131,45 @@ export const LeadsPage: React.FC = () => {
       return;
     }
 
-    const headers = ["ID", "Nom", "Prenom", "Email", "Telephone", "Statut", "Region", "GRD", "Fournisseur", "EAN", "Date_Creation"];
+    const headers = [
+      "Identifiant",
+      "Nom",
+      "Prénom",
+      "Email",
+      "Téléphone",
+      "Statut",
+      "Région",
+      "Gestionnaire de réseau",
+      "Fournisseur actuel",
+      "Code EAN",
+      "Date de création",
+    ];
     const rows = filteredData.map((lead) => {
       const isOpt = lead.status === "OPT_OUT";
+      const region = resolveRegion(lead);
       return [
         lead.id,
-        isOpt ? "RGPD_PURGED" : lead.last_name || "",
-        isOpt ? "RGPD_PURGED" : lead.first_name || "",
-        isOpt ? "" : lead.email || "",
-        isOpt ? "" : lead.phone || "",
-        lead.status,
-        resolveRegion(lead),
+        isOpt ? "RGPD_PURGED" : sanitizeCsvField(lead.last_name || ""),
+        isOpt ? "RGPD_PURGED" : sanitizeCsvField(lead.first_name || ""),
+        isOpt ? "" : sanitizeCsvField(lead.email || ""),
+        isOpt ? "" : sanitizeCsvField(lead.phone || ""),
+        t(`status.${lead.status}`, { defaultValue: lead.status }),
+        CSV_REGION_LABELS[region] || region,
         resolveGrd(lead),
-        lead.current_supplier || "",
-        isOpt ? "" : lead.ean || "",
-        lead.created_at,
-      ].map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",");
+        sanitizeCsvField(lead.current_supplier || ""),
+        isOpt ? "" : forceExcelText(lead.ean || ""),
+        formatCsvDate(lead.created_at),
+        // Excel/Sheets on a fr-BE locale default to ";" as the field
+        // separator when a .csv is double-clicked, not ",". Using "," here
+        // (as before) made every value collapse into column A on open.
+      ].map((val) => `"${String(val).replace(/"/g, '""')}"`).join(";");
     });
 
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const csvContent = [headers.join(";"), ...rows].join("\r\n");
+    // Leading BOM: without it, Excel on Windows reads the file with the
+    // system ANSI codepage instead of UTF-8 and every accented character
+    // (é, è, à in names and headers) turns to mojibake on open.
+    const blob = new Blob(['\uFEFF' + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
