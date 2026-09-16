@@ -242,7 +242,45 @@
     "duplicatesSaved": "Doublons interceptés (find_duplicate)",
     "channel": "Canal",
     "status": "Statut",
-    "empty": "Aucune campagne active. Importez votre premier fichier de leads."
+    "empty": "Aucune campagne active. Créez votre première campagne.",
+    "totalLeads": "Prospects ciblés",
+    "actions": "Actions",
+    "start": "Démarrer",
+    "pause": "Pause",
+    "resume": "Reprendre",
+    "channelNotActivated": "Configurer les clés dans Render",
+    "createModal": {
+      "title": "Nouvelle campagne",
+      "name": "Nom de la campagne",
+      "channel": "Canal",
+      "region": "Région ciblée (optionnel)",
+      "anyRegion": "Toutes régions couvertes",
+      "submit": "Créer la campagne",
+      "success": "Campagne créée avec succès",
+      "error": "Erreur lors de la création de la campagne"
+    },
+    "startConfirm": {
+      "title": "Confirmer le lancement",
+      "body": "{{count}} messages seront envoyés avec l'énoncé IA obligatoire. Confirmer ?",
+      "disclosurePreview": "Aperçu de la divulgation :",
+      "confirm": "Confirmer et lancer",
+      "success": "Campagne lancée",
+      "error": "Erreur lors du lancement"
+    },
+    "detail": {
+      "title": "Détail de la campagne",
+      "total": "Total assignés",
+      "pending": "En attente",
+      "contacted": "Contactés",
+      "replied": "Répondu",
+      "qualified": "Qualifiés",
+      "rejected": "Rejetés",
+      "handoff": "Relais humain",
+      "responseRate": "Taux de réponse",
+      "qualificationRate": "Taux de qualification"
+    },
+    "pauseSuccess": "Campagne mise en pause",
+    "resumeSuccess": "Campagne relancée"
   },
   "compliancePage": {
     "title": "Centre de Conformité & RGPD",

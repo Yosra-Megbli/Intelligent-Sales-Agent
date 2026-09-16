@@ -242,7 +242,45 @@
     "duplicatesSaved": "Duplicates Intercepted (find_duplicate)",
     "channel": "Channel",
     "status": "Status",
-    "empty": "No active campaigns. Import your first leads file."
+    "empty": "No active campaigns. Create your first campaign.",
+    "totalLeads": "Targeted prospects",
+    "actions": "Actions",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "channelNotActivated": "Configure the keys in Render",
+    "createModal": {
+      "title": "New campaign",
+      "name": "Campaign name",
+      "channel": "Channel",
+      "region": "Targeted region (optional)",
+      "anyRegion": "All covered regions",
+      "submit": "Create campaign",
+      "success": "Campaign created successfully",
+      "error": "Error while creating the campaign"
+    },
+    "startConfirm": {
+      "title": "Confirm launch",
+      "body": "{{count}} messages will be sent with the mandatory AI disclosure. Confirm?",
+      "disclosurePreview": "Disclosure preview:",
+      "confirm": "Confirm and launch",
+      "success": "Campaign launched",
+      "error": "Error while launching"
+    },
+    "detail": {
+      "title": "Campaign detail",
+      "total": "Total assigned",
+      "pending": "Pending",
+      "contacted": "Contacted",
+      "replied": "Replied",
+      "qualified": "Qualified",
+      "rejected": "Rejected",
+      "handoff": "Human handoff",
+      "responseRate": "Response rate",
+      "qualificationRate": "Qualification rate"
+    },
+    "pauseSuccess": "Campaign paused",
+    "resumeSuccess": "Campaign resumed"
   },
   "compliancePage": {
     "title": "Compliance & GDPR Center",

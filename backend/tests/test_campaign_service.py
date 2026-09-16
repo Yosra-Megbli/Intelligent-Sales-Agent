@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import pytest
 
 from application.campaign_service import (
@@ -98,6 +100,38 @@ def test_start_campaign_assigns_and_sends_first_batch(db_session):
     assert started.sent == 1
     db_session.refresh(lead)
     assert lead.status == LeadStatus.CONTACTED
+
+
+def test_start_campaign_never_assigns_an_opted_out_lead(db_session):
+    """Sprint 5's own explicit requirement: opted-out leads are already
+    excluded by existing machinery, not a second filter. There is no
+    dedicated LeadStatus.OPT_OUT value - application/conversation_service.py's
+    _handle_opt_out sets status=REJECTED (reason=REQUEST_HUMAN_ONLY) plus
+    opt_out_at, and list_new_for_campaign only ever selects
+    LeadStatus.NEW - so an opted-out lead is excluded by the exact same
+    NEW-only filter every other non-NEW lead already is, no special-casing
+    needed. Never tested end-to-end through start_campaign until now -
+    close that gap rather than assume it from the query alone."""
+    from domain.enums import RejectionReason
+
+    active_lead = _seed_lead(db_session, region="Wallonie", phone="+32491111111")
+    opted_out_lead = _seed_lead(db_session, region="Wallonie", phone="+32492222222")
+    LeadRepository(db_session).set_status(opted_out_lead, LeadStatus.REJECTED, RejectionReason.REQUEST_HUMAN_ONLY)
+    opted_out_lead.opt_out_at = datetime.utcnow()
+    db_session.commit()
+
+    service = CampaignService(db_session)
+    campaign = service.create_campaign(name="Wallonie", target_rules={"region": "Wallonie"})
+    started = service.start_campaign(campaign.id)
+
+    assert started.total_leads == 1
+    assert started.sent == 1
+    db_session.refresh(active_lead)
+    db_session.refresh(opted_out_lead)
+    assert active_lead.campaign_id == campaign.id
+    assert opted_out_lead.campaign_id is None
+    assert opted_out_lead.status == LeadStatus.REJECTED
+    assert opted_out_lead.opt_out_at is not None
 
 
 def test_start_campaign_twice_raises(db_session):

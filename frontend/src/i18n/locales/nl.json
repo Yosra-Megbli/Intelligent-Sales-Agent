@@ -242,7 +242,45 @@
     "duplicatesSaved": "Onderschepte duplicaten (find_duplicate)",
     "channel": "Kanaal",
     "status": "Status",
-    "empty": "Geen actieve campagnes. Importeer uw eerste leadsbestand."
+    "empty": "Geen actieve campagnes. Maak uw eerste campagne aan.",
+    "totalLeads": "Beoogde prospects",
+    "actions": "Acties",
+    "start": "Starten",
+    "pause": "Pauzeren",
+    "resume": "Hervatten",
+    "channelNotActivated": "Configureer de sleutels in Render",
+    "createModal": {
+      "title": "Nieuwe campagne",
+      "name": "Campagnenaam",
+      "channel": "Kanaal",
+      "region": "Beoogde regio (optioneel)",
+      "anyRegion": "Alle gedekte regio's",
+      "submit": "Campagne aanmaken",
+      "success": "Campagne succesvol aangemaakt",
+      "error": "Fout bij het aanmaken van de campagne"
+    },
+    "startConfirm": {
+      "title": "Lancering bevestigen",
+      "body": "{{count}} berichten worden verzonden met de verplichte AI-vermelding. Bevestigen?",
+      "disclosurePreview": "Voorbeeld van de vermelding:",
+      "confirm": "Bevestigen en starten",
+      "success": "Campagne gestart",
+      "error": "Fout bij het starten"
+    },
+    "detail": {
+      "title": "Campagnedetail",
+      "total": "Totaal toegewezen",
+      "pending": "In afwachting",
+      "contacted": "Gecontacteerd",
+      "replied": "Gereageerd",
+      "qualified": "Gekwalificeerd",
+      "rejected": "Afgewezen",
+      "handoff": "Menselijke overdracht",
+      "responseRate": "Responspercentage",
+      "qualificationRate": "Kwalificatiepercentage"
+    },
+    "pauseSuccess": "Campagne gepauzeerd",
+    "resumeSuccess": "Campagne hervat"
   },
   "compliancePage": {
     "title": "Nalevings- & AVG-Centrum",

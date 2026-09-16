@@ -156,13 +156,21 @@ export interface OverviewResponse {
   optional_digi_revenue?: number;
 }
 
+// Matches backend/api/campaign_schemas.py's CampaignSummary exactly -
+// the previous version of this type ("ACTIVE" status, leads_count,
+// target_rules as an object) never matched the real API at all, which is
+// how CampaignsPage.tsx ended up rendering fabricated numbers instead of
+// a real, empty response.
+export type CampaignStatus = "DRAFT" | "RUNNING" | "PAUSED" | "COMPLETED";
+
 export interface CampaignSummary {
   id: string;
   name: string;
+  status: CampaignStatus;
   channel: string;
-  status: "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED";
-  target_rules: Record<string, unknown>;
-  leads_count: number;
+  total_leads: number;
+  sent: number;
+  target_rules: string | null; // JSON-encoded, e.g. '{"region": "Wallonie"}'
   created_at: string;
   updated_at: string;
 }
@@ -170,6 +178,36 @@ export interface CampaignSummary {
 export interface CampaignListResponse {
   items: CampaignSummary[];
   total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface CampaignDetailResponse {
+  campaign: CampaignSummary;
+  leads: LeadSummary[];
+  leads_total: number;
+  leads_limit: number;
+  leads_offset: number;
+}
+
+export interface CampaignAnalyticsResponse {
+  campaign_id: string;
+  total: number;
+  pending: number;
+  contacted: number;
+  replied: number;
+  qualified: number;
+  rejected: number;
+  handoff: number;
+  response_rate: number;
+  qualification_rate: number;
+}
+
+export interface CampaignPreviewResponse {
+  campaign_id: string;
+  matched_leads: number;
+  channel: string;
+  disclosure_preview: string;
   limit: number;
   offset: number;
 }

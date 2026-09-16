@@ -1,6 +1,10 @@
 import {
   ActivityFeedListResponse,
+  CampaignAnalyticsResponse,
+  CampaignDetailResponse,
   CampaignListResponse,
+  CampaignPreviewResponse,
+  CampaignSummary,
   ComplianceOverviewResponse,
   ContractListResponse,
   ContractSummary,
@@ -246,6 +250,41 @@ export class ApiClient {
 
   async getCampaigns(limit = 50, offset = 0): Promise<CampaignListResponse> {
     return this.request<CampaignListResponse>(`/api/campaigns?limit=${limit}&offset=${offset}`);
+  }
+
+  async getCampaignDetail(campaignId: string): Promise<CampaignDetailResponse> {
+    return this.request<CampaignDetailResponse>(`/api/campaigns/${campaignId}`);
+  }
+
+  async getCampaignAnalytics(campaignId: string): Promise<CampaignAnalyticsResponse> {
+    return this.request<CampaignAnalyticsResponse>(`/api/campaigns/${campaignId}/analytics`);
+  }
+
+  async createCampaign(payload: { name: string; channel: string; target_rules?: Record<string, unknown> }): Promise<CampaignSummary> {
+    return this.request<CampaignSummary>("/api/campaigns", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  }
+
+  async previewCampaign(campaignId: string): Promise<CampaignPreviewResponse> {
+    return this.request<CampaignPreviewResponse>(`/api/campaigns/${campaignId}/preview`, { method: "POST" });
+  }
+
+  async startCampaign(campaignId: string): Promise<CampaignSummary> {
+    return this.request<CampaignSummary>(`/api/campaigns/${campaignId}/start`, { method: "POST" });
+  }
+
+  async pauseCampaign(campaignId: string): Promise<CampaignSummary> {
+    return this.request<CampaignSummary>(`/api/campaigns/${campaignId}/pause`, { method: "POST" });
+  }
+
+  async resumeCampaign(campaignId: string): Promise<CampaignSummary> {
+    return this.request<CampaignSummary>(`/api/campaigns/${campaignId}/resume`, { method: "POST" });
+  }
+
+  async deleteCampaign(campaignId: string): Promise<void> {
+    await this.request<void>(`/api/campaigns/${campaignId}`, { method: "DELETE" });
   }
 
   async getConversations(params?: {
