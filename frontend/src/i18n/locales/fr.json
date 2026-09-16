@@ -59,6 +59,7 @@
       "conversations": "Conversations Actives",
       "qualified": "Prospects Qualifiés",
       "sales": "Ventes Finalisées",
+      "signedContracts": "Contrats Signés",
       "conversionRate": "Taux de Transformation",
       "costPerSale": "Coût d'Acquisition / Vente",
       "estimatedRevenue": "CA Récurrent Estimé (MRR)"
@@ -172,6 +173,12 @@
         "solarPitch": "Suggestion : Valorisation d'injection",
         "battery": "Batterie domestique",
         "batteryPitch": "Suggestion : Arbitrage tarif horaire Motion"
+      },
+      "contract": {
+        "title": "Contrat & Signature",
+        "downloadSuccess": "Contrat PDF SPÉCIMEN téléchargé avec succès",
+        "createSuccess": "Contrat généré avec succès !",
+        "signSuccess": "Signature Yousign simulée avec succès ! Statut client activé."
       }
     }
   },
@@ -188,7 +195,8 @@
     "chips": {
       "optOut": "Opt-out immédiat — données purgées",
       "fixedSeeker": "Refus poli — prix fixe exigé",
-      "errorRecovery": "Bascule question-par-question"
+      "errorRecovery": "Bascule question-par-question",
+      "contractSigned": "SIGNED — Contrat Énergie Confirmé (Nouveau Client)"
     },
     "emptyList": "Aucune conversation trouvée."
   },

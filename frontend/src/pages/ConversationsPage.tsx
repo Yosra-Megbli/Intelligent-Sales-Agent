@@ -66,6 +66,7 @@ export const ConversationsPage: React.FC = () => {
     { label: "INTENT", value: "INTENT_CONFIRMATION" },
     { label: "COLLECT", value: "COLLECT_CONTACT" },
     { label: "QUALIFIED", value: "QUALIFIED" },
+    { label: "SIGNED", value: "CUSTOMER" },
     { label: "FIXED_SEEKER", value: "FIXED_SEEKER" },
     { label: "OPT_OUT", value: "OPT_OUT" },
   ];
@@ -155,6 +156,8 @@ export const ConversationsPage: React.FC = () => {
     { key: "COLLECT_EAN", label: "COLLECT_EAN", desc: "Code compteur 5414..." },
     { key: "DATA_VALIDATION", label: "DATA_VALIDATION", desc: "Vérification des règles métier" },
     { key: "QUALIFIED", label: "QUALIFIED", desc: "Lead prêt pour contrat" },
+    { key: "CONTRACT_DRAFT", label: "CONTRACT_DRAFT", desc: "Spécimen PDF & Envoi Yousign" },
+    { key: "CUSTOMER", label: "CUSTOMER (SIGNED)", desc: "Contrat signé & validé" },
   ];
 
   // Helper to determine step index
@@ -162,7 +165,9 @@ export const ConversationsPage: React.FC = () => {
     const idx = pipelineSteps.findIndex((s) => s.key === currentState);
     if (idx !== -1) return idx;
     if (currentState.includes("COLLECT")) return 5;
-    if (currentState === "HANDOFF" || currentState === "CONTRACT" || currentState === "CUSTOMER") return 9;
+    if (currentState === "CONTRACT") return 10;
+    if (currentState === "CUSTOMER" || currentState === "SIGNED") return 11;
+    if (currentState === "HANDOFF") return 9;
     return 1;
   };
 
@@ -401,6 +406,18 @@ export const ConversationsPage: React.FC = () => {
                       <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3 py-1 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 shadow-xs">
                         <RotateCcw className="w-3.5 h-3.5" />
                         <span>{t("conversations.chips.errorRecovery")}</span>
+                      </span>
+                    </div>
+                  )}
+
+                  {/* SIGNED teal chip */}
+                  {(activeConversation.current_state === "CUSTOMER" ||
+                    activeConversation.current_state === "SIGNED" ||
+                    activeConversation.current_state === "CONTRACT_DRAFT") && (
+                    <div className="flex justify-center py-2">
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-3.5 py-1.5 rounded-full bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border border-[var(--color-teal-soft-border)] shadow-xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-teal)]" />
+                        <span>{t("conversations.chips.contractSigned") || "SIGNED — Contrat Énergie Confirmé (Nouveau Client)"}</span>
                       </span>
                     </div>
                   )}

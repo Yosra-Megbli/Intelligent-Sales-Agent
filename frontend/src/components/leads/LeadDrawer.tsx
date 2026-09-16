@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
 import { LeadSummary, LeadStatus } from "@/api/types";
 import { Badge } from "@/components/ui/Badge";
@@ -19,6 +19,10 @@ import {
   Activity as ActivityIcon,
   Calendar,
   Sparkles,
+  FileText,
+  Download,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,12 +34,70 @@ interface LeadDrawerProps {
 
 export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose }) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [isGeneratingContract, setIsGeneratingContract] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isSimulatingSign, setIsSimulatingSign] = useState(false);
 
   const { data: detailData, isLoading: isDetailLoading } = useQuery({
     queryKey: ["leadDetail", lead?.id],
     queryFn: () => (lead?.id ? apiClient.getLeadDetail(lead.id) : null),
     enabled: Boolean(lead?.id && isOpen),
   });
+
+  const { data: contractsData } = useQuery({
+    queryKey: ["leadContracts", lead?.id],
+    queryFn: () => (lead?.id ? apiClient.getContracts({ lead_id: lead.id, limit: 1 }) : null),
+    enabled: Boolean(lead?.id && isOpen),
+  });
+
+  const latestContract = contractsData?.items?.[0] || null;
+
+  const handleDownloadPdf = async (contractId: string) => {
+    try {
+      setIsDownloadingPdf(true);
+      await apiClient.downloadContractPdf(contractId, `contrat_specimen_${lead?.last_name || "lead"}.pdf`);
+      toast.success(t("leads.drawer.contract.downloadSuccess") || "Contrat PDF SPÉCIMEN téléchargé");
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors du téléchargement du PDF");
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
+  const handleGenerateContract = async () => {
+    if (!lead?.id) return;
+    try {
+      setIsGeneratingContract(true);
+      const contract = await apiClient.createContract(lead.id);
+      toast.success(t("leads.drawer.contract.createSuccess") || `Contrat ${contract.product} généré avec succès !`);
+      queryClient.invalidateQueries({ queryKey: ["leadContracts", lead.id] });
+      queryClient.invalidateQueries({ queryKey: ["leadDetail", lead.id] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["overview"] });
+      await apiClient.downloadContractPdf(contract.id, `contrat_specimen_${lead.last_name || "lead"}.pdf`);
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la génération du contrat");
+    } finally {
+      setIsGeneratingContract(false);
+    }
+  };
+
+  const handleSimulateSign = async (contractId: string) => {
+    try {
+      setIsSimulatingSign(true);
+      await apiClient.simulateSignContract(contractId);
+      toast.success(t("leads.drawer.contract.signSuccess") || "Signature Yousign simulée avec succès ! Statut client activé.");
+      queryClient.invalidateQueries({ queryKey: ["leadContracts", lead?.id] });
+      queryClient.invalidateQueries({ queryKey: ["leadDetail", lead?.id] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["overview"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la simulation de signature");
+    } finally {
+      setIsSimulatingSign(false);
+    }
+  };
 
   if (!lead) return null;
 
@@ -259,6 +321,118 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
               ))}
             </div>
           </div>
+
+          {/* Contract Card */}
+          {!isOptOut && (
+            <div className="p-3.5 rounded-[0.75rem] border border-[var(--border)] bg-[var(--surface-hover)] space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-[var(--color-teal)]" />
+                  <h3 className="text-xs font-bold text-[var(--ink)] tracking-tight uppercase">
+                    {t("leads.drawer.contract.title") || "Contrat & Signature"}
+                  </h3>
+                </div>
+                {latestContract && (
+                  <span
+                    className={`inline-flex items-center gap-1 text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
+                      latestContract.status === "SIGNED"
+                        ? "bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border-[var(--color-teal-soft-border)]"
+                        : latestContract.status === "SENT"
+                        ? "bg-sky-100 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border-sky-300"
+                        : latestContract.status === "WITHDRAWN"
+                        ? "bg-pink-100 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300 border-pink-300"
+                        : "bg-[var(--surface)] text-[var(--ink-muted)] border-[var(--border)]"
+                    }`}
+                  >
+                    {latestContract.status === "SIGNED" && <CheckCircle2 className="w-3 h-3 text-[var(--color-teal)]" />}
+                    <span>{latestContract.status}</span>
+                  </span>
+                )}
+              </div>
+
+              {latestContract ? (
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div>
+                      <span className="text-[var(--ink-muted)] block text-[10px]">Offre</span>
+                      <span className="font-bold text-[var(--ink)]">Ecofix {latestContract.product}</span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--ink-muted)] block text-[10px]">Redevance</span>
+                      <span className="font-mono text-[var(--ink)]">5,99 € / mois</span>
+                    </div>
+                    {latestContract.signed_at && (
+                      <div>
+                        <span className="text-[var(--ink-muted)] block text-[10px]">Signé le</span>
+                        <span className="font-mono text-[var(--ink)]">
+                          {new Date(latestContract.signed_at).toLocaleDateString("fr-BE")}
+                        </span>
+                      </div>
+                    )}
+                    {latestContract.yousign_signature_request_id && (
+                      <div>
+                        <span className="text-[var(--ink-muted)] block text-[10px]">Yousign Sandbox</span>
+                        <span className="font-mono text-[10px] text-[var(--ink-subtle)] truncate block">
+                          {latestContract.yousign_signature_request_id.slice(0, 14)}...
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--border)]">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadPdf(latestContract.id)}
+                      disabled={isDownloadingPdf}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-[var(--color-teal)] text-white hover:bg-[var(--color-teal-hover)] text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50"
+                    >
+                      {isDownloadingPdf ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                      <span>Télécharger PDF Spécimen</span>
+                    </button>
+
+                    {latestContract.status !== "SIGNED" && latestContract.status !== "WITHDRAWN" && (
+                      <button
+                        type="button"
+                        onClick={() => handleSimulateSign(latestContract.id)}
+                        disabled={isSimulatingSign}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border border-[var(--color-teal-soft-border)] hover:bg-[var(--color-teal-soft)]/80 text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50"
+                      >
+                        {isSimulatingSign ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-teal)]" />
+                        )}
+                        <span>Simuler Signature (Sandbox)</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-[11px] text-[var(--ink-muted)] leading-relaxed">
+                    Aucun contrat actif pour ce prospect. Générez le contrat SPÉCIMEN avec les données CRM réelles et la transparence AI Act.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleGenerateContract}
+                    disabled={isGeneratingContract}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-[var(--color-teal)] text-white hover:bg-[var(--color-teal-hover)] text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50"
+                  >
+                    {isGeneratingContract ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    <span>Générer le contrat SPÉCIMEN</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Product Fit & Energy Profile */}
           <div className="space-y-3 pt-2">

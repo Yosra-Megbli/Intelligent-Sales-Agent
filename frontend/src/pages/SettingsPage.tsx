@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/api/client";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -19,15 +21,36 @@ import {
   CheckCircle2,
   ExternalLink,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 
 export const SettingsPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [showApiKey, setShowApiKey] = useState(false);
+  const [selectedLeadId, setSelectedLeadId] = useState<string>("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSigning, setIsSigning] = useState(false);
+  const [lastGeneratedContract, setLastGeneratedContract] = useState<{ id: string; product: string } | null>(null);
 
   const storedApiKey = localStorage.getItem("sophie_api_key") || "sk-live-ecofix-demo-key-2026";
   const maskedApiKey = storedApiKey.slice(0, 7) + "••••••••••••••••" + storedApiKey.slice(-4);
+
+  const { data: leadsData } = useQuery({
+    queryKey: ["leadsForContract"],
+    queryFn: () => apiClient.getLeads({ limit: 100 }),
+  });
+
+  const qualifiedLeads = (leadsData?.items || []).filter(
+    (l) =>
+      l.status === "QUALIFIED" ||
+      l.status === "QUALIFIED_FLEXY" ||
+      l.status === "QUALIFIED_MOTION" ||
+      l.status === "CONTRACT" ||
+      l.status === "CUSTOMER"
+  );
+
+  const targetLeadId = selectedLeadId || qualifiedLeads[0]?.id || "";
 
   const handleNonLiveChannelClick = (channelName: string) => {
     toast.info(t("toast.phase2Title"), {
@@ -35,10 +58,35 @@ export const SettingsPage: React.FC = () => {
     });
   };
 
-  const handleGenerateContract = () => {
-    toast.info(t("toast.phase2Title"), {
-      description: t("settingsPage.contractToast"),
-    });
+  const handleGenerateContract = async () => {
+    if (!targetLeadId) {
+      toast.error("Veuillez sélectionner un prospect qualifié dans la liste.");
+      return;
+    }
+    try {
+      setIsGenerating(true);
+      const contract = await apiClient.createContract(targetLeadId);
+      setLastGeneratedContract({ id: contract.id, product: contract.product });
+      toast.success(`Contrat Ecofix ${contract.product} généré pour le prospect ! Téléchargement en cours...`);
+      await apiClient.downloadContractPdf(contract.id, `contrat_specimen_${contract.product.toLowerCase()}.pdf`);
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la génération du contrat.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSimulateYousign = async () => {
+    if (!lastGeneratedContract?.id) return;
+    try {
+      setIsSigning(true);
+      await apiClient.simulateSignContract(lastGeneratedContract.id);
+      toast.success("Signature Yousign Sandbox simulée avec succès ! Statut client activé.");
+    } catch (err: any) {
+      toast.error(err?.message || "Erreur lors de la simulation de signature.");
+    } finally {
+      setIsSigning(false);
+    }
   };
 
   const handleCopyApiKey = () => {
@@ -174,7 +222,7 @@ export const SettingsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Card 2: Contract Section (Generate Toast + Real PDF Specimen Download) */}
+        {/* Card 2: Contract Section (Real Generator with Qualified Leads Dropdown) */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -183,7 +231,7 @@ export const SettingsPage: React.FC = () => {
                 <CardTitle>{t("settingsPage.contractTitle")}</CardTitle>
               </div>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] font-semibold border border-[var(--color-teal-soft-border)]">
-                Modèle Ecofix Motion
+                Données CRM Réelles • AI Act Preamble
               </span>
             </div>
             <CardDescription>{t("settingsPage.contractDesc")}</CardDescription>
@@ -191,19 +239,80 @@ export const SettingsPage: React.FC = () => {
           <CardContent className="space-y-4">
             <div className="p-3.5 rounded-[0.5rem] bg-[var(--surface-hover)] border border-[var(--border)] text-xs text-[var(--ink-muted)] space-y-1.5">
               <span className="font-bold text-[var(--ink)] block">
-                Cadre contractuel certifié SPÉCIMEN :
+                Génération de Contrat d'Énergie Réel (SPÉCIMEN) :
               </span>
               <p className="leading-relaxed text-[11px]">
-                Le contrat spécimen intègre l'offre dynamique Ecofix Motion, la redevance plateforme de 5,99 €/mois, le programme Friends with Benefits, la mention légale de rétractation de 14 jours, et reproduit mot pour mot l'énoncé de transparence IA prescrit par l'AI Act.
+                Sélectionnez un prospect qualifié par Sophie. Le moteur extrait ses données CRM (nom, adresse, EAN 18 chiffres, GRD Fluvius/ORES), applique la règle de produit (Motion si VE/pompe/batterie sinon Flexy), injecte la mention AI Act verbatim et produit le PDF juridique avec bordereau de rétractation de 14 jours.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 pt-1">
-              <Button variant="secondary" size="sm" onClick={handleGenerateContract}>
-                <Sparkles className="w-3.5 h-3.5 mr-1 text-[var(--color-teal-text)]" />
-                <span>{t("settingsPage.generateContract")}</span>
-              </Button>
+            {/* Dropdown of qualified leads */}
+            <div className="space-y-2 pt-1">
+              <label className="text-xs font-semibold text-[var(--ink)] block">
+                Sélectionner un prospect qualifié :
+              </label>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <select
+                  value={targetLeadId}
+                  onChange={(e) => setSelectedLeadId(e.target.value)}
+                  className="flex-1 px-3 py-2 text-xs rounded-[0.5rem] border border-[var(--border)] bg-[var(--surface)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-teal)]/40 focus:border-[var(--color-teal)] cursor-pointer"
+                >
+                  {qualifiedLeads.length === 0 ? (
+                    <option value="">Aucun prospect qualifié disponible</option>
+                  ) : (
+                    qualifiedLeads.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {[l.first_name, l.last_name].filter(Boolean).join(" ") || "Prospect"} — {l.city || l.region || "Belgique"} ({l.status})
+                      </option>
+                    ))
+                  )}
+                </select>
 
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleGenerateContract}
+                  disabled={isGenerating || !targetLeadId}
+                  className="cursor-pointer shrink-0"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                  ) : (
+                    <Sparkles className="w-3.5 h-3.5 mr-1" />
+                  )}
+                  <span>{t("settingsPage.generateContract")}</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* If a contract was just created, offer instant Yousign simulation */}
+            {lastGeneratedContract && (
+              <div className="p-3 rounded-[0.5rem] bg-[var(--color-teal-soft)]/50 border border-[var(--color-teal-soft-border)] flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs">
+                  <span className="font-bold text-[var(--color-teal-text)] block">
+                    Contrat {lastGeneratedContract.product} prêt pour signature
+                  </span>
+                  <span className="text-[11px] text-[var(--ink-muted)]">
+                    ID: {lastGeneratedContract.id}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSimulateYousign}
+                  disabled={isSigning}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-[var(--color-teal)] text-white hover:bg-[var(--color-teal-hover)] text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50"
+                >
+                  {isSigning ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  )}
+                  <span>Simuler Signature (Yousign Sandbox)</span>
+                </button>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[var(--border)]">
               <a
                 href="/contrat-specimen.pdf"
                 download="contrat-specimen-ecofix.pdf"

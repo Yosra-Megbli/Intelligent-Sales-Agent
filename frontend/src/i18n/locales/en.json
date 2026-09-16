@@ -59,6 +59,7 @@
       "conversations": "Active Conversations",
       "qualified": "Qualified Leads",
       "sales": "Completed Sales",
+      "signedContracts": "Signed Contracts",
       "conversionRate": "Conversion Rate",
       "costPerSale": "Acquisition Cost / Sale",
       "estimatedRevenue": "Estimated Monthly Revenue (MRR)"
@@ -172,6 +173,12 @@
         "solarPitch": "Suggestion: Feed-in tariff monetization",
         "battery": "Home Battery",
         "batteryPitch": "Suggestion: Motion hourly rate arbitrage"
+      },
+      "contract": {
+        "title": "Contract & Signature",
+        "downloadSuccess": "SPECIMEN PDF contract successfully downloaded",
+        "createSuccess": "Contract successfully generated!",
+        "signSuccess": "Yousign sandbox signature simulated successfully! Customer status activated."
       }
     }
   },
@@ -188,7 +195,8 @@
     "chips": {
       "optOut": "Immediate opt-out — data purged",
       "fixedSeeker": "Polite decline — fixed price seeker",
-      "errorRecovery": "Single-question fallback activated"
+      "errorRecovery": "Single-question fallback activated",
+      "contractSigned": "SIGNED — Energy Contract Confirmed (New Customer)"
     },
     "emptyList": "No conversations found."
   },

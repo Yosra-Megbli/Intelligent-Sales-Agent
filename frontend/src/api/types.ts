@@ -39,6 +39,32 @@ export interface LeadSummary {
   campaign_name: string | null;
   last_contact_date: string | null;
   language?: string | null;
+  has_ev?: boolean | null;
+  has_heat_pump?: boolean | null;
+  has_battery?: boolean | null;
+}
+
+export type ContractStatus = "DRAFT" | "SENT" | "SIGNED" | "WITHDRAWN" | "CANCELLED";
+
+export interface ContractSummary {
+  id: string;
+  lead_id: string;
+  product: "Flexy" | "Motion" | string;
+  status: ContractStatus;
+  pdf_path: string | null;
+  yousign_signature_request_id: string | null;
+  yousign_document_id: string | null;
+  created_at: string;
+  updated_at: string;
+  signed_at: string | null;
+  withdrawn_at: string | null;
+}
+
+export interface ContractListResponse {
+  items: ContractSummary[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 
@@ -125,6 +151,7 @@ export interface OverviewResponse {
   cost_per_sale?: number;
   estimated_ca?: number;
   currency?: string;
+  signed_contracts?: number;
 }
 
 export interface CampaignSummary {

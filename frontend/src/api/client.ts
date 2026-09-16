@@ -2,6 +2,8 @@ import {
   ActivityFeedListResponse,
   CampaignListResponse,
   ComplianceOverviewResponse,
+  ContractListResponse,
+  ContractSummary,
   ConversationListItem,
   ConversationListResponse,
   HandoffListResponse,
@@ -171,7 +173,62 @@ export class ApiClient {
   async getCompliance(): Promise<ComplianceOverviewResponse> {
     return this.request<ComplianceOverviewResponse>("/api/dashboard/compliance");
   }
+
+  async getContracts(params?: {
+    lead_id?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ContractListResponse> {
+    const searchParams = new URLSearchParams();
+    if (params?.lead_id) searchParams.set("lead_id", params.lead_id);
+    if (params?.status) searchParams.set("status", params.status);
+    if (params?.limit) searchParams.set("limit", params.limit.toString());
+    if (params?.offset) searchParams.set("offset", params.offset.toString());
+    const qs = searchParams.toString();
+    return this.request<ContractListResponse>(`/api/contracts${qs ? `?${qs}` : ""}`);
+  }
+
+  async getContract(contractId: string): Promise<ContractSummary> {
+    return this.request<ContractSummary>(`/api/contracts/${contractId}`);
+  }
+
+  async createContract(leadId: string): Promise<ContractSummary> {
+    return this.request<ContractSummary>("/api/contracts", {
+      method: "POST",
+      body: JSON.stringify({ lead_id: leadId }),
+    });
+  }
+
+  async simulateSignContract(contractId: string): Promise<ContractSummary> {
+    return this.request<ContractSummary>(`/api/contracts/${contractId}/simulate-sign`, {
+      method: "POST",
+    });
+  }
+
+  async downloadContractPdf(contractId: string, filename?: string): Promise<void> {
+    const apiKey = this.getApiKey();
+    const headers: Record<string, string> = {};
+    if (apiKey) {
+      headers["X-API-Key"] = apiKey;
+    }
+    const url = `${this.baseUrl.replace(/\/$/, "")}/api/contracts/${contractId}/pdf`;
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      throw new Error(`Erreur lors du téléchargement du PDF (${response.status})`);
+    }
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename || `contrat_specimen_${contractId.slice(0, 8)}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  }
 }
 
 
 export const apiClient = new ApiClient();
+

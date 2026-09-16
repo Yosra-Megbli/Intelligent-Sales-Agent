@@ -59,6 +59,7 @@
       "conversations": "Actieve Gesprekken",
       "qualified": "Gekwalificeerde Leads",
       "sales": "Afgeronde Verkopen",
+      "signedContracts": "Ondertekende Contracten",
       "conversionRate": "Conversieratio",
       "costPerSale": "Acquisitiekost / Verkoop",
       "estimatedRevenue": "Geschatte Terugkerende Omzet (MRR)"
@@ -172,6 +173,12 @@
         "solarPitch": "Suggestie: Waardering teruglevering",
         "battery": "Thuisbatterij",
         "batteryPitch": "Suggestie: Arbitrage uurtarief Motion"
+      },
+      "contract": {
+        "title": "Contract & Handtekening",
+        "downloadSuccess": "PDF SPECIMEN-contract succesvol gedownload",
+        "createSuccess": "Contract succesvol gegenereerd!",
+        "signSuccess": "Yousign-handtekening succesvol gesimuleerd! Klantstatus geactiveerd."
       }
     }
   },
@@ -188,7 +195,8 @@
     "chips": {
       "optOut": "Onmiddellijke opt-out — gegevens gewist",
       "fixedSeeker": "Beleefde weigering — vaste prijs vereist",
-      "errorRecovery": "Omschakeling vraag-per-vraag"
+      "errorRecovery": "Omschakeling vraag-per-vraag",
+      "contractSigned": "SIGNED — Energiecontract Bevestigd (Nieuwe Klant)"
     },
     "emptyList": "Geen gesprekken gevonden."
   },

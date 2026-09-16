@@ -21,10 +21,15 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
   const conversations = overview?.active_conversations ?? 0;
   const qualified = overview?.qualified ?? 0;
 
-  // Signed sales: in our deterministic status model, qualified Flexy + Motion leads transitioning or signed
+  // Signed contracts: real CRM count from overview.signed_contracts or stats.by_status.CUSTOMER
   const flexyCount = stats?.by_status?.QUALIFIED_FLEXY ?? 0;
   const motionCount = stats?.by_status?.QUALIFIED_MOTION ?? 0;
-  const totalSales = flexyCount + motionCount > 0 ? flexyCount + motionCount : Math.round(qualified * 0.45);
+  const fallbackSales = flexyCount + motionCount > 0 ? flexyCount + motionCount : Math.round(qualified * 0.45);
+
+  const signedContracts =
+    overview?.signed_contracts !== undefined && overview?.signed_contracts !== null
+      ? overview.signed_contracts
+      : (stats?.by_status?.CUSTOMER ?? fallbackSales);
 
   // Conversion rate: percent (formatted with 1 decimal)
   const convRate = overview?.conversion_rate
@@ -35,8 +40,8 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
   const costPerSale =
     overview?.cost_per_sale !== undefined && overview?.cost_per_sale !== null
       ? overview.cost_per_sale.toFixed(2)
-      : totalSales > 0
-        ? (245 / totalSales).toFixed(2)
+      : signedContracts > 0
+        ? (245 / signedContracts).toFixed(2)
         : "0.00";
 
   // Estimated Annual Revenue (CA) from platform fee (€5.99/mo) & energy margin
@@ -46,7 +51,7 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })
-      : (totalSales * 120).toLocaleString("fr-BE", {
+      : (signedContracts * 120).toLocaleString("fr-BE", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
@@ -80,12 +85,12 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
         isLoading={isLoading}
       />
 
-      {/* 4. Ventes Finalisées */}
+      {/* 4. Contrats Signés */}
       <KpiCard
-        title={t("overview.kpi.sales")}
-        value={totalSales}
+        title={t("overview.kpi.signedContracts") || "Contrats Signés"}
+        value={signedContracts}
         delta={{ value: 15.0, label: t("overview.delta.vsLastWeek"), isPositive: true }}
-        sparklineData={[2, 3, 5, 7, 10, 12, totalSales || 15]}
+        sparklineData={[2, 3, 5, 7, 10, 12, signedContracts || 15]}
         isLoading={isLoading}
       />
 

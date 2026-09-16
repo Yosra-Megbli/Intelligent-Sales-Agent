@@ -214,6 +214,7 @@ def test_get_overview_empty_database(client):
         "cost_per_sale": 0.0,
         "estimated_ca": 0.0,
         "currency": "EUR",
+        "signed_contracts": 0,
     }
 
 
