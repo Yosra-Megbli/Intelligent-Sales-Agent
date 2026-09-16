@@ -150,6 +150,8 @@
     "drawer": {
       "title": "Dossier Prospect 360°",
       "qualificationTitle": "Contrôle de qualification (9 critères)",
+      "criteriaMet": "critères validés",
+      "notProvided": "Non renseigné",
       "profileTitle": "Profil énergétique & Compatibilité produit",
       "activityTitle": "Journal d'activité du prospect",
       "purgedNotice": "Données PII effacées le {{date}} conformément à l'article 17 du RGPD (STOP/ARRÊT).",
@@ -167,12 +169,16 @@
       "productFit": {
         "ev": "Véhicule électrique (EV)",
         "evPitch": "Suggestion : Pitch Ecofix Motion (tarification horaire dynamique)",
+        "evOff": "Pas de VE déclaré",
         "heatPump": "Pompe à chaleur",
         "heatPumpPitch": "Suggestion : Optimisation flexibilité Motion",
+        "heatPumpOff": "Chauffage classique",
         "solar": "Panneaux solaires",
         "solarPitch": "Suggestion : Valorisation d'injection",
+        "solarOff": "Sans panneaux solaires",
         "battery": "Batterie domestique",
-        "batteryPitch": "Suggestion : Arbitrage tarif horaire Motion"
+        "batteryPitch": "Suggestion : Arbitrage tarif horaire Motion",
+        "batteryOff": "Sans batterie"
       },
       "contract": {
         "title": "Contrat & Signature",

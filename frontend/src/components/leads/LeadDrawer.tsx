@@ -277,43 +277,36 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
                 {t("leads.drawer.qualificationTitle")}
               </h3>
               <span className="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border border-[var(--color-teal-soft-border)] font-semibold">
-                {completedCount}/9 {t("status.QUALIFIED").toLowerCase()}
+                {completedCount}/9 {t("leads.drawer.criteriaMet")}
               </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-2">
+            <div className="rounded-[0.75rem] border border-[var(--border)] bg-[var(--surface-hover)] divide-y divide-[var(--border)] overflow-hidden">
               {checklistItems.map((item) => (
-                <div
-                  key={item.id}
-                  className={`flex items-center justify-between p-2.5 rounded-[0.5rem] border transition-smooth ${
-                    item.isComplete
-                      ? "bg-[var(--color-teal-soft)]/40 border-[var(--color-teal-soft-border)]"
-                      : "bg-[var(--surface-hover)] border-dashed border-[var(--border)]"
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                        item.isComplete
-                          ? "bg-[var(--color-teal)] text-white"
-                          : "bg-[var(--border)] text-[var(--ink-subtle)]"
+                <div key={item.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {item.isComplete ? (
+                      <Check className="w-3.5 h-3.5 shrink-0 stroke-[2.5] text-[var(--color-teal)]" />
+                    ) : (
+                      <Minus className="w-3.5 h-3.5 shrink-0 text-[var(--ink-subtle)]" />
+                    )}
+                    <span
+                      className={`text-xs truncate ${
+                        item.isComplete ? "font-semibold text-[var(--ink)]" : "font-medium text-[var(--ink-muted)]"
                       }`}
                     >
-                      {item.isComplete ? <Check className="w-3 h-3 stroke-[2.5]" /> : <Minus className="w-3 h-3" />}
-                    </div>
-                    <span className="text-xs font-medium text-[var(--ink)]">
                       {item.label}
                     </span>
                   </div>
 
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     {item.value ? (
-                      <span className="font-mono text-[11px] text-[var(--ink-muted)]">
+                      <span className="font-mono text-[11px] text-[var(--ink)]">
                         {item.value}
                       </span>
                     ) : (
-                      <span className="text-[11px] text-[var(--ink-subtle)] italic">
-                        Non renseigné
+                      <span className="text-[11px] text-[var(--ink-subtle)]">
+                        {t("leads.drawer.notProvided")}
                       </span>
                     )}
                   </div>
@@ -445,45 +438,53 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
             </h3>
 
             <div className="grid grid-cols-2 gap-2.5">
-              <div className={`p-3 rounded-[0.75rem] border ${hasEv ? "bg-[var(--color-motion-soft)] border-[var(--color-motion-border)]" : "bg-[var(--surface-hover)] border-[var(--border)]"}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Zap className={`w-3.5 h-3.5 ${hasEv ? "text-[var(--color-motion)]" : "text-[var(--ink-subtle)]"}`} />
-                  <span className="font-semibold text-[11px] text-[var(--ink)]">{t("leads.drawer.productFit.ev")}</span>
+              {[
+                {
+                  active: hasEv,
+                  Icon: Zap,
+                  activeClass: "bg-[var(--color-motion-soft)] border-[var(--color-motion-border)] text-[var(--color-motion)]",
+                  label: t("leads.drawer.productFit.ev"),
+                  desc: hasEv ? t("leads.drawer.productFit.evPitch") : t("leads.drawer.productFit.evOff"),
+                },
+                {
+                  active: hasHeatPump,
+                  Icon: Flame,
+                  activeClass: "bg-[var(--color-teal-soft)] border-[var(--color-teal-soft-border)] text-[var(--color-teal-text)]",
+                  label: t("leads.drawer.productFit.heatPump"),
+                  desc: hasHeatPump ? t("leads.drawer.productFit.heatPumpPitch") : t("leads.drawer.productFit.heatPumpOff"),
+                },
+                {
+                  active: hasSolar,
+                  Icon: Sun,
+                  activeClass: "bg-amber-500/10 border-amber-500/30 text-amber-500",
+                  label: t("leads.drawer.productFit.solar"),
+                  desc: hasSolar ? t("leads.drawer.productFit.solarPitch") : t("leads.drawer.productFit.solarOff"),
+                },
+                {
+                  active: hasBattery,
+                  Icon: Battery,
+                  activeClass: "bg-purple-500/10 border-purple-500/30 text-purple-500",
+                  label: t("leads.drawer.productFit.battery"),
+                  desc: hasBattery ? t("leads.drawer.productFit.batteryPitch") : t("leads.drawer.productFit.batteryOff"),
+                },
+              ].map(({ active, Icon, activeClass, label, desc }, idx) => (
+                <div
+                  key={idx}
+                  className={`p-3 rounded-[0.75rem] ${
+                    active ? `border ${activeClass}` : "border border-transparent"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? "" : "text-[var(--ink-subtle)]"}`} />
+                    <span className={`text-[11px] truncate ${active ? "font-semibold text-[var(--ink)]" : "font-medium text-[var(--ink-muted)]"}`}>
+                      {label}
+                    </span>
+                  </div>
+                  <p className={`text-[10px] leading-normal ${active ? "text-[var(--ink-muted)]" : "text-[var(--ink-subtle)]"}`}>
+                    {desc}
+                  </p>
                 </div>
-                <p className="text-[10px] text-[var(--ink-muted)] leading-normal">
-                  {hasEv ? t("leads.drawer.productFit.evPitch") : "Pas de VE déclaré"}
-                </p>
-              </div>
-
-              <div className={`p-3 rounded-[0.75rem] border ${hasHeatPump ? "bg-[var(--color-teal-soft)] border-[var(--color-teal-soft-border)]" : "bg-[var(--surface-hover)] border-[var(--border)]"}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Flame className={`w-3.5 h-3.5 ${hasHeatPump ? "text-[var(--color-teal-text)]" : "text-[var(--ink-subtle)]"}`} />
-                  <span className="font-semibold text-[11px] text-[var(--ink)]">{t("leads.drawer.productFit.heatPump")}</span>
-                </div>
-                <p className="text-[10px] text-[var(--ink-muted)] leading-normal">
-                  {hasHeatPump ? t("leads.drawer.productFit.heatPumpPitch") : "Chauffage classique"}
-                </p>
-              </div>
-
-              <div className={`p-3 rounded-[0.75rem] border ${hasSolar ? "bg-amber-500/10 border-amber-500/30" : "bg-[var(--surface-hover)] border-[var(--border)]"}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Sun className={`w-3.5 h-3.5 ${hasSolar ? "text-amber-500" : "text-[var(--ink-subtle)]"}`} />
-                  <span className="font-semibold text-[11px] text-[var(--ink)]">{t("leads.drawer.productFit.solar")}</span>
-                </div>
-                <p className="text-[10px] text-[var(--ink-muted)] leading-normal">
-                  {hasSolar ? t("leads.drawer.productFit.solarPitch") : "Sans panneaux solaires"}
-                </p>
-              </div>
-
-              <div className={`p-3 rounded-[0.75rem] border ${hasBattery ? "bg-purple-500/10 border-purple-500/30" : "bg-[var(--surface-hover)] border-[var(--border)]"}`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Battery className={`w-3.5 h-3.5 ${hasBattery ? "text-purple-500" : "text-[var(--ink-subtle)]"}`} />
-                  <span className="font-semibold text-[11px] text-[var(--ink)]">{t("leads.drawer.productFit.battery")}</span>
-                </div>
-                <p className="text-[10px] text-[var(--ink-muted)] leading-normal">
-                  {hasBattery ? t("leads.drawer.productFit.batteryPitch") : "Sans batterie"}
-                </p>
-              </div>
+              ))}
             </div>
           </div>
 
