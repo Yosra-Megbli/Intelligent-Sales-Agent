@@ -52,11 +52,11 @@ Verified against the Sept 2026 tariff card on 2026-09-16. **Tariff cards change 
 
 ## Tests & CI
 
-896 tests green (`tests/` + `golden_tests/`, including `scenarios/conversations.yaml`). Separate real-LLM eval against Groq (`golden_tests/run_real_llm_eval.py`) — never collected by pytest, never gating.
+897 tests green (`tests/` + `golden_tests/`, including `scenarios/conversations.yaml`). Separate real-LLM eval against Groq (`golden_tests/run_real_llm_eval.py`) — never collected by pytest, never gating.
 
 CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus the frontend build on every push/PR to main. The real-LLM eval is `workflow_dispatch` opt-in.
 
-**Migration trap:** tests build the schema with `Base.metadata.create_all()` on SQLite in-memory, and `migration_runner.py` skips SQL migrations on any non-postgresql dialect. A broken `.sql` migration therefore passes CI green and fails at boot on Render. Any new table needs BOTH a SQLAlchemy model AND a SQL migration, kept consistent by hand — a static coherence test (column names cross-checked between the model and the `.sql` file) is the pattern to reuse; see `tests/test_rag_v2_migration_coherence.py`. Next migration number is **0013** (`0011` and `0012` are both now used - RAG v2's `knowledge_documents`/`knowledge_chunks` and Sprint 4b's `knowledge_entries` respectively; note two files also already share the `0007` prefix).
+**Migration trap:** tests build the schema with `Base.metadata.create_all()` on SQLite in-memory, and `migration_runner.py` skips SQL migrations on any non-postgresql dialect. A broken `.sql` migration therefore passes CI green and fails at boot on Render. Any new table needs BOTH a SQLAlchemy model AND a SQL migration, kept consistent by hand — a static coherence test (column names cross-checked between the model and the `.sql` file) is the pattern to reuse; see `tests/test_rag_v2_migration_coherence.py` and `tests/test_activity_type_migration_coherence.py`. Next migration number is **0015** (`0013` and `0014` are used for `CITATION_STRIPPED` and contract `activity_type` enum values respectively).
 
 ## Status
 
