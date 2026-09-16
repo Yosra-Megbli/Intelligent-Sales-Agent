@@ -56,7 +56,7 @@ Verified against the Sept 2026 tariff card on 2026-09-16. **Tariff cards change 
 
 CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus the frontend build on every push/PR to main. The real-LLM eval is `workflow_dispatch` opt-in.
 
-**Migration trap:** tests build the schema with `Base.metadata.create_all()` on SQLite in-memory, and `migration_runner.py` skips SQL migrations on any non-postgresql dialect. A broken `.sql` migration therefore passes CI green and fails at boot on Render. Any new table needs BOTH a SQLAlchemy model AND a SQL migration, kept consistent by hand. Next migration number is **0011** (note: two files already share the `0007` prefix).
+**Migration trap:** tests build the schema with `Base.metadata.create_all()` on SQLite in-memory, and `migration_runner.py` skips SQL migrations on any non-postgresql dialect. A broken `.sql` migration therefore passes CI green and fails at boot on Render. Any new table needs BOTH a SQLAlchemy model AND a SQL migration, kept consistent by hand — a static coherence test (column names cross-checked between the model and the `.sql` file) is the pattern to reuse; see `tests/test_rag_v2_migration_coherence.py`. Next migration number is **0012** (note: two files already share the `0007` prefix).
 
 ## Status
 
@@ -77,7 +77,7 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 - Yousign is sandbox-only; no real e-signature key.
 - Campaigns and Knowledge admin screens are still honest "Phase 2" stubs (Sprint 4 target).
 - No manual lead creation endpoint (`POST /api/leads`) — only CSV import; `PATCH` and `DELETE` already exist.
-- RAG is keyword-only. RAG v2 (vector) deferred — see below.
+- RAG v2 retrieval is not wired into the chat: `ai/rag.py` (chat-facing) is still keyword-only. RAG v2 Phase 1 (schema + ingestion) exists — see below — but nothing calls it from `application/conversation_service.py` yet.
 - NL copy has never been field-tested.
 - README content has stale sections (it still claims contract generation is unimplemented) and carries a UTF-8 double-encoding corruption in its prose.
 
@@ -85,13 +85,25 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 
 `knowledge_corpus/` holds the official raw material (12 Sept-2026 tariff card PDFs FR+NL, terms, FAQ, regulators) — see `knowledge_corpus/README.md`.
 
-**RAG v2 is DEFERRED and the spec must be written BEFORE any code.** Backlog and decisions: `docs/RAG_BACKLOG.md`. Vision: port the ZEN Knowledge patterns (publish-explicit, W3 obsolescence, citations validator, refusal-before-LLM) to FastAPI/Python. Settled decisions: pgvector on Neon; embeddings via API (Gemini/Mistral), no local models (Render free = 512 MB) except a measured `fastembed` prototype; source-of-truth hierarchy tariff card > terms > helpdesk > regulator > marketing; legacy keyword RAG kept during migration.
+**RAG v2** — vision: port the ZEN Knowledge patterns (publish-explicit, W3 obsolescence, citations validator, refusal-before-LLM) to FastAPI/Python. Backlog and decisions: `docs/RAG_BACKLOG.md`. Settled decisions: pgvector on Neon; embeddings via API (Google AI `text-embedding-004`, 768-dim, free tier — Mistral documented as a fallback), no local models (Render free = 512 MB); source-of-truth hierarchy tariff card > terms > helpdesk > regulator > marketing; legacy keyword RAG kept during migration.
+
+**Phase 1 (schema + ingestion) is done, migration `0011`:**
+- `domain/models/knowledge_document.py` / `knowledge_chunk.py`, migration `database/migrations/0011_knowledge_documents_and_chunks.sql` (pgvector extension, `vector(768)` column, HNSW cosine index).
+- Cross-dialect vector column: `database/vector_types.py`'s `EmbeddingVector` — real pgvector type on PostgreSQL, JSON-in-Text fallback on SQLite (same pattern as `GUID`), so the model works in both the SQLite test suite and production.
+- `ai/providers/embeddings/` — `EmbeddingProvider` interface + `GoogleEmbeddingProvider`. **Known follow-up:** built against `google-generativeai`, which Google end-of-lifed in favor of `google-genai` during this same work — it still installs and functions, every test uses a fake client (no network, no real key ever used), but the real API call shape is unverified against a live call. Verify with one real `rag_v2.ingest` run before depending on it; see the file's docstring for the exact migration path if it needs fixing.
+- `rag_v2/chunking.py` — deterministic word-window chunking (~500 tokens/50 overlap, no tokenizer dependency), pure function, no I/O.
+- `rag_v2/ingestion.py` (core, testable) + `rag_v2/ingest.py` (CLI: `python -m rag_v2.ingest --file ... --title ... --source-type ... --language ...`) — extract (pypdf) → clean → chunk → embed (batched) → persist, always `status=DRAFT`.
+- `rag_v2/documents.py` — publish-explicit: `publish_document()`/`archive_document()`/`list_published_chunks()`. Ingesting never publishes; nothing is retrievable until this is called.
+- 37 new tests, all offline (fake `EmbeddingProvider`, monkeypatched PDF extraction, no network) — chunking correctness incl. a no-content-loss regression, ingestion, publish-explicit gating, and a static model/migration column-coherence check (`tests/test_rag_v2_migration_coherence.py`).
+- **Not built yet (Phase 2+):** real similarity-search retrieval, relevance threshold/refusal-before-LLM, citation validator, chat integration, obsolescence scheduler, admin API/UI. No PDF from `knowledge_corpus/` has actually been ingested with a real key — cost so far is €0.
 
 ## Priority order
 
-1. **Sprint 4:** make the three admin surfaces real — manual Leads CRUD, real Campaigns (wire the existing engine), Knowledge management (`knowledge_base.yaml` → `knowledge_entries` table + CRUD + active toggle). Remove stubs that become real; keep honest stubs for WhatsApp/Voice, real Yousign, and RAG v2.
-2. **RAG v2:** spec first, then code.
+1. **Sprint 4:** make the remaining admin surfaces real — manual Leads CRUD (`POST /api/leads`; campaign channel-activation guard + launch preview already done, see Sprint 5 note below), Knowledge management (`knowledge_base.yaml` → `knowledge_entries` table + CRUD + active toggle — this is the *keyword* RAG's admin surface, separate from RAG v2). Remove stubs that become real; keep honest stubs for WhatsApp/Voice, real Yousign, and RAG v2's retrieval/admin UI.
+2. **RAG v2:** Phase 1 (schema + ingestion) done — see above. Phase 2 (retrieval + refusal gate + citations) next, then chat integration, then obsolescence + admin API/UI.
 3. Optional: real WhatsApp/Voice, EU hosting region instead of US.
+
+**Sprint 5 (campaign cockpit), Phase 1 only:** channel-activation guard (`WHATSAPP`/`VOICE` → 422 `channel_not_activated`, `SMS` allowed) and `POST /api/campaigns/{id}/preview` (dry-run launch count + disclosure preview) are done. SSE live-supervisor layer and the frontend wizard/cockpit are not built.
 
 ## Workflow
 

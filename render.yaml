@@ -33,3 +33,9 @@
         sync: false
       - key: PUBLIC_BASE_URL
         sync: false
+      # RAG v2 (docs/RAG_BACKLOG.md) - optional, only needed to run
+      # rag_v2/ingest.py against a real embedding API. The deployed web
+      # service itself doesn't call this today (no admin API/retrieval
+      # wired up yet - Phase 1 only).
+      - key: GOOGLE_AI_API_KEY
+        sync: false
