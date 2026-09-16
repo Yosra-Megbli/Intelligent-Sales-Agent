@@ -29,6 +29,29 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    # tests/conftest.py builds the schema with Base.metadata.create_all() on
+    # SQLite in-memory, so Postgres is never needed. Redis is a different
+    # story: several tests (opt-out purge, demo reset, voice session state,
+    # output-guard logging) exercise the real redis client from
+    # database/redis.py because that module isn't mocked everywhere. Locally
+    # this silently works because database/postgres.py calls load_dotenv()
+    # at import time and backend/.env points REDIS_URL at the live Upstash
+    # instance - so a "green" local run has been reaching a real production
+    # service. On a CI runner there is no .env, REDIS_URL falls back to its
+    # redis://localhost:6379/0 default, and nothing is listening there. A
+    # service container gives that default something real to talk to
+    # without touching application code or reaching the actual Upstash
+    # instance from CI.
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -41,8 +64,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-dev.txt
 
-      # tests/conftest.py builds the schema with Base.metadata.create_all()
-      # on SQLite in-memory, so no Postgres or Redis service is needed here.
       - name: Run test suite (tests/ + golden_tests/)
         run: pytest -q
 
