@@ -58,6 +58,7 @@ export interface ContractSummary {
   updated_at: string;
   signed_at: string | null;
   withdrawn_at: string | null;
+  digi_subscribed?: boolean;
 }
 
 export interface ContractListResponse {
@@ -152,6 +153,7 @@ export interface OverviewResponse {
   estimated_ca?: number;
   currency?: string;
   signed_contracts?: number;
+  optional_digi_revenue?: number;
 }
 
 export interface CampaignSummary {

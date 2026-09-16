@@ -661,3 +661,22 @@ scenarios:
         expected_action_after: ASK_SUPPLIER
         notes: "Customer provides city -> location group complete -> advances to COLLECT_SUPPLIER."
 
+  - id: conv_fees_faq_pricing_truth
+    category: full_conversation
+    description: >
+      Customer asks "Quels sont vos frais ?" right after greeting.
+      State machine detours to FAQ with required_action ANSWER_FAQ.
+      RAG answer provides transparent 60 €/an fixed fee and optional Digi app at 5,99 €/month.
+    turns:
+      - input: "Bonjour"
+        expected_event_type: CUSTOMER_MESSAGE
+        expected_entities: {}
+        expected_state_after: GREETING
+      - input: "Quels sont vos frais ?"
+        expected_event_type: QUESTION
+        expected_entities: {}
+        expected_state_after: FAQ
+        expected_action_after: ANSWER_FAQ
+        notes: "Customer asks about fees -> StateMachine detours to FAQ with ANSWER_FAQ."
+
+

@@ -29,6 +29,8 @@ NOTIFY_HUMAN: "Let the customer know you're connecting them with a human colleag
 STILL_WAITING_FOR_HUMAN: "Reassure the customer a human colleague is still going to get back to them shortly - they don't need to wait for anything from you right now."
 ASK_CLARIFICATION: "Say you didn't quite catch that, and gently ask the customer to rephrase or repeat their last message."
 SEND_FOLLOW_UP: "Check in with the customer about the energy switch you discussed earlier, and ask if they'd like to continue."
+ANSWER_FEES: "Explain clearly that Ecofix has transparent fixed fees of 60 €/year (obligatory), and the optional Ecofix Digi mobile app at 5.99 €/month for smart monitoring and control if desired. Clarify that switching is 100% free with no cancellation or dossier fees."
+
 
 
 

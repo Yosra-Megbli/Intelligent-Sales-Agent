@@ -23,10 +23,12 @@ entries:
 
   - id: switching_fees
     category: faq
-    keywords: [gratuit, payant, frais, frais de dossier, ca coute pour changer, coute combien pour changer]
+    keywords: [gratuit, payant, frais, frais de dossier, ca coute pour changer, coute combien pour changer, quels sont vos frais, frais fixes, abonnement, redevance, digi, combien ca coute]
     answer: >
-      Le changement de fournisseur vers Ecofix est gratuit ; il n'y a aucun
-      frais de dossier pour ouvrir un nouveau contrat.
+      Des frais fixes transparents de 60 €/an, et l'appli Ecofix Digi en option
+      a 5,99 €/mois si vous voulez le suivi intelligent. Le changement de
+      fournisseur vers Ecofix est gratuit, sans frais de dossier et sans frais
+      de resiliation.
 
   - id: energy_pricing
     category: faq

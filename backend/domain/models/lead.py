@@ -123,6 +123,7 @@ class Lead(Base):
     has_ev = Column(Boolean, nullable=True, default=False)
     has_heat_pump = Column(Boolean, nullable=True, default=False)
     has_battery = Column(Boolean, nullable=True, default=False)
+    digi_subscribed = Column(Boolean, nullable=True, default=False)
 
     contracts = relationship("Contract", back_populates="lead", cascade="all, delete-orphan")
 

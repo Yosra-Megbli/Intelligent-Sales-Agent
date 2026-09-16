@@ -215,6 +215,7 @@ def test_get_overview_empty_database(client):
         "estimated_ca": 0.0,
         "currency": "EUR",
         "signed_contracts": 0,
+        "optional_digi_revenue": 0.0,
     }
 
 

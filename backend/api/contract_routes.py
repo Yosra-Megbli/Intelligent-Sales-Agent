@@ -50,6 +50,7 @@ class ContractResponse(BaseModel):
     updated_at: str
     signed_at: Optional[str] = None
     withdrawn_at: Optional[str] = None
+    digi_subscribed: bool = False
     yousign_status: Optional[str] = None
     yousign_label: Optional[str] = None
 
@@ -64,6 +65,7 @@ def _serialize_contract(c: Any, base_url: str = "") -> ContractResponse:
         id=str(c.id),
         lead_id=str(c.lead_id),
         product=c.product,
+        digi_subscribed=bool(getattr(c, "digi_subscribed", False)),
         status=c.status.value if hasattr(c.status, "value") else str(c.status),
         yousign_signature_request_id=c.yousign_signature_request_id,
         yousign_document_id=c.yousign_document_id,

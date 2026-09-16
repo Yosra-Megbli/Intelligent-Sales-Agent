@@ -358,7 +358,11 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
                       <span className="font-bold text-[var(--ink)]">Ecofix {latestContract.product}</span>
                     </div>
                     <div>
-                      <span className="text-[var(--ink-muted)] block text-[10px]">Redevance</span>
+                      <span className="text-[var(--ink-muted)] block text-[10px]">Frais fixes (obligatoire)</span>
+                      <span className="font-mono text-[var(--ink)]">60,00 € / an</span>
+                    </div>
+                    <div>
+                      <span className="text-[var(--ink-muted)] block text-[10px]">Ecofix Digi (optionnel)</span>
                       <span className="font-mono text-[var(--ink)]">5,99 € / mois</span>
                     </div>
                     {latestContract.signed_at && (

@@ -47,5 +47,10 @@ ASK_CLARIFICATION: "Desole, je n'ai pas bien compris. Pouvez-vous reformuler ?"
 SEND_FOLLOW_UP: "Je me permets de revenir vers vous au sujet de votre changement de fournisseur d'energie. Souhaitez-vous continuer ?"
 ANSWER_FAQ: "Merci pour votre question, je transmets cela a notre equipe pour vous repondre precisement."
 ANSWER_OBJECTION: "Je comprends votre hesitation. Un conseiller Ecofix pourra vous en dire plus si vous le souhaitez."
+ANSWER_FEES_fr: "Des frais fixes transparents de 60 €/an, et l'appli Ecofix Digi en option à 5,99 €/mois si vous voulez le suivi intelligent. Le changement de fournisseur est sans frais cachés, sans frais de dossier et sans frais de résiliation."
+ANSWER_FEES_nl: "Transparante vaste kosten van 60 €/jaar, en de optionele Ecofix Digi-app aan 5,99 €/maand als u slimme opvolging wenst. Overstappen is zonder verborgen kosten, zonder dossierkosten en zonder verbrekingsvergoeding."
+ANSWER_FEES_en: "Transparent fixed fees of €60/year, and the optional Ecofix Digi app at €5.99/month if you want smart monitoring. Switching supplier has no hidden fees, no dossier fees, and no cancellation fees."
+ANSWER_FEES: "Des frais fixes transparents de 60 €/an, et l'appli Ecofix Digi en option à 5,99 €/mois si vous voulez le suivi intelligent. Le changement de fournisseur est sans frais cachés, sans frais de dossier et sans frais de résiliation."
+
 
 

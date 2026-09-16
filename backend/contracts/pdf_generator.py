@@ -7,7 +7,7 @@ strictly adhering to compliance constraints:
 - Real lead data from CRM only (never LLM output)
 - Preamble verbatim quoting AI disclosure + European AI Act Art. 50 reference
 - Correct grid operators (Flanders=Fluvius, Wallonia=ORES/RESA, never mixed, no Brussels)
-- Friends with Benefits (€5/mo per active referral) & Platform fee €5.99/mo
+- Friends with Benefits (€5/mo referral program), Frais fixes obligatoires €60/an, and optional Ecofix Digi €5.99/mo
 - 14-day legal withdrawal annex (Belgian Code of Economic Law Art. VI.47)
 """
 
@@ -248,9 +248,10 @@ def generate_contract_pdf(
     terms_data = [
         [Paragraph("<b>Offre souscrite :</b>", body_style), Paragraph(f"Ecofix {product_name.upper()} — 100% Électricité Verte", body_style)],
         [Paragraph("<b>Fonctionnement du prix :</b>", body_style), Paragraph(product_desc, body_style)],
-        [Paragraph("<b>Redevance fixe plateforme :</b>", body_style), Paragraph("<b>5,99 € TTC / mois</b> (soit 71,88 €/an)", body_style)],
-        [Paragraph("<b>Friends with Benefits :</b>", body_style), Paragraph("<b>5,00 € / mois de réduction</b> par ami parrainé ayant un contrat actif.", body_style)],
-        [Paragraph("<b>Indemnité de résiliation :</b>", body_style), Paragraph("<b>0,00 €</b> (aucune indemnité de rupture résidentielle en Belgique).", body_style)],
+        [Paragraph("<b>Frais fixes obligatoires :</b>", body_style), Paragraph("<b>60,00 € TTC / an</b> (soit 5,00 €/mois)", body_style)],
+        [Paragraph("<b>Ecofix Digi (optionnel) :</b>", body_style), Paragraph("5,99 € TTC / mois (application de suivi intelligent et pilotage dynamique)", body_style)],
+        [Paragraph("<b>Friends with Benefits :</b>", body_style), Paragraph("Programme de parrainage : <b>5,00 € / mois de réduction</b> par filleul actif (sans plafond).", body_style)],
+        [Paragraph("<b>Indemnité de résiliation :</b>", body_style), Paragraph("<b>0,00 €</b> (résiliation libre sans aucune pénalité résidentielle en Belgique).", body_style)],
         [Paragraph("<b>Délai de bascule technique :</b>", body_style), Paragraph("3 à 4 semaines auprès de votre gestionnaire de réseau.", body_style)],
     ]
 

@@ -44,14 +44,14 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
         ? (245 / signedContracts).toFixed(2)
         : "0.00";
 
-  // Estimated Annual Revenue (CA) from platform fee (€5.99/mo) & energy margin
+  // Estimated Annual Revenue (CA) from base fixed fee (60,00 €/an base = 5,00 €/mois)
   const estimatedRevenue =
     overview?.estimated_ca !== undefined && overview?.estimated_ca !== null
       ? overview.estimated_ca.toLocaleString("fr-BE", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })
-      : (signedContracts * 120).toLocaleString("fr-BE", {
+      : (signedContracts * 60).toLocaleString("fr-BE", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });

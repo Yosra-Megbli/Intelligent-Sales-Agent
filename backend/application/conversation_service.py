@@ -77,6 +77,7 @@ _REQUIRED_ACTION_TO_EXPECTED_FIELD: dict[str, str] = {
 _RAG_CATEGORY_BY_ACTION: dict[str, str] = {
     "ANSWER_FAQ": "faq",
     "ANSWER_OBJECTION": "objection",
+    "ANSWER_FEES": "faq",
 }
 
 # Maps a Channel to the LeadSource a new lead started on that channel should

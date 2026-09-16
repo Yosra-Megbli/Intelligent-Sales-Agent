@@ -57,6 +57,18 @@ scenarios:
       entities: {}
     notes: "Question about switching fees specifically (maps to knowledge_base switching_fees)."
 
+  - id: price_q_04_fees_pricing_truth
+    category: price_question_vs_objection
+    input: "Quels sont vos frais ?"
+    expected_field: null
+    expected:
+      event_type: QUESTION
+      entities: {}
+    notes: >
+      Customer asks specifically about fees. Must be classified as QUESTION,
+      and RAG answer must cite 60 €/an frais fixes + Digi 5,99 €/mois optional
+      + no hidden fees, without claiming 5,99 €/mois is the base fee.
+
   - id: price_obj_01
     category: price_question_vs_objection
     input: "C'est trop cher pour moi."

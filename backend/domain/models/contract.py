@@ -11,7 +11,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Enum as SAEnum, ForeignKey, String
+from sqlalchemy import Boolean, Column, DateTime, Enum as SAEnum, ForeignKey, String
 from sqlalchemy.orm import relationship
 
 from database.postgres import Base, GUID
@@ -26,6 +26,9 @@ class Contract(Base):
 
     # Product: "Flexy" (variable monthly) or "Motion" (dynamic hourly)
     product = Column(String(32), nullable=False)
+
+    # Optional digital app add-on: Ecofix Digi (5.99 €/mo)
+    digi_subscribed = Column(Boolean, default=False, nullable=False)
 
     # Lifecycle status: DRAFT, SENT, SIGNED, WITHDRAWN, CANCELLED
     status = Column(

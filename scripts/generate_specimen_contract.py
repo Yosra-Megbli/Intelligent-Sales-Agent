@@ -201,12 +201,12 @@ def generate_contract(output_path: str):
     story.append(Spacer(1, 6))
 
     # Conditions tarifaires
-    story.append(Paragraph("3. CONDITIONS TARIFAIRES & FRAIS DE PLATEFORME", section_heading))
+    story.append(Paragraph("3. CONDITIONS TARIFAIRES & FRAIS FIXES", section_heading))
     tarifs_text = (
         "Le contrat <b>Ecofix Motion</b> est indexé directement sur les cotations horaires de la bourse de l'électricité "
         "EPEX SPOT Belgique Day-Ahead, répercutées sans majoration opaque. "
-        "Des frais fixes de gestion de plateforme de <b>5,99 € / mois TTC</b> sont appliqués pour l'accès aux outils de pilotage "
-        "intelligent et de prévisions Sophie."
+        "Des frais fixes annuels obligatoires de <b>60,00 € / an TTC</b> (soit 5,00 € / mois) sont appliqués. "
+        "L'application mobile Ecofix Digi pour le suivi intelligent et le pilotage des consommations est disponible en option facultative à <b>5,99 € / mois TTC</b>."
     )
     story.append(Paragraph(tarifs_text, body_style))
 

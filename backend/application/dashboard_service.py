@@ -121,6 +121,7 @@ class OverviewStats:
     estimated_ca: float = 0.0
     currency: str = "EUR"
     signed_contracts: int = 0
+    optional_digi_revenue: float = 0.0
 
 
 @dataclass
@@ -215,12 +216,17 @@ class DashboardService:
         conversion_rate = (qualified / total_leads * 100) if total_leads else 0.0
 
         # Unit Economics & Estimated Annual Turnover (CA)
-        # Platform fee €5.99/mo (€71.88/yr) + average contract margin (~€48.12/yr) = ~€120.00 / year / contract
+        # Pricing truth (Sept 2026 tariff card):
+        # - Base fixed fee (obligatoire): 60.00 €/year (€5.00/month equivalent).
+        # - Optional Ecofix Digi: 5.99 €/month (€71.88/year) - tracked separately if subscribed.
         cost_per_conversation = 0.02
         total_conversations = self.conversation_repo.count_total()
         total_ai_cost = round(total_conversations * cost_per_conversation, 2)
         cost_per_sale = round(total_ai_cost / qualified, 2) if qualified > 0 else 0.0
-        estimated_ca = round(qualified * 120.0, 2)
+        
+        base_annual_fee = 60.0
+        estimated_ca = round(qualified * base_annual_fee, 2)
+        optional_digi_revenue = 0.0  # Wired for later when digi_subscribed is selected
 
         signed_contracts = self.contract_repo.count_signed()
 
@@ -238,6 +244,7 @@ class DashboardService:
             estimated_ca=estimated_ca,
             currency="EUR",
             signed_contracts=signed_contracts,
+            optional_digi_revenue=optional_digi_revenue,
         )
 
     # --- Reason labels for the Handoff Queue's "why" column ---------------
