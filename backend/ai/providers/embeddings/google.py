@@ -30,6 +30,7 @@ isolated change scoped to this one file when someone verifies its API.
 
 from __future__ import annotations
 
+import inspect
 import os
 import time
 from typing import Any, Optional
@@ -46,7 +47,7 @@ try:
 except ImportError:  # pragma: no cover - exercised via injected `client=` in tests
     genai = None  # type: ignore[assignment]
 
-DEFAULT_MODEL = "models/text-embedding-004"
+DEFAULT_MODEL = "models/gemini-embedding-001"
 DIMENSIONS = 768
 
 # Matched by name (not isinstance), same reasoning as groq.py: works
@@ -100,14 +101,24 @@ class GoogleEmbeddingProvider(EmbeddingProvider):
                 "the caller must chunk its own batches (see rag_v2/ingestion.py)."
             )
 
+        kwargs: dict[str, Any] = {
+            "model": self.model,
+            "content": texts,
+            "task_type": "retrieval_document",
+        }
+        try:
+            sig = inspect.signature(self._client.embed_content)
+            if "output_dimensionality" in sig.parameters or any(
+                p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+            ):
+                kwargs["output_dimensionality"] = self.dimensions
+        except (ValueError, TypeError):
+            pass
+
         last_error: Optional[Exception] = None
         for attempt in range(self.max_retries):
             try:
-                result = self._client.embed_content(
-                    model=self.model,
-                    content=texts,
-                    task_type="retrieval_document",
-                )
+                result = self._client.embed_content(**kwargs)
                 return list(result["embedding"])
             except Exception as exc:  # noqa: BLE001 - classified by name below
                 error_name = type(exc).__name__

@@ -62,6 +62,9 @@ def main() -> int:
             embedding_provider=provider,
             review_date=review_date,
         )
+        doc_filename = result.document.filename
+        doc_id = result.document.id
+        chunks_created = result.chunks_created
     except IngestionError as exc:
         print(f"::error:: {exc}", file=sys.stderr)
         db.rollback()
@@ -70,8 +73,8 @@ def main() -> int:
         db.close()
 
     print(
-        f"Ingested {result.document.filename} -> document {result.document.id} "
-        f"({result.chunks_created} chunks, status=DRAFT). "
+        f"Ingested {doc_filename} -> document {doc_id} "
+        f"({chunks_created} chunks, status=DRAFT). "
         f"Publish it explicitly with rag_v2.documents.publish_document() when reviewed."
     )
     return 0

@@ -97,13 +97,13 @@ class PgVectorSearch(VectorSearch):
         lang_filter = "AND d.language = :language" if language else ""
         sql = text(f"""
             SELECT c.id AS chunk_id, d.id AS doc_id,
-                   (1 - (c.embedding <=> :query_vector::vector)) AS similarity
+                   (1 - (c.embedding <=> CAST(:query_vector AS vector))) AS similarity
             FROM knowledge_chunks c
             JOIN knowledge_documents d ON c.document_id = d.id
             WHERE d.status = 'PUBLISHED'
               AND c.embedding IS NOT NULL
               {lang_filter}
-            ORDER BY c.embedding <=> :query_vector::vector
+            ORDER BY c.embedding <=> CAST(:query_vector AS vector)
             LIMIT :top_k
         """)
         params: dict = {"query_vector": query_str, "top_k": top_k}

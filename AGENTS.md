@@ -77,12 +77,9 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 
 - WhatsApp and Voice are built but NOT activated (API keys missing).
 - Yousign is sandbox-only; no real e-signature production key.
-- Real-corpus ingestion pending `GOOGLE_AI_API_KEY` configuration in Render.
 - `RAG_MIN_SIMILARITY` calibration on real prospect queries (default 0.30).
 - Campaigns admin screen is real (list, create, two-step launch, pause/resume) but scoped down from the original vision: no lead multi-select/CSV-import wizard, no cancel.
-- No manual lead creation endpoint (`POST /api/leads`) — only CSV import; `PATCH` and `DELETE` already exist.
 - NL copy has never been field-tested.
-- README content has stale sections (it still claims contract generation is unimplemented) and carries a UTF-8 double-encoding corruption in its prose.
 
 ## Knowledge & RAG
 

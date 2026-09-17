@@ -4,14 +4,14 @@
 ![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB?logo=react&logoColor=black)
-![Tests](https://img.shields.io/badge/tests-1000%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-897%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'électricité et de gaz Ecofix : elle engage la conversation, répond aux objections, collecte et valide les informations nécessaires, génère le contrat et le fait signer électroniquement, puis transmet les leads qualifiés à l'équipe commerciale humaine.
 
 ## In short (EN)
 
-A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision — the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live, SMS ready; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, PDF contract generation, Yousign e-signature integration, a React ops dashboard, a RAG v2 knowledge base with citation validation, API-key/webhook-signature security, and **over 1,000 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs — this project is built for a real French-speaking client.
+A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision — the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live, SMS ready; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, PDF contract generation, Yousign e-signature integration, a React ops dashboard, a RAG v2 knowledge base with citation validation, API-key/webhook-signature security, and **897 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs — this project is built for a real French-speaking client.
 
 ## Statut du projet & déploiement en production
 
@@ -27,6 +27,7 @@ Le projet est **déployé en production** sur une infrastructure cloud moderne, 
 | **Cache & Pub/Sub** | Upstash (Redis serverless) | Actif pour le rate limiting et le streaming SSE |
 | **Frontend** | Vercel (React 18 + Vite + TypeScript) | Déployé avec proxy API sécurisé |
 | **Inférence IA** | Groq Cloud (`openai/gpt-oss-120b` / Llama 3.3) | ~300 ms de latence moyenne |
+| **Embeddings RAG** | Google AI (`models/gemini-embedding-001`, 768 dimensions) | Actif, 12 grilles tarifaires officielles publiées |
 | **Bot Telegram** | Pilote inbound multi-canal | [`@EcofixSalesBot`](https://t.me/EcofixSalesBot) (actif en direct) |
 
 ### Cycle de vie et signature contractuelle
@@ -74,11 +75,11 @@ Pour 1 000 conversations menées par Sophie :
 
 ```
 backend/                      API Python/FastAPI
-├── domain/                   Modèles métier (Lead, Conversation, Message, Campaign, Activity) + enums
+├── domain/                   Modèles métier (Lead, Conversation, Message, Campaign, Activity, KnowledgeDocument, KnowledgeChunk) + enums
 ├── conversation_engine/      State machine pure + Rules Engine (YAML) + Intent Classifier + Dialogue Policy
 ├── business_rules/           Règles déclaratives en YAML (qualification, validation, follow-up...)
-├── ai/                       Abstraction LLM (Groq), extraction, génération de réponse, RAG
-├── rag_v2/                   Base de connaissances RAG v2 (ingestion, cycle de vie, recherche vectorielle)
+├── ai/                       Abstraction LLM (Groq), extraction, génération de réponse, RAG v1 par mots-clés, embeddings
+├── rag_v2/                   RAG sémantique vectoriel pgvector, retrieval cosinus, obsolescence W3
 ├── prompts/                  Prompts en Markdown/YAML (jamais codés en dur en Python)
 ├── crm/                      Repositories (leads, conversations, activités, campagnes)
 ├── channels/                 Adaptateurs par canal (Web, Telegram, SMS ; WhatsApp/Voice prêts, non activés)
@@ -94,19 +95,20 @@ backend/                      API Python/FastAPI
 └── tests/ + golden_tests/    Suite de tests unitaires/intégration + scénarios de conversation bout en bout
 
 frontend/
-├── artifacts/sophie-dashboard/   Dashboard React (Vite + Tailwind + shadcn/ui + TanStack Query)
-├── artifacts/api-server/         Proxy Node/Express (prod) : masque la clé API au navigateur
-└── lib/                          Client API généré depuis lib/api-spec/openapi.yaml
+├── src/                      Dashboard React (Vite + TypeScript + TanStack Query + Tailwind)
+├── src/pages/                Tableau de bord, Prospects, Conversations, Live Cockpit, Campagnes, RAG, etc.
+└── src/components/           Composants UI, modals CSV & prospects, drawer 360°, sparklines
 ```
 
 **Principe central** : le moteur métier (state machine + règles YAML) décide seul de l'état de la conversation et du statut du lead. Le LLM ne fait que formuler les réponses en langage naturel — il ne décide jamais d'une transition d'état ni d'une qualification.
 
 ## Stack technique
 
-- **Backend** : Python 3.12+, FastAPI, SQLAlchemy, PostgreSQL (SQLite pour les tests), Redis
-- **IA** : Groq (`openai/gpt-oss-120b` par défaut), abstraction `LLMProvider` remplaçable
-- **Frontend** : React, Vite, TypeScript, Tailwind v4, shadcn/ui, TanStack Query
-- **Tests** : Pytest — plus de 1 000 tests unitaires/intégration + scénarios golden
+- **Backend** : Python 3.12+, FastAPI, SQLAlchemy, PostgreSQL (Neon pgvector), Redis (Upstash)
+- **IA Conversationnelle** : Groq (`openai/gpt-oss-120b` / Llama 3.3), abstraction `LLMProvider` remplaçable
+- **Embeddings RAG** : Google AI (`models/gemini-embedding-001`, 768 dimensions), abstraction `EmbeddingProvider`
+- **Frontend** : React 18, Vite, TypeScript, Tailwind, TanStack Query
+- **Tests** : Pytest (897 tests unitaires/intégration + scénarios golden)
 
 ## Démarrage rapide — backend
 
@@ -119,7 +121,7 @@ cp .env.example .env           # puis renseigner GROQ_API_KEY, DATABASE_URL, etc
 uvicorn api.main:app --host 127.0.0.1 --port 8001
 ```
 
-Le port `8001` n'est pas arbitraire : c'est celui que le dashboard React attend (`frontend/artifacts/sophie-dashboard/vite.config.ts` y proxifie `/api` en dev).
+Le port `8001` n'est pas arbitraire : c'est celui que le dashboard React attend en dev.
 
 - Documentation API interactive : http://127.0.0.1:8001/docs
 - Healthcheck : http://127.0.0.1:8001/health
@@ -128,23 +130,17 @@ Le port `8001` n'est pas arbitraire : c'est celui que le dashboard React attend 
 
 ```bash
 cd frontend
-pnpm install
-pnpm --filter sophie-dashboard dev   # http://localhost:5173, proxy /api -> localhost:8001
+npm install
+npm run dev   # http://localhost:5173, proxy /api -> localhost:8001
 ```
-
-En production, le dashboard passe par `frontend/artifacts/api-server` (proxy Node/Express) qui injecte la clé API côté serveur, pour ne jamais l'exposer au navigateur.
 
 ## Migrations DB
 
-Ce projet n'utilise pas Alembic en routine : `database/postgres.py` appelle `Base.metadata.create_all()` au démarrage, qui crée les tables manquantes mais ne modifie jamais une table existante. Un changement de schéma sur une table déjà créée (nouvelle colonne, nouvel index...) nécessite donc un `ALTER TABLE` manuel, en plus du changement dans `domain/models/`.
-
-Les scripts SQL correspondants vivent dans `backend/database/migrations/`, numérotés dans l'ordre où ils doivent être appliqués :
+Ce projet gère ses migrations via des scripts SQL exécutés automatiquement au démarrage ou via `migration_runner.py`. Les scripts SQL correspondants vivent dans `backend/database/migrations/`, numérotés dans l'ordre où ils doivent être appliqués :
 
 ```bash
-psql "$DATABASE_URL" -f backend/database/migrations/0001_add_telegram_chat_id.sql
+psql "$DATABASE_URL" -f backend/database/migrations/0014_add_contract_activity_types.sql
 ```
-
-Sur une base de dev jetable (recréée à chaque fois), ce n'est pas nécessaire : `docker compose down -v && docker compose up -d` puis un redémarrage du backend suffit, `create_all()` crée alors le schéma à jour directement.
 
 ## Tests
 
@@ -161,7 +157,7 @@ pytest tests/ golden_tests/ -v
 Le dashboard d'administration et de supervision comporte 8 écrans complets :
 
 - **Tableau de bord** (`/`) : indicateurs clés (taux de qualification, coût moyen par conversation ~0,02 €, coût d'acquisition, revenus annuels estimés avec distinction frais fixes 60 €/an et add-on Digi optionnel 5,99 €/mois).
-- **Prospects & Leads** (`/leads`) : tableau CRM en temps réel, filtres multi-critères, tiroir de détail du lead (données CRM, timeline d'activités, génération et suivi du contrat PDF).
+- **Prospects & Leads** (`/leads`) : tableau CRM en temps réel, filtres multi-critères, modal d'import CSV avec prévisualisation et titres en gras, bouton d'ajout unitaire de prospect, tiroir de détail 360° du lead (données CRM, timeline d'activités, génération et signature du contrat SPÉCIMEN).
 - **Conversations & Replay** (`/conversations`) : historique trilingue des dialogues par canal, drawer de relecture pas à pas avec trace d'audit.
 - **Supervision Live** (`/live`) : cockpit temps réel alimenté par flux SSE (Server-Sent Events) via jeton HMAC signé, cartes de conversation actives dynamiques, compteurs in/out par minute, tiroir replay intégré et repli automatique sur polling 30 s si la liaison est interrompue plus de 60 s.
 - **Campagnes sortantes** (`/campaigns`) : gestion des campagnes sortantes SMS, prévisualisation obligatoire avant lancement (aperçu de divulgation IA légale et comptage réel des cibles), pause/reprise et métriques de progression en direct.
@@ -173,45 +169,49 @@ Le dashboard d'administration et de supervision comporte 8 écrans complets :
 
 Le système RAG v2 implémente les patrons ZEN Knowledge adaptés à FastAPI et pgvector :
 
-### 1. Ingestion explicite et cycle de vie (publish-explicit)
-- Découpage par fenêtres de ~500 tokens (50 tokens de recouvrement) sans perte d'information.
-- Tout document ingéré est créé au statut `DRAFT` : ses segments vectoriels restent strictement invisibles pour Sophie jusqu'à sa publication manuelle et explicite.
-- Cycle de vie complet `DRAFT → PUBLISHED → ARCHIVED`.
+### 1. Ingestion explicite et cycle de vie (Publish-Explicit)
+- Découpage par fenêtres de mots de ~500 tokens (50 tokens de recouvrement) sans perte d'information.
+- Tout document ingéré est créé au statut `DRAFT` : ses segments vectoriels restent strictement invisibles pour l'agent Sophie jusqu'à sa publication manuelle et explicite.
+- Le cycle de vie complet (`DRAFT -> PUBLISHED -> ARCHIVED`) garantit une maîtrise absolue des sources citées.
+- Les 12 grilles tarifaires officielles de Septembre 2026 sont entièrement préparées et ingérables via `backend/scripts/ingest_official_tariffs.py`.
 
-### 2. Double moteur de recherche et seuil de pertinence (relevance gate)
-- Recherche vectorielle : `PgVectorSearch` (distance cosinus `<=>` PostgreSQL) en production, `InMemoryCosineSearch` (cosinus Python pur) sur SQLite et en tests.
+### 2. Double moteur de recherche et seuil de pertinence (Relevance Gate)
+- Recherche vectorielle cross-dialecte : `PgVectorSearch` (distance cosinus `<=>` PostgreSQL) en production, `InMemoryCosineSearch` (calcul cosinus Python pur) sur SQLite et en environnement de test.
 - Seuil de similarité `RAG_MIN_SIMILARITY` (défaut `0.30`) et extraction bornée `RAG_TOP_K` (défaut `20`).
 - Chaîne de repli à double niveau :
   1. Si aucun segment n'atteint le seuil minimal, repli transparent vers le RAG v1 par mots-clés.
-  2. Si aucune entrée mot-clé ne correspond, refus déterministe trilingue sans aucun appel LLM (FR/NL/EN).
+  2. Si aucune entrée mot-clé ne correspond, émission d'un **refus déterministe trilingue sans aucun appel LLM** :
+     - FR : *"Je n'ai pas d'information suffisante dans ma base documentaire pour répondre précisément à cette question — un conseiller humain vous répondra très prochainement."*
+     - NL : *"Ik heb niet voldoende informatie in mijn documentenbasis om deze vraag nauwkeurig te beantwoorden — een menselijke adviseur zal u zeer binnenkort antwoorden."*
+     - EN : *"I don't have sufficient information in my document base to answer this question precisely - a human advisor will get back to you very soon."*
 
 ### 3. Génération ancrée et validateur de citations
-- Les segments valides sont injectés sous forme de blocs `[SOURCE n]` avec titre, version et date de revue.
-- Le validateur de citations (`rag_v2/citations.py`) retire et trace (`CITATION_STRIPPED`) toute référence `[SOURCE n]` non présente dans le contexte fourni.
-- Une couche de garde regex (layer 5) valide la réponse finale contre toute statistique inventée ou promesse absolue.
+- Les segments valides sont injectés sous la forme de blocs contextualisés `[SOURCE n]` avec titre, version et date de revue.
+- Le validateur de citations (`rag_v2/citations.py`) analyse la réponse générée : toute référence `[SOURCE n]` non présente dans le contexte fourni est automatiquement retirée et tracée dans le journal d'audit (`CITATION_STRIPPED`).
+- La couche de garde regex (Layer 5) valide la réponse finale contre toute statistique inventée ou promesse absolue.
 
-### 4. Gestion de l'obsolescence (patron ZEN W3)
+### 4. Gestion de l'obsolescence (Patron ZEN W3)
 - Contrôle continu des dates de revue documentaire (`review_date`).
-- Documents à échéance sous 7 jours signalés à l'administrateur (`due_soon`).
-- Documents dépassant la période de grâce (`RAG_GRACE_PERIOD_DAYS`, défaut 30 jours) automatiquement archivés (`auto_archive_expired`).
-- Détection proactive des conflits de versions sur un même type de produit.
+- Les documents à échéance dans les 7 jours sont signalés à l'administrateur (`due_soon`).
+- Les documents dépassant la période de grâce (`RAG_GRACE_PERIOD_DAYS`, défaut 30 jours) sont automatiquement archivés (`auto_archive_expired`), retirant instantanément leurs segments du périmètre de recherche.
+- Détection proactive des conflits de versions sur les mêmes types de produits.
 
 ### 5. Calibration, fournisseurs d'embeddings et coûts
 - **Calibration** : ajuster `RAG_MIN_SIMILARITY` en observant les scores réels retournés par le testeur QA (`POST /api/knowledge/test`).
-- **Fournisseur d'embeddings** : abstraction `EmbeddingProvider` (`ai/providers/embeddings/`) ; implémentation actuelle Google AI `text-embedding-004` (768 dimensions, niveau gratuit), interchangeable sans modifier l'application.
+- **Fournisseur d'embeddings** : abstraction `EmbeddingProvider` (`ai/providers/embeddings/`) ; implémentation actuelle Google AI (`models/gemini-embedding-001`, 768 dimensions), interchangeable sans modifier l'application.
 - **Estimation des coûts** : `/api/knowledge/stats` (nombre de segments actifs × 500 tokens × coût unitaire du fournisseur).
 - **Guide d'ingestion** : `docs/RAG_V2_INGESTION_GUIDE.md` (commandes CLI pour les 12 grilles tarifaires de référence).
 
-## Canaux
+## Canaux de Communication
 
-| Canal | Statut |
-|---|---|
-| Telegram | Actif et testé — canal du pilote |
-| Web (widget) | Actif et testé |
-| SMS | Architecturé et testé (`channels/sms.py`, signature Twilio), prêt pour déploiement |
-| WhatsApp Business | Architecturé et testé (`channels/whatsapp.py`, signature Twilio), non activé pour le pilote actuel |
-| Appel vocal | Pipeline complet câblé (`application/voice_inbound_service.py` + `channels/voice/session_manager.py`, STT/TTS Twilio) ; il ne manque qu'un compte Twilio Voice réel (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_VOICE_NUMBER`/`PUBLIC_BASE_URL`) pour un appel en conditions réelles — voir `docs/architecture/voice_agent_architecture.md` |
-| Messenger, Instagram, Meta Ads | Non implémentés — roadmap |
+| Canal | Statut | Détails |
+|---|---|---|
+| **Telegram** | Actif | `@EcofixSalesBot` — canal du pilote live avec webhook sécurisé |
+| **Web (widget)** | Actif | Intégré sur le dashboard et simulateur interactif |
+| **SMS** | Opérationnel | `channels/sms.py` avec signature HMAC Twilio et traitement STOP |
+| **WhatsApp Business** | Câblé (Inactif) | `channels/whatsapp.py` complet, en attente de clés Twilio WhatsApp |
+| **Appel vocal** | Câblé (Inactif) | Pipeline STT/TTS complet, en attente de numéro Twilio Voice dédié |
+| **Messenger, Instagram, Meta Ads** | Roadmap | Non implémentés dans le pilote initial |
 
 ## Sécurité
 
@@ -253,5 +253,4 @@ Le prospect peut à tout moment exercer son droit d'opposition en envoyant un mo
 
 - WhatsApp et Voice sont entièrement architecturés, câblés et testés, mais non activés en production tant que les comptes Twilio correspondants ne sont pas provisionnés (voir tableau des canaux).
 - Néerlandais/anglais : couverts par le moteur (RAG v2, disclosure, opt-out), mais le français reste la langue principale réellement testée en conditions pilote.
-- Messenger, Instagram et Meta Ads ne sont pas implémentés (roadmap).
-- Fournisseur d'embeddings RAG v2 actuel (Google `text-embedding-004`) sur niveau gratuit — à surveiller en cas de montée en volume.
+- Fournisseur d'embeddings RAG v2 actuel (Google `gemini-embedding-001`) sur niveau gratuit — à surveiller en cas de montée en volume.
