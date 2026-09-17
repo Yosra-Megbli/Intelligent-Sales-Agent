@@ -1,129 +1,130 @@
-# Sophie â€” Agent IA de vente Ecofix
+# Sophie — Agent IA de vente Ecofix
 
 [![CI](https://github.com/Yosra-Megbli/Intelligent-Sales-Agent/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Yosra-Megbli/Intelligent-Sales-Agent/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB?logo=react&logoColor=black)
-![Tests](https://img.shields.io/badge/tests-896%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-1000%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'أ©lectricitأ© et de gaz Ecofix : elle engage la conversation, rأ©pond aux objections, collecte et valide les informations nأ©cessaires, puis transmet les leads qualifiأ©s أ  l'أ©quipe commerciale humaine.
+Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'électricité et de gaz Ecofix : elle engage la conversation, répond aux objections, collecte et valide les informations nécessaires, génère le contrat et le fait signer électroniquement, puis transmet les leads qualifiés à l'équipe commerciale humaine.
 
 ## In short (EN)
 
-A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision â€” the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, a React ops dashboard, API-key/webhook-signature security, and **896 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs â€” this project is built for a real French-speaking client.
+A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision — the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live, SMS ready; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, PDF contract generation, Yousign e-signature integration, a React ops dashboard, a RAG v2 knowledge base with citation validation, API-key/webhook-signature security, and **over 1,000 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs — this project is built for a real French-speaking client.
 
-## Statut du projet & Déploiement en Production
+## Statut du projet & déploiement en production
 
-Le projet est **déployé en production** sur une infrastructure cloud moderne, sécurisée et optimisée (100% free tier pour le pilote).
+Le projet est **déployé en production** sur une infrastructure cloud moderne, sécurisée et optimisée (100 % free tier pour le pilote).
 
-### Infrastructure de Production Live
+### Infrastructure de production live
 
 | Composant | Fournisseur / Technologie | Statut / URL |
 |---|---|---|
 | **Backend API** | Render (Docker `python:3.12-slim`, auto-migrations) | `https://intelligent-sales-agent.onrender.com` |
-| **Healthcheck** | Endpoint public DB + Redis | [`https://intelligent-sales-agent.onrender.com/health`](https://intelligent-sales-agent.onrender.com/health) (`{"status":"ok"}`) |
-| **Base de données** | Neon (PostgreSQL managé + extension pgvector) | Actif avec index HNSW cosine 768d |
-| **Cache & Pub/Sub** | Upstash (Redis serverless) | Actif pour rate-limiting et streaming SSE |
+| **Healthcheck** | Endpoint public DB + Redis | [`/health`](https://intelligent-sales-agent.onrender.com/health) (`{"status":"ok"}`) |
+| **Base de données** | Neon (PostgreSQL managé + extension pgvector) | Actif, index HNSW cosinus 768d |
+| **Cache & Pub/Sub** | Upstash (Redis serverless) | Actif pour le rate limiting et le streaming SSE |
 | **Frontend** | Vercel (React 18 + Vite + TypeScript) | Déployé avec proxy API sécurisé |
-| **Inférence IA** | Groq Cloud (`openai/gpt-oss-120b` / Llama 3.3) | ~300ms de latence moyenne |
-| **Bot Telegram** | Pilote inbound multi-canal | [`@EcofixSalesBot`](https://t.me/EcofixSalesBot) (Actif en direct) |
+| **Inférence IA** | Groq Cloud (`openai/gpt-oss-120b` / Llama 3.3) | ~300 ms de latence moyenne |
+| **Bot Telegram** | Pilote inbound multi-canal | [`@EcofixSalesBot`](https://t.me/EcofixSalesBot) (actif en direct) |
 
-### Cycle de Vie & Signature Contractuelle
+### Cycle de vie et signature contractuelle
 
-Sophie qualifie les prospects de bout-en-bout et pilote le cycle contractuel complet :
+Sophie qualifie les prospects de bout en bout et pilote le cycle contractuel complet :
+
 ```
 NOUVEAU LEAD → QUALIFIÉ → CONTRAT GÉNÉRÉ (PDF) → ENVOI YOUSIGN → SIGNÉ / CLIENT ACTIF
 ```
-- **Génération de contrat PDF** : Module certifié ReportLab (`contracts/pdf_generator.py`) incluant les mentions légales obligatoires (loi IA européenne, droit de rétractation de 14 jours, grille tarifaire officielle).
-- **Signature électronique** : Intégration Yousign Sandbox v3 (`integrations/yousign.py`) avec webhooks HMAC sécurisés et simulation de signature instantanée (`POST /api/contracts/{id}/simulate-sign`).
 
-## Économie Réelle en Production (Unit Economics)
+- **Génération de contrat PDF** : module ReportLab (`contracts/pdf_generator.py`) incluant les mentions légales obligatoires (loi IA européenne, droit de rétractation de 14 jours, grille tarifaire officielle).
+- **Signature électronique** : intégration Yousign Sandbox v3 (`integrations/yousign.py`) avec webhooks HMAC sécurisés et simulation de signature instantanée (`POST /api/contracts/{id}/simulate-sign`). Dégradation propre si `YOUSIGN_API_KEY` n'est pas configurée : le flux s'arrête proprement à l'étape PDF sans planter.
 
-Les métriques financières affichées dans le Tableau de Bord reflètent la réalité du marché belge et la stricte vérité tarifaire Ecofix :
+## Économie réelle en production (unit economics)
 
-### 1. Structure de Coûts de Fonctionnement
-- **Coût d'inférence par conversation qualifiée** : **~0,02 €** (grâce à l'architecture hybride : moteur déterministe YAML + extraction Groq ultra-rapide).
-- **Coût d'infrastructure d'hébergement** : **0,00 € / mois** en phase pilote grâce aux niveaux gratuits de Render, Neon, Upstash et Vercel.
-- **Marge brute d'acquisition** : **> 99%** d'économie par rapport aux coûts d'un centre d'appels classique (8 à 15 € par lead qualifié par un opérateur humain).
+Les métriques financières affichées dans le tableau de bord reflètent la réalité du marché belge et la stricte vérité tarifaire Ecofix :
 
-### 2. Vérité Tarifaire Ecofix (Pricing Truth — Septembre 2026)
-- **Frais fixes de base (obligatoires)** : **60,00 € / an** par contrat d'énergie (électricité ou gaz).
-- **Option Ecofix Digi (strictement optionnelle)** : **5,99 € / mois** pour le suivi temps réel et le pilotage intelligent via l'application mobile (jamais présentée comme une redevance de base).
-- **Programme de parrainage "Friends with Benefits"** : Remise permanente de **5,00 € / mois** par filleul actif, sans plafond de cumul.
-- **Frais de sortie résidentielle en Belgique** : **0,00 €** (résiliation libre à tout moment sans pénalités, bascule standard sous 3 à 4 semaines).
+### 1. Structure de coûts de fonctionnement
+- **Coût d'inférence par conversation qualifiée** : ~0,02 € (architecture hybride : moteur déterministe YAML + extraction Groq ultra-rapide).
+- **Coût d'infrastructure d'hébergement** : 0,00 € / mois en phase pilote grâce aux niveaux gratuits de Render, Neon, Upstash et Vercel.
+- **Marge brute d'acquisition** : > 99 % d'économie par rapport aux coûts d'un centre d'appels classique (8 à 15 € par lead qualifié par un opérateur humain).
 
-### 3. Ratio Financier Réel du Pilote
-- Pour **1 000 conversations** menées par Sophie :
-  * Coût total d'inférence IA : **20,00 €**
-  * Leads hautement qualifiés (~30%) : **300 prospects**
-  * Contrats conclus estimés (~10%) : **100 souscriptions**
-  * Chiffre d'affaires brut généré (frais fixes seuls) : **6 000 € / an** (hors consommation volumétrique et abonnements Digi).
+### 2. Vérité tarifaire Ecofix (septembre 2026)
+- **Frais fixes de base (obligatoires)** : 60,00 € / an par contrat d'énergie (électricité ou gaz).
+- **Option Ecofix Digi (strictement optionnelle)** : 5,99 € / mois pour le suivi temps réel et le pilotage intelligent via l'application mobile — jamais présentée comme une redevance de base.
+- **Programme de parrainage « Friends with Benefits »** : remise permanente de 5,00 € / mois par filleul actif, sans plafond de cumul.
+- **Frais de sortie résidentielle en Belgique** : 0,00 € (résiliation libre à tout moment, bascule standard sous 3 à 4 semaines).
 
-## Captures d'Écran de la Production
+### 3. Ratio financier du pilote
+Pour 1 000 conversations menées par Sophie :
+- Coût total d'inférence IA : 20,00 €
+- Leads hautement qualifiés (~30 %) : 300 prospects
+- Contrats conclus estimés (~10 %) : 100 souscriptions
+- Chiffre d'affaires brut généré (frais fixes seuls) : 6 000 € / an (hors consommation volumétrique et abonnements Digi)
 
-### 1. Tableau de Bord & Économie Réelle
-Aperçu du tableau de bord de production avec les indicateurs clés de conversion, les volumes de dialogues et le suivi des revenus annuels estimés :
+## Captures d'écran de la production
 
-![Tableau de Bord Production](docs/images/dashboard_production.jpg)
+### Tableau de bord & économie réelle
+![Tableau de bord production](docs/images/dashboard_production.jpg)
 
-### 2. Supervision Live (Cockpit SSE) & Tiroir Replay
-Supervision en direct des conversations multi-canaux (Telegram, Web, SMS) avec compteurs de débit en temps réel et relecture pas-à-pas des échanges :
-
-![Supervision Live Cockpit](docs/images/live_cockpit.jpg)
+### Supervision live (cockpit SSE) & tiroir replay
+![Supervision live cockpit](docs/images/live_cockpit.jpg)
 
 ## Architecture
 
 ```
 backend/                      API Python/FastAPI
-â”œâ”€â”€ domain/                   Modأ¨les mأ©tier (Lead, Conversation, Message, Campaign, Activity) + enums
-â”œâ”€â”€ conversation_engine/      State machine pure + Rules Engine (YAML) + Intent Classifier + Dialogue Policy
-â”œâ”€â”€ business_rules/           Rأ¨gles dأ©claratives en YAML (qualification, validation, follow-up...)
-â”œâ”€â”€ ai/                       Abstraction LLM (Groq), extraction, gأ©nأ©ration de rأ©ponse, RAG
-â”œâ”€â”€ prompts/                  Prompts en Markdown/YAML (jamais codأ©s en dur en Python)
-â”œâ”€â”€ crm/                      Repositories (leads, conversations, activitأ©s, campagnes)
-â”œâ”€â”€ channels/                 Adaptateurs par canal (Web, Telegram ; WhatsApp/Voice prأھts, non activأ©s)
-â”œâ”€â”€ outbound/                 Moteur de campagnes sortantes
-â”œâ”€â”€ followup/                 Dأ©tection de silence + relances automatiques
-â”œâ”€â”€ api/                      Routes FastAPI, sأ©curitأ© (clأ© API, rate limiting, CORS)
-â”œâ”€â”€ application/              Services applicatifs (orchestrent domain + conversation_engine + crm)
-â”œâ”€â”€ dashboard/                Build compilأ© du dashboard React, servi en statique par FastAPI
-â”œâ”€â”€ docs/                     Documentation d'architecture (state machine, decisions techniques)
-â””â”€â”€ tests/ + golden_tests/    Suite de tests unitaires/intأ©gration + scأ©narios de conversation bout-en-bout
+├── domain/                   Modèles métier (Lead, Conversation, Message, Campaign, Activity) + enums
+├── conversation_engine/      State machine pure + Rules Engine (YAML) + Intent Classifier + Dialogue Policy
+├── business_rules/           Règles déclaratives en YAML (qualification, validation, follow-up...)
+├── ai/                       Abstraction LLM (Groq), extraction, génération de réponse, RAG
+├── rag_v2/                   Base de connaissances RAG v2 (ingestion, cycle de vie, recherche vectorielle)
+├── prompts/                  Prompts en Markdown/YAML (jamais codés en dur en Python)
+├── crm/                      Repositories (leads, conversations, activités, campagnes)
+├── channels/                 Adaptateurs par canal (Web, Telegram, SMS ; WhatsApp/Voice prêts, non activés)
+├── outbound/                 Moteur de campagnes sortantes
+├── followup/                 Détection de silence + relances automatiques
+├── contracts/                Génération de contrat PDF (specimen certifié, mentions légales)
+├── integrations/             Yousign (signature électronique)
+├── live/                     Cockpit de supervision temps réel (SSE)
+├── api/                      Routes FastAPI, sécurité (clé API, rate limiting, CORS)
+├── application/              Services applicatifs (orchestrent domain + conversation_engine + crm)
+├── dashboard/                Build compilé du dashboard React, servi en statique par FastAPI
+├── docs/                     Documentation d'architecture (state machine, décisions techniques)
+└── tests/ + golden_tests/    Suite de tests unitaires/intégration + scénarios de conversation bout en bout
 
 frontend/
-â”œâ”€â”€ artifacts/sophie-dashboard/   Dashboard React (Vite + Tailwind + shadcn/ui + TanStack Query)
-â”œâ”€â”€ artifacts/api-server/         Proxy Node/Express (prod) : masque la clأ© API au navigateur
-â””â”€â”€ lib/                          Client API gأ©nأ©rأ© depuis lib/api-spec/openapi.yaml
+├── artifacts/sophie-dashboard/   Dashboard React (Vite + Tailwind + shadcn/ui + TanStack Query)
+├── artifacts/api-server/         Proxy Node/Express (prod) : masque la clé API au navigateur
+└── lib/                          Client API généré depuis lib/api-spec/openapi.yaml
 ```
 
-**Principe central** : le moteur mأ©tier (state machine + rأ¨gles YAML) dأ©cide seul de l'أ©tat de la conversation et du statut du lead. Le LLM ne fait que formuler les rأ©ponses en langage naturel â€” il ne dأ©cide jamais d'une transition d'أ©tat ni d'une qualification.
+**Principe central** : le moteur métier (state machine + règles YAML) décide seul de l'état de la conversation et du statut du lead. Le LLM ne fait que formuler les réponses en langage naturel — il ne décide jamais d'une transition d'état ni d'une qualification.
 
 ## Stack technique
 
-- Backend : Python 3.12+, FastAPI, SQLAlchemy, PostgreSQL (SQLite pour les tests), Redis
-- IA : Groq (`openai/gpt-oss-120b` par dأ©faut), abstraction `LLMProvider` remplaأ§able
-- Frontend : React, Vite, TypeScript, Tailwind v4, shadcn/ui, TanStack Query
-- Tests : Pytest (896 tests unitaires/intأ©gration + scأ©narios golden)
+- **Backend** : Python 3.12+, FastAPI, SQLAlchemy, PostgreSQL (SQLite pour les tests), Redis
+- **IA** : Groq (`openai/gpt-oss-120b` par défaut), abstraction `LLMProvider` remplaçable
+- **Frontend** : React, Vite, TypeScript, Tailwind v4, shadcn/ui, TanStack Query
+- **Tests** : Pytest — plus de 1 000 tests unitaires/intégration + scénarios golden
 
-## Dأ©marrage rapide â€” backend
+## Démarrage rapide — backend
 
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate      # Windows : .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 cp .env.example .env           # puis renseigner GROQ_API_KEY, DATABASE_URL, etc.
 uvicorn api.main:app --host 127.0.0.1 --port 8001
 ```
 
-Le port `8001` n'est pas arbitraire : c'est celui que le dashboard React attend
-(`frontend/artifacts/sophie-dashboard/vite.config.ts` proxy `/api` dessus en dev).
+Le port `8001` n'est pas arbitraire : c'est celui que le dashboard React attend (`frontend/artifacts/sophie-dashboard/vite.config.ts` y proxifie `/api` en dev).
 
 - Documentation API interactive : http://127.0.0.1:8001/docs
 - Healthcheck : http://127.0.0.1:8001/health
 
-## Dأ©marrage rapide â€” dashboard React
+## Démarrage rapide — dashboard React
 
 ```bash
 cd frontend
@@ -131,136 +132,126 @@ pnpm install
 pnpm --filter sophie-dashboard dev   # http://localhost:5173, proxy /api -> localhost:8001
 ```
 
-En production, le dashboard passe par `frontend/artifacts/api-server` (proxy Node/Express) qui injecte la clأ© API cأ´tأ© serveur, pour ne jamais l'exposer au navigateur.
+En production, le dashboard passe par `frontend/artifacts/api-server` (proxy Node/Express) qui injecte la clé API côté serveur, pour ne jamais l'exposer au navigateur.
 
 ## Migrations DB
 
-Ce projet n'a pas d'Alembic : `database/postgres.py` appelle uniquement
-`Base.metadata.create_all()` au dأ©marrage, qui crأ©e les tables manquantes
-mais ne modifie jamais une table existante. Un changement de schأ©ma sur une
-table dأ©jأ  crأ©أ©e (nouvelle colonne, nouvel index...) nأ©cessite donc un
-`ALTER TABLE` manuel, en plus du changement dans `domain/models/`.
+Ce projet n'utilise pas Alembic en routine : `database/postgres.py` appelle `Base.metadata.create_all()` au démarrage, qui crée les tables manquantes mais ne modifie jamais une table existante. Un changement de schéma sur une table déjà créée (nouvelle colonne, nouvel index...) nécessite donc un `ALTER TABLE` manuel, en plus du changement dans `domain/models/`.
 
-Les scripts SQL correspondants vivent dans `backend/database/migrations/`,
-numأ©rotأ©s dans l'ordre oأ¹ ils doivent أھtre appliquأ©s :
+Les scripts SQL correspondants vivent dans `backend/database/migrations/`, numérotés dans l'ordre où ils doivent être appliqués :
 
 ```bash
 psql "$DATABASE_URL" -f backend/database/migrations/0001_add_telegram_chat_id.sql
 ```
 
-Sur une base de dev jetable (recrأ©أ©e أ  chaque fois), ce n'est pas
-nأ©cessaire : `docker compose down -v && docker compose up -d` puis un
-redأ©marrage du backend suffit, `create_all()` crأ©e alors le schأ©ma أ  jour
-directement.
+Sur une base de dev jetable (recréée à chaque fois), ce n'est pas nécessaire : `docker compose down -v && docker compose up -d` puis un redémarrage du backend suffit, `create_all()` crée alors le schéma à jour directement.
 
 ## Tests
 
 ```bash
 cd backend
+pip install -r requirements-dev.txt
 pytest tests/ golden_tests/ -v
 ```
 
-## Ecrans du Dashboard React
+> Redis doit être démarré localement (`redis-server`) pour que la suite complète passe : plusieurs tests (opt-out, disclosure guard, live cockpit, RAG v2) passent par le cache Redis réel plutôt qu'un mock.
 
-Le dashboard d'administration et de supervision comporte 8 ecrans complets :
+## Écrans du dashboard React
 
-- **Tableau de bord** (`/`) : Indicateurs cles (taux de qualification, cout moyen par conversation ~0.02 EUR, cout d'acquisition, revenus annuels estimes avec distinction frais fixes 60 EUR/an et add-on Digi optionnel 5.99 EUR/mois).
-- **Prospects & Leads** (`/leads`) : Tableau CRM en temps reel, filtres multi-criteres, tiroir de detail du lead (donnees CRM, timeline d'activites, generation et suivi du contrat PDF).
-- **Conversations & Replay** (`/conversations`) : Historique trilingue des dialogues par canal, drawer de relecture pas-a-pas avec trace d'audit.
-- **Supervision Live** (`/live`) : Cockpit temps reel alimente par flux SSE (Server-Sent Events) via jeton HMAC signe, cartes de conversation actives dynamiques, compteurs in/out par minute, tiroir replay integre et repli automatique sur polling 30s si la liaison est interrompue plus de 60s.
-- **Campagnes sortantes** (`/campaigns`) : Gestion des campagnes sortantes SMS, previsualisation obligatoire avant lancement (apercu de divulgation IA legale et comptage reel des cibles), pause/reprise et metriques de progression en direct.
-- **Base de Connaissances** (`/knowledge`) : Gestionnaire RAG v2 avec table des documents sources PDF, statut de cycle de vie (Brouillon / Publie / Archive), zone de televersement avec verification de la couche texte, testeur QA de transparence (inspection des segments extraits et score sans appel LLM), alertes d'obsolescence (cycle W3) et table de repli RAG v1 par mots-cles.
-- **Simulateur** (`/simulator`) : Bac a sable interactif multi-canal et multi-langue (FR, NL, EN) permettant d'eprouver les 5 couches anti-hallucination et les regles d'admissibilite en direct.
-- **Parametres** (`/settings`) : Gestion securisee des cles API, secrets de webhooks, simulation Yousign Sandbox pour validation du cycle de vie contractuel et statut de sante des integrations.
+Le dashboard d'administration et de supervision comporte 8 écrans complets :
+
+- **Tableau de bord** (`/`) : indicateurs clés (taux de qualification, coût moyen par conversation ~0,02 €, coût d'acquisition, revenus annuels estimés avec distinction frais fixes 60 €/an et add-on Digi optionnel 5,99 €/mois).
+- **Prospects & Leads** (`/leads`) : tableau CRM en temps réel, filtres multi-critères, tiroir de détail du lead (données CRM, timeline d'activités, génération et suivi du contrat PDF).
+- **Conversations & Replay** (`/conversations`) : historique trilingue des dialogues par canal, drawer de relecture pas à pas avec trace d'audit.
+- **Supervision Live** (`/live`) : cockpit temps réel alimenté par flux SSE (Server-Sent Events) via jeton HMAC signé, cartes de conversation actives dynamiques, compteurs in/out par minute, tiroir replay intégré et repli automatique sur polling 30 s si la liaison est interrompue plus de 60 s.
+- **Campagnes sortantes** (`/campaigns`) : gestion des campagnes sortantes SMS, prévisualisation obligatoire avant lancement (aperçu de divulgation IA légale et comptage réel des cibles), pause/reprise et métriques de progression en direct.
+- **Base de connaissances** (`/knowledge`) : gestionnaire RAG v2 avec table des documents sources PDF, statut de cycle de vie (Brouillon / Publié / Archivé), zone de téléversement avec vérification de la couche texte, testeur QA de transparence (inspection des segments extraits et score sans appel LLM), alertes d'obsolescence (cycle W3) et table de repli RAG v1 par mots-clés.
+- **Simulateur** (`/simulator`) : bac à sable interactif multi-canal et multi-langue (FR, NL, EN) permettant d'éprouver les 5 couches anti-hallucination et les règles d'admissibilité en direct.
+- **Paramètres** (`/settings`) : gestion sécurisée des clés API, secrets de webhooks, simulation Yousign Sandbox pour validation du cycle de vie contractuel et statut de santé des intégrations.
 
 ## Architecture RAG v2
 
-Le systeme RAG v2 implemente les patrons ZEN Knowledge adaptes a FastAPI et pgvector :
+Le système RAG v2 implémente les patrons ZEN Knowledge adaptés à FastAPI et pgvector :
 
-### 1. Ingestion explicite et cycle de vie (Publish-Explicit)
-- Decoupage par fenetres de mots de ~500 tokens (50 tokens de recouvrement) sans perte d'information.
-- Tout document ingere est cree au statut `DRAFT` : ses segments vectoriels restent strictement invisibles pour l'agent Sophie jusqu'a sa publication manuelle et explicite.
-- Le cycle de vie complet (`DRAFT -> PUBLISHED -> ARCHIVED`) garantit une maitrise absolue des sources citees.
+### 1. Ingestion explicite et cycle de vie (publish-explicit)
+- Découpage par fenêtres de ~500 tokens (50 tokens de recouvrement) sans perte d'information.
+- Tout document ingéré est créé au statut `DRAFT` : ses segments vectoriels restent strictement invisibles pour Sophie jusqu'à sa publication manuelle et explicite.
+- Cycle de vie complet `DRAFT → PUBLISHED → ARCHIVED`.
 
-### 2. Double moteur de recherche et seuil de pertinence (Relevance Gate)
-- Recherche vectorielle cross-dialecte : `PgVectorSearch` (distance cosinus `<=>` PostgreSQL) en production, `InMemoryCosineSearch` (calcul cosinus Python pur) sur SQLite et en environnement de test.
-- Seuil de similarite `RAG_MIN_SIMILARITY` (defaut `0.30`) et extraction bornee `RAG_TOP_K` (defaut `20`).
-- Chaine de repli a double niveau :
-  1. Si aucun segment n'atteint le seuil minimal, repli transparent vers le RAG v1 par mots-cles.
-  2. Si aucune entree mot-cle ne correspond, emission d'un **refus deterministe trilingue sans aucun appel LLM** :
-     - FR : *"Je n'ai pas d'information suffisante dans ma base documentaire pour repondre precisement a cette question - un conseiller humain vous repondra tres prochainement."*
-     - NL : *"Ik heb niet voldoende informatie in mijn documentenbasis om deze vraag nauwkeurig te beantwoorden - een menselijke adviseur zal u zeer binnenkort antwoorden."*
-     - EN : *"I don't have sufficient information in my document base to answer this question precisely - a human advisor will get back to you very soon."*
+### 2. Double moteur de recherche et seuil de pertinence (relevance gate)
+- Recherche vectorielle : `PgVectorSearch` (distance cosinus `<=>` PostgreSQL) en production, `InMemoryCosineSearch` (cosinus Python pur) sur SQLite et en tests.
+- Seuil de similarité `RAG_MIN_SIMILARITY` (défaut `0.30`) et extraction bornée `RAG_TOP_K` (défaut `20`).
+- Chaîne de repli à double niveau :
+  1. Si aucun segment n'atteint le seuil minimal, repli transparent vers le RAG v1 par mots-clés.
+  2. Si aucune entrée mot-clé ne correspond, refus déterministe trilingue sans aucun appel LLM (FR/NL/EN).
 
-### 3. Generation ancree et validateur de citations
-- Les segments valides sont injectes sous la forme de blocs contextualises `[SOURCE n]` avec titre, version et date de revue.
-- Le validateur de citations (`rag_v2/citations.py`) analyse la reponse generee : toute reference `[SOURCE n]` non presente dans le contexte fourni est automatiquement retiree et tracee dans le journal d'audit (`CITATION_STRIPPED`).
-- La couche de garde regex (Layer 5) valide la reponse finale contre toute statistique inventee ou promesse absolue.
+### 3. Génération ancrée et validateur de citations
+- Les segments valides sont injectés sous forme de blocs `[SOURCE n]` avec titre, version et date de revue.
+- Le validateur de citations (`rag_v2/citations.py`) retire et trace (`CITATION_STRIPPED`) toute référence `[SOURCE n]` non présente dans le contexte fourni.
+- Une couche de garde regex (layer 5) valide la réponse finale contre toute statistique inventée ou promesse absolue.
 
-### 4. Gestion de l'obsolescence (Patron ZEN W3)
-- Controle continu des dates de revue documentaire (`review_date`).
-- Les documents a echeance dans les 7 jours sont signales a l'administrateur (`due_soon`).
-- Les documents depassant la periode de grace (`RAG_GRACE_PERIOD_DAYS`, defaut 30 jours) sont automatiquement archives (`auto_archive_expired`), retirant instantanement leurs segments du perimetre de recherche.
-- Detection proactive des conflits de versions sur les memes types de produits.
+### 4. Gestion de l'obsolescence (patron ZEN W3)
+- Contrôle continu des dates de revue documentaire (`review_date`).
+- Documents à échéance sous 7 jours signalés à l'administrateur (`due_soon`).
+- Documents dépassant la période de grâce (`RAG_GRACE_PERIOD_DAYS`, défaut 30 jours) automatiquement archivés (`auto_archive_expired`).
+- Détection proactive des conflits de versions sur un même type de produit.
 
-### 5. Calibration du seuil, Fournisseurs d'Embeddings et Estimation des Couts
-- **Calibration** : Ajustez `RAG_MIN_SIMILARITY` dans les variables d'environnement en observant les scores de similarite reels retournes par l'outil de test QA (`POST /api/knowledge/test`).
-- **Fournisseur d'embeddings** : Abstraction basee sur `EmbeddingProvider` (`ai/providers/embeddings/`). L'implementation actuelle utilise Google AI `text-embedding-004` (768 dimensions, niveau gratuit). Le basculement vers Mistral Embeddings ou un autre fournisseur s'effectue par simple mise en oeuvre de la meme interface sans modifier l'application.
-- **Estimation des couts** : Accessible via `/api/knowledge/stats`, estimee sur la base du nombre de segments actifs (`total_chunks * 500 tokens * cout unitaire du fournisseur`).
-- **Guide d'ingestion officiel** : Consultez `docs/RAG_V2_INGESTION_GUIDE.md` pour les commandes CLI d'ingestion des 12 grilles tarifaires de reference.
+### 5. Calibration, fournisseurs d'embeddings et coûts
+- **Calibration** : ajuster `RAG_MIN_SIMILARITY` en observant les scores réels retournés par le testeur QA (`POST /api/knowledge/test`).
+- **Fournisseur d'embeddings** : abstraction `EmbeddingProvider` (`ai/providers/embeddings/`) ; implémentation actuelle Google AI `text-embedding-004` (768 dimensions, niveau gratuit), interchangeable sans modifier l'application.
+- **Estimation des coûts** : `/api/knowledge/stats` (nombre de segments actifs × 500 tokens × coût unitaire du fournisseur).
+- **Guide d'ingestion** : `docs/RAG_V2_INGESTION_GUIDE.md` (commandes CLI pour les 12 grilles tarifaires de référence).
 
 ## Canaux
 
 | Canal | Statut |
 |---|---|
-| Telegram | Actif et testأ© â€” canal du pilote |
-| Web (widget) | Actif et testأ© |
-| WhatsApp Business | Architecturأ© et testأ© (`channels/whatsapp.py`, signature Twilio), non activأ© pour le pilote actuel |
-| Appel vocal | Pipeline complet câblé (`application/voice_inbound_service.py` + `channels/voice/session_manager.py`, STT/TTS Twilio) ; il ne manque qu'un compte Twilio Voice réel (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_VOICE_NUMBER`/`PUBLIC_BASE_URL`) pour un appel en conditions réelles — voir `docs/architecture/voice_agent_architecture.md` |
+| Telegram | Actif et testé — canal du pilote |
+| Web (widget) | Actif et testé |
 | SMS | Architecturé et testé (`channels/sms.py`, signature Twilio), prêt pour déploiement |
-| Messenger, Instagram | Non implémentés — roadmap |
+| WhatsApp Business | Architecturé et testé (`channels/whatsapp.py`, signature Twilio), non activé pour le pilote actuel |
+| Appel vocal | Pipeline complet câblé (`application/voice_inbound_service.py` + `channels/voice/session_manager.py`, STT/TTS Twilio) ; il ne manque qu'un compte Twilio Voice réel (`TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN`/`TWILIO_VOICE_NUMBER`/`PUBLIC_BASE_URL`) pour un appel en conditions réelles — voir `docs/architecture/voice_agent_architecture.md` |
+| Messenger, Instagram, Meta Ads | Non implémentés — roadmap |
 
-## Sأ©curitأ©
+## Sécurité
 
-- Toutes les routes API sensibles (conversations, dashboard, campagnes) protأ©gأ©es par une clأ© `X-API-Key` (comparaison أ  temps constant)
-- Webhook Telegram vأ©rifiأ© par secret partagأ©
-- CORS dأ©sactivأ© par dأ©faut (safe-by-default), أ  configurer explicitement via `CORS_ALLOWED_ORIGINS`
-- Rate limiting appliquأ© par conversation/IP
-- âڑ ï¸ڈ Par dأ©faut (dأ©veloppement), si `API_KEY` n'est pas configurأ©e, l'authentification est dأ©sactivأ©e avec un avertissement en log
-- âœ… En dأ©finissant `ENVIRONMENT=production` (voir `backend/.env.example`), l'API **refuse de dأ©marrer** si `API_KEY` ou `TELEGRAM_WEBHOOK_SECRET` ne sont pas configurأ©es, au lieu de tourner sans authentification (`api/main.py:_fail_fast_if_misconfigured_for_production`)
-- `backend/.env` (secrets rأ©els) est exclu de git via `.gitignore` et n'a jamais أ©tأ© commit â€” pour livrer une archive au client, utiliser `scripts/package_client_delivery.ps1` (basأ© sur `git archive`, ne peut physiquement pas inclure un fichier non commit comme `.env`) plutأ´t qu'une compression manuelle du dossier
+- Toutes les routes API sensibles (conversations, dashboard, campagnes) protégées par une clé `X-API-Key` (comparaison à temps constant).
+- Webhooks Telegram, WhatsApp/SMS (Twilio) et Yousign vérifiés par signature/secret partagé (HMAC).
+- CORS désactivé par défaut (safe-by-default), à configurer explicitement via `CORS_ALLOWED_ORIGINS`.
+- Rate limiting appliqué par conversation/IP.
+- ⚠️ Par défaut (développement), si `API_KEY` n'est pas configurée, l'authentification est désactivée avec un avertissement en log.
+- ✅ En définissant `ENVIRONMENT=production` (voir `backend/.env.example`), l'API **refuse de démarrer** si `API_KEY` ou `TELEGRAM_WEBHOOK_SECRET` ne sont pas configurées, au lieu de tourner sans authentification (`api/main.py:_fail_fast_if_misconfigured_for_production`).
+- `backend/.env` (secrets réels) est exclu de git via `.gitignore` et n'a jamais été commit — pour livrer une archive au client, utiliser `scripts/package_client_delivery.ps1` (basé sur `git archive`, ne peut physiquement pas inclure un fichier non commit comme `.env`) plutôt qu'une compression manuelle du dossier.
 
-## Conformitأ© RGPD / GDPR Compliance
+## Conformité RGPD
 
-Sophie intأ¨gre les principes du Rأ¨glement Gأ©nأ©ral sur la Protection des Donnأ©es (RGPD / GDPR) dأ¨s la conception (*privacy by design*) :
+Sophie intègre les principes du RGPD dès la conception (*privacy by design*) :
 
-### 1. Bases lأ©gales de traitement (Art. 6 RGPD)
-- **Leads entrants (Inbound)** : Consentement explicite et exأ©cution de mesures prأ©contractuelles أ  la demande du prospect (Art. 6(1)(a) & (b) RGPD) lors de l'initiation d'un أ©change pour أ©tudier ou souscrire une offre d'أ©nergie Ecofix.
-- **Campagnes sortantes (Outbound)** : Intأ©rأھt lأ©gitime (Art. 6(1)(f) RGPD) pour la prospection commerciale B2B / prospects qualifiأ©s, assorti d'une **transparence obligatoire et immأ©diate** (mention explicite de l'agent virtuel IA dأ¨s le premier message sur tous les canaux) et du droit inconditionnel d'opposition (Art. 21 RGPD).
+### 1. Bases légales de traitement (Art. 6 RGPD)
+- **Leads entrants (inbound)** : consentement explicite et exécution de mesures précontractuelles à la demande du prospect (Art. 6(1)(a) et (b)) lors de l'initiation d'un échange pour étudier ou souscrire une offre d'énergie Ecofix.
+- **Campagnes sortantes (outbound)** : intérêt légitime (Art. 6(1)(f)) pour la prospection commerciale sur prospects qualifiés, assorti d'une transparence obligatoire et immédiate (mention explicite de l'agent virtuel IA dès le premier message sur tous les canaux) et du droit inconditionnel d'opposition (Art. 21).
 
-### 2. Durأ©e de conservation (Rأ¨gle des 12 mois)
-- Les donnأ©es أ  caractأ¨re personnel des prospects non convertis sont conservأ©es pendant une durأ©e maximale de **12 mois** أ  compter du dernier contact ou de la clأ´ture de la qualification.
-- أ€ l'issue de cette pأ©riode de 12 mois, les donnأ©es d'identification (`first_name`, `last_name`, `email`, `phone`, `notes`, `date_of_birth`) sont purgأ©es ou anonymisأ©es de maniأ¨re irrأ©versible, sauf en cas de conversion effective en contrat client actif (soumis aux dأ©lais lأ©gaux de conservation contractuelle et comptable).
+### 2. Durée de conservation (règle des 12 mois)
+- Les données personnelles des prospects non convertis sont conservées 12 mois maximum à compter du dernier contact ou de la clôture de la qualification.
+- À l'issue de cette période, les données d'identification (`first_name`, `last_name`, `email`, `phone`, `notes`, `date_of_birth`) sont purgées ou anonymisées de manière irréversible, sauf conversion effective en contrat client actif (soumise aux délais légaux de conservation contractuelle et comptable).
 
-### 3. Procأ©dure d'opt-out / droit d'opposition (STOP / STOPT / ARRأٹT)
-- Le prospect peut أ  tout moment exercer son droit d'opposition par simple envoi d'un mot-clأ© d'arrأھt standardisأ© : **`STOP`**, **`STOPT`** ou **`ARRأٹT`** (insensible أ  la casse et aux accents, supportأ© en franأ§ais, nأ©erlandais et anglais).
-- Le traitement d'opt-out est **immأ©diat et dأ©terministe** (gأ©rأ© au niveau applicatif par le Rules Engine / ConversationService, sans dأ©pendance LLM) :
-  1. **Retrait immأ©diat des campagnes** : le lead est retirأ© de toute campagne sortante active ou future (`campaign_id = NULL`).
-  2. **Annulation des relances programmأ©es** : tout follow-up programmأ© est annulأ© ; le planificateur de relances (`FollowUpEngine`) ignore systأ©matiquement tout prospect ayant manifestأ© son opposition (`opt_out_at IS NOT NULL`).
-  3. **Purge des donnأ©es PII** : suppression immأ©diate des donnأ©es identifiantes directes (`first_name`, `last_name`, `email`, `notes`, `date_of_birth`).
-  4. **Clأ© de suppression (Suppression Key)** : conservation d'une clأ© technique de suppression / empreinte hashأ©e afin d'empأھcher toute rأ©importation ou rأ©envoi ultأ©rieur non sollicitأ©.
-  5. **Horodatage et audit trail** : enregistrement de l'horodatage UTC (`opt_out_at`), mise أ  jour du statut en `REJECTED` et inscription d'un أ©vأ©nement `OPT_OUT` dans le journal d'activitأ© d'audit (`activities`).
-  6. **Confirmation de dأ©sabonnement** : envoi d'un message unique de confirmation attestant la prise en compte de la demande et garantissant qu'aucune communication ultأ©rieure ne sera أ©mise.
+### 3. Procédure d'opt-out / droit d'opposition (STOP / STOPT / ARRÊT)
+Le prospect peut à tout moment exercer son droit d'opposition en envoyant un mot-clé standardisé (`STOP`, `STOPT` ou `ARRÊT`, insensible à la casse et aux accents, en français/néerlandais/anglais). Le traitement est immédiat et déterministe, géré par le Rules Engine / `ConversationService`, sans dépendance LLM :
+1. Retrait immédiat de toute campagne sortante active ou future (`campaign_id = NULL`).
+2. Annulation des relances programmées ; `FollowUpEngine` ignore systématiquement tout prospect en opposition (`opt_out_at IS NOT NULL`).
+3. Purge des données PII directes (`first_name`, `last_name`, `email`, `notes`, `date_of_birth`).
+4. Conservation d'une clé de suppression hashée pour empêcher toute réimportation ultérieure non sollicitée.
+5. Horodatage UTC (`opt_out_at`), statut mis à `REJECTED`, événement `OPT_OUT` inscrit dans le journal d'audit (`activities`).
+6. Envoi d'un message unique de confirmation de désabonnement.
 
-### 4. Transfert de donnأ©es & DPA Groq (Sous-traitance IA)
-- Les requأھtes d'extraction d'entitأ©s et de formulation de rأ©ponses s'appuient sur l'API Groq Cloud.
-- **Accord de traitement des donnأ©es (DPA)** : l'exploitation en production nأ©cessite la souscription du Data Processing Agreement (DPA) avec Groq Inc., incorporant les Clauses Contractuelles Types (CCT / SCCs) approuvأ©es par la Commission Europأ©enne pour rأ©gir les transferts de donnأ©es hors Union Europأ©enne.
-- **Minimisation des donnأ©es (Art. 5(1)(c) RGPD)** : seuls les fragments textuels strictement nأ©cessaires أ  la qualification conversationnelle transitent par l'API d'infأ©rence. L'أ©valuation des rأ¨gles mأ©tier, la validation de la majoritأ©, la dأ©tection des doublons et la liste d'exclusion (suppression list) s'exأ©cutent entiأ¨rement en local dans l'application.
+### 4. Transfert de données & sous-traitance IA (Groq)
+- Les requêtes d'extraction d'entités et de formulation de réponses s'appuient sur l'API Groq Cloud.
+- La production nécessite la souscription d'un Data Processing Agreement (DPA) avec Groq Inc., incorporant les Clauses Contractuelles Types approuvées par la Commission européenne pour les transferts hors UE.
+- Minimisation des données (Art. 5(1)(c)) : seuls les fragments textuels strictement nécessaires à la qualification transitent par l'API d'inférence ; l'évaluation des règles métier, la validation de majorité, la détection des doublons et la liste de suppression s'exécutent entièrement en local.
 
-## Limites connues du MVP actuel
+## Limites connues du pilote actuel
 
-- Pas de gأ©nأ©ration/signature de contrat automatique (roadmap)
-- Pas de canal SMS, Messenger, Instagram, Meta Ads (roadmap)
-- WhatsApp et Voice sont architecturأ©s mais non activأ©s dans le pilote (voir tableau des canaux)
-- Nأ©erlandais/Anglais : أ  confirmer/أ©tendre selon les besoins du pilote (le franأ§ais est le canal principal actuellement testأ©)
-
+- WhatsApp et Voice sont entièrement architecturés, câblés et testés, mais non activés en production tant que les comptes Twilio correspondants ne sont pas provisionnés (voir tableau des canaux).
+- Néerlandais/anglais : couverts par le moteur (RAG v2, disclosure, opt-out), mais le français reste la langue principale réellement testée en conditions pilote.
+- Messenger, Instagram et Meta Ads ne sont pas implémentés (roadmap).
+- Fournisseur d'embeddings RAG v2 actuel (Google `text-embedding-004`) sur niveau gratuit — à surveiller en cas de montée en volume.
