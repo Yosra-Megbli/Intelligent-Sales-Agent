@@ -79,6 +79,7 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
   - Campaign `CANCELLED` status & backend enum: migration `0015_add_campaign_status_cancelled.sql`, coherence test, `POST /api/campaigns/{id}/cancel`, and frontend cancel button with confirmation.
   - Advanced 3-Step Campaign Wizard: Step 1 Info & Channel, Step 2 multi-mode targeting (Geographic rule, CRM checkbox lead selection, or dedicated CSV upload with validation), Step 3 recap & AI Act disclosure preview.
   - RAG v2 Sensitivity Slider (`RAG_MIN_SIMILARITY`): interactive calibration gauge in the Knowledge Base QA transparency box to test precision vs. refusal trade-offs.
+  - Interactive Contract Visual Viewer & Signature Studio (`ContractVisualViewerModal.tsx`): Realistic A4 digital contract paper sheet with Ecofix branding, 45° watermark, AI Act Art. 50 legal preamble, CRM prospect data, energy pricing table (Flexy/Motion, 60 €/an base, Digi option, 0 € penalty), 14-day legal withdrawal clause, interactive drawing canvas `<canvas>` with touch/mouse support, calligraphy script mode, legal consent validation, instant certified eIDAS green stamp with SHA-256 hash and UTC timestamp, and embedded ReportLab PDF iframe mode. Integrated into `ContractsPage`, `LeadDrawer`, and `SettingsPage`.
 
 ### Known gaps (never claim "done")
 

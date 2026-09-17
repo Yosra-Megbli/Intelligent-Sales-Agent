@@ -27,7 +27,9 @@ import {
   Trash2,
   Save,
   XCircle,
+  Eye,
 } from "lucide-react";
+import { ContractVisualViewerModal } from "@/components/contracts/ContractVisualViewerModal";
 import { toast } from "sonner";
 
 interface LeadDrawerProps {
@@ -80,6 +82,8 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isVisualViewerOpen, setIsVisualViewerOpen] = useState(false);
+  const [openViewerInStudio, setOpenViewerInStudio] = useState(false);
 
   const { data: detailData, isLoading: isDetailLoading } = useQuery({
     queryKey: ["leadDetail", lead?.id],
@@ -593,6 +597,18 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
                   <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--border)]">
                     <button
                       type="button"
+                      onClick={() => {
+                        setOpenViewerInStudio(false);
+                        setIsVisualViewerOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-[var(--surface-hover)] text-[var(--ink)] border border-[var(--border)] hover:bg-[var(--border)]/30 text-xs font-semibold transition-smooth cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-[var(--color-teal)]" />
+                      <span>Visualiser le Contrat</span>
+                    </button>
+
+                    <button
+                      type="button"
                       onClick={() => handleDownloadPdf(latestContract.id)}
                       disabled={isDownloadingPdf}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-[var(--color-teal)] text-white hover:bg-[var(--color-teal-hover)] text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50"
@@ -602,22 +618,20 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
                       ) : (
                         <Download className="w-3.5 h-3.5" />
                       )}
-                      <span>Télécharger PDF Spécimen</span>
+                      <span>Télécharger PDF</span>
                     </button>
 
                     {latestContract.status !== "SIGNED" && latestContract.status !== "WITHDRAWN" && (
                       <button
                         type="button"
-                        onClick={() => handleSimulateSign(latestContract.id)}
-                        disabled={isSimulatingSign}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border border-[var(--color-teal-soft-border)] hover:bg-[var(--color-teal-soft)]/80 text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50"
+                        onClick={() => {
+                          setOpenViewerInStudio(true);
+                          setIsVisualViewerOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border border-[var(--color-teal-soft-border)] hover:bg-[var(--color-teal-soft)]/80 text-xs font-semibold transition-smooth cursor-pointer"
                       >
-                        {isSimulatingSign ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-teal)]" />
-                        )}
-                        <span>Simuler Signature (Sandbox)</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[var(--color-teal)]" />
+                        <span>Simuler Signature</span>
                       </button>
                     )}
                   </div>
@@ -800,6 +814,25 @@ export const LeadDrawer: React.FC<LeadDrawerProps> = ({ lead, isOpen, onClose })
             </div>
           </div>
         </>
+      )}
+      {/* Visual Contract Viewer & Signature Studio Modal */}
+      {latestContract && (
+        <ContractVisualViewerModal
+          contract={latestContract}
+          isOpen={isVisualViewerOpen}
+          onClose={() => {
+            setIsVisualViewerOpen(false);
+            setOpenViewerInStudio(false);
+          }}
+          initialSignStudioOpen={openViewerInStudio}
+          onContractSigned={() => {
+            queryClient.invalidateQueries({ queryKey: ["leadContracts", lead?.id] });
+            queryClient.invalidateQueries({ queryKey: ["leadDetail", lead?.id] });
+            queryClient.invalidateQueries({ queryKey: ["leads"] });
+            queryClient.invalidateQueries({ queryKey: ["overview"] });
+            queryClient.invalidateQueries({ queryKey: ["contracts"] });
+          }}
+        />
       )}
     </>
   );

@@ -23,6 +23,7 @@ import {
   X,
   Loader2,
 } from "lucide-react";
+import { ContractVisualViewerModal } from "@/components/contracts/ContractVisualViewerModal";
 import { toast } from "sonner";
 
 export const ContractsPage: React.FC = () => {
@@ -33,6 +34,7 @@ export const ContractsPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [productFilter, setProductFilter] = useState<string>("ALL");
   const [selectedContract, setSelectedContract] = useState<ContractSummary | null>(null);
+  const [openInStudio, setOpenInStudio] = useState(false);
   const [previewingId, setPreviewingId] = useState<string | null>(null);
 
   const {
@@ -355,7 +357,10 @@ export const ContractsPage: React.FC = () => {
                   return (
                     <tr
                       key={c.id}
-                      onClick={() => setSelectedContract(c)}
+                      onClick={() => {
+                        setSelectedContract(c);
+                        setOpenInStudio(false);
+                      }}
                       className="hover:bg-[var(--surface-hover)]/50 transition-colors cursor-pointer group"
                     >
                       <td className="py-3 px-4">
@@ -411,9 +416,12 @@ export const ContractsPage: React.FC = () => {
                             <Button
                               variant="primary"
                               size="sm"
-                              onClick={(e) => handleSimulateSign(c, e)}
-                              disabled={simulateSignMutation.isPending}
-                              className="text-[11px] h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedContract(c);
+                                setOpenInStudio(true);
+                              }}
+                              className="text-[11px] h-7 px-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold cursor-pointer"
                             >
                               <CheckCircle2 className="w-3 h-3 mr-1" />
                               <span>Simuler Signature</span>
@@ -424,7 +432,7 @@ export const ContractsPage: React.FC = () => {
                             variant="secondary"
                             size="sm"
                             onClick={(e) => handleDownload(c, e)}
-                            className="text-[11px] h-7 px-2"
+                            className="text-[11px] h-7 px-2 cursor-pointer"
                             title="Télécharger le contrat PDF ReportLab"
                           >
                             <Download className="w-3 h-3 text-[var(--ink-muted)]" />
@@ -433,9 +441,13 @@ export const ContractsPage: React.FC = () => {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setSelectedContract(c)}
-                            className="text-[11px] h-7 px-2"
-                            title="Voir les détails et le certificat"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedContract(c);
+                              setOpenInStudio(false);
+                            }}
+                            className="text-[11px] h-7 px-2 cursor-pointer"
+                            title="Visualiser le contrat et sa signature"
                           >
                             <Eye className="w-3 h-3 text-[var(--ink-muted)]" />
                           </Button>
@@ -450,144 +462,22 @@ export const ContractsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Contract Detail & Visual Stamp Modal */}
-      {selectedContract && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="relative w-full max-w-xl rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
-            {/* Close button */}
-            <button
-              onClick={() => setSelectedContract(null)}
-              className="absolute top-4 right-4 p-1.5 rounded-full text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-hover)] transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Header */}
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-500/15 border border-teal-500/25 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
-                <FileCheck2 className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-[var(--ink)] tracking-tight">
-                  Contrat de fourniture Ecofix {selectedContract.product}
-                </h3>
-                <p className="text-xs text-[var(--ink-muted)] mt-0.5">
-                  ID: <span className="font-mono">{selectedContract.id}</span>
-                </p>
-              </div>
-            </div>
-
-            {/* Status & Details */}
-            <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface-hover)]/50 space-y-3 text-xs">
-              <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
-                <span className="text-[var(--ink-muted)]">Statut du contrat :</span>
-                <div>{getStatusBadge(selectedContract.status)}</div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <span className="text-[var(--ink-muted)] block">Souscripteur :</span>
-                  <span className="font-semibold text-[var(--ink)] block mt-0.5">
-                    {selectedContract.lead_name || "Client Prospect"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[var(--ink-muted)] block">Contact :</span>
-                  <span className="font-medium text-[var(--ink)] block mt-0.5">
-                    {selectedContract.lead_email || selectedContract.lead_phone || "-"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[var(--ink-muted)] block">Frais fixes obligatoires :</span>
-                  <span className="font-semibold text-[var(--ink)] block mt-0.5">
-                    60,00 € TTC / an (5 €/mois)
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[var(--ink-muted)] block">Option Ecofix Digi :</span>
-                  <span className="font-medium text-[var(--ink)] block mt-0.5">
-                    {selectedContract.digi_subscribed ? "Souscrite (+5,99 €/mois)" : "Non souscrite"}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* eIDAS Signature Certification Box */}
-            {selectedContract.status === "SIGNED" ? (
-              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/60 text-xs space-y-2">
-                <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Certificat de Signature Électronique eIDAS (Yousign v3)</span>
-                </div>
-                <div className="space-y-1 text-emerald-900/90 dark:text-emerald-200/90 text-[11px]">
-                  <p>
-                    • <strong>Signataire certifié :</strong> {selectedContract.lead_name || "Souscripteur"}
-                  </p>
-                  <p>
-                    • <strong>Horodatage cryptographique :</strong> {formatDate(selectedContract.signed_at)}
-                  </p>
-                  <p className="font-mono text-[10px] text-emerald-800/80 dark:text-emerald-300/80">
-                    • <strong>Transaction ID :</strong> {selectedContract.id.replace(/-/g, "").toUpperCase()}
-                  </p>
-                  <p className="text-[10px] italic pt-1">
-                    Conforme au Code de droit économique belge et au Règlement européen sur l'Intelligence Artificielle (AI Act, Art. 50).
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-xs space-y-2">
-                <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300 font-bold">
-                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <span>En attente de signature par le prospect</span>
-                </div>
-                <p className="text-[11px] text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
-                  Le contrat PDF ReportLab a été préparé avec succès. Pour la démonstration, vous pouvez déclencher immédiatement la signature électronique simulée ci-dessous.
-                </p>
-              </div>
-            )}
-
-            {/* Modal Actions */}
-            <div className="flex items-center justify-between pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedContract(null)}
-              >
-                Fermer
-              </Button>
-
-              <div className="flex items-center gap-2">
-                {selectedContract.status !== "SIGNED" && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleSimulateSign(selectedContract)}
-                    disabled={simulateSignMutation.isPending}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-                  >
-                    {simulateSignMutation.isPending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
-                    ) : (
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
-                    )}
-                    <span>Simuler la Signature Client</span>
-                  </Button>
-                )}
-
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => handleDownload(selectedContract)}
-                  className="font-semibold"
-                >
-                  <Download className="w-3.5 h-3.5 mr-1 text-teal-600" />
-                  <span>Télécharger le PDF Certifié</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Contract Visual Viewer & Signature Studio Modal */}
+      <ContractVisualViewerModal
+        contract={selectedContract}
+        isOpen={Boolean(selectedContract)}
+        onClose={() => {
+          setSelectedContract(null);
+          setOpenInStudio(false);
+        }}
+        initialSignStudioOpen={openInStudio}
+        onContractSigned={(updatedContract) => {
+          queryClient.invalidateQueries({ queryKey: ["contracts"] });
+          queryClient.invalidateQueries({ queryKey: ["overview"] });
+          queryClient.invalidateQueries({ queryKey: ["stats"] });
+          setSelectedContract(updatedContract);
+        }}
+      />
     </div>
   );
 };

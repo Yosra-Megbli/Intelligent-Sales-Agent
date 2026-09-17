@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/api/client";
+import { ContractSummary } from "@/api/types";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -35,6 +36,7 @@ import {
   Scale,
   FileCheck2,
 } from "lucide-react";
+import { ContractVisualViewerModal } from "@/components/contracts/ContractVisualViewerModal";
 import { toast } from "sonner";
 
 export const SettingsPage: React.FC = () => {
@@ -44,7 +46,9 @@ export const SettingsPage: React.FC = () => {
   const [selectedLeadId, setSelectedLeadId] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSigning, setIsSigning] = useState(false);
-  const [lastGeneratedContract, setLastGeneratedContract] = useState<{ id: string; product: string } | null>(null);
+  const [lastGeneratedContract, setLastGeneratedContract] = useState<ContractSummary | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [viewerInitialStudio, setViewerInitialStudio] = useState(false);
 
   const { apiKey } = useAuth();
 
@@ -83,7 +87,7 @@ export const SettingsPage: React.FC = () => {
     try {
       setIsGenerating(true);
       const contract = await apiClient.createContract(targetLeadId);
-      setLastGeneratedContract({ id: contract.id, product: contract.product });
+      setLastGeneratedContract(contract);
       toast.success(`Contrat Ecofix ${contract.product} généré pour le prospect ! Téléchargement en cours...`);
       await apiClient.downloadContractPdf(contract.id, `contrat_specimen_${contract.product.toLowerCase()}.pdf`);
     } catch (err: any) {
@@ -390,7 +394,7 @@ export const SettingsPage: React.FC = () => {
                   </button>
                 </div>
 
-                {/* If a contract was just created, offer instant Yousign simulation */}
+                {/* If a contract was just created, offer visual view and Yousign simulation */}
                 {lastGeneratedContract && (
                   <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex flex-wrap items-center justify-between gap-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
                     <div>
@@ -399,7 +403,7 @@ export const SettingsPage: React.FC = () => {
                           Contrat {lastGeneratedContract.product} prêt pour signature
                         </span>
                         <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold">
-                          DRAFT
+                          {lastGeneratedContract.status}
                         </span>
                       </div>
                       <span className="text-[10px] font-mono text-[var(--ink-muted)] block mt-0.5">
@@ -407,19 +411,31 @@ export const SettingsPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={handleSimulateYousign}
-                      disabled={isSigning}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50 shadow-xs"
-                    >
-                      {isSigning ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setViewerInitialStudio(false);
+                          setIsViewerOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--surface)] hover:bg-[var(--surface-hover)] border border-[var(--border)] text-[var(--ink)] text-xs font-semibold transition-smooth cursor-pointer shadow-2xs"
+                      >
+                        <Eye className="w-3.5 h-3.5 text-[var(--color-teal)]" />
+                        <span>Visualiser</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setViewerInitialStudio(true);
+                          setIsViewerOpen(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white text-xs font-semibold transition-smooth cursor-pointer shadow-xs"
+                      >
                         <ShieldCheck className="w-3.5 h-3.5" />
-                      )}
-                      <span>Simuler Signature (eIDAS Sandbox)</span>
-                    </button>
+                        <span>Simuler Signature eIDAS</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -646,6 +662,22 @@ export const SettingsPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Visual Contract Viewer & Signature Studio Modal */}
+      {lastGeneratedContract && (
+        <ContractVisualViewerModal
+          contract={lastGeneratedContract}
+          isOpen={isViewerOpen}
+          onClose={() => {
+            setIsViewerOpen(false);
+            setViewerInitialStudio(false);
+          }}
+          initialSignStudioOpen={viewerInitialStudio}
+          onContractSigned={(updated) => {
+            setLastGeneratedContract(updated);
+          }}
+        />
+      )}
     </div>
   );
 };
