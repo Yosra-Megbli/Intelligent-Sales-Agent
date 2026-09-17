@@ -16,17 +16,19 @@ export type BadgeVariant =
   | "OPT_OUT"
   | "HUMAN_HANDOFF"
   | "LOST"
+  | "CUSTOMER"
+  | "CONTRACT"
   | "phase2"
   | "default";
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: BadgeVariant;
+  variant?: BadgeVariant | string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({ variant = "default", className, children, ...props }) => {
   const { t } = useTranslation();
 
-  const styles: Record<BadgeVariant, string> = {
+  const styles: Record<string, string> = {
     NEW: "bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700",
     CONTACTED: "bg-[var(--info-soft)] text-[var(--info-blue)] border-[var(--info-border)]",
     QUALIFIED_FLEXY: "bg-[var(--color-teal-soft)] text-[var(--color-teal-text)] border-[var(--color-teal-soft-border)] font-semibold",
@@ -35,6 +37,8 @@ export const Badge: React.FC<BadgeProps> = ({ variant = "default", className, ch
     OPT_OUT: "bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400 border-pink-200 dark:border-pink-900 line-through opacity-80",
     HUMAN_HANDOFF: "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
     LOST: "bg-[var(--danger-soft)] text-[var(--danger-red)] border-[var(--danger-border)]",
+    CUSTOMER: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold",
+    CONTRACT: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30 font-semibold",
     phase2: "bg-[var(--warn-soft)] text-[var(--warn-amber)] border-[var(--warn-border)] uppercase tracking-wider text-[9px] font-bold py-0.5 px-1.5",
     default: "bg-[var(--surface-hover)] text-[var(--ink-muted)] border-[var(--border)]",
   };
