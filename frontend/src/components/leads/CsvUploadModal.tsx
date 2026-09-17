@@ -504,7 +504,7 @@ export const CsvUploadModal: React.FC<CsvUploadModalProps> = ({
                   type="button"
                   onClick={handleConfirmImport}
                   disabled={isImporting || previewData.rows.length === 0}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-[var(--color-teal)] hover:bg-[var(--color-teal-hover)] text-white text-xs font-bold shadow-md transition-smooth cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white text-xs font-bold shadow-md transition-smooth cursor-pointer disabled:opacity-50 active:scale-[0.98]"
                 >
                   {isImporting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />

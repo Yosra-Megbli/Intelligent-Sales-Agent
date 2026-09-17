@@ -7,6 +7,7 @@
   --color-navy: var(--color-navy);
   --color-navy-soft: var(--color-navy-soft);
   --color-teal: var(--color-teal);
+  --color-teal-hover: var(--color-teal-hover);
   --color-teal-dim: var(--color-teal-dim);
   --color-teal-text: var(--color-teal-text);
   --color-teal-soft: var(--color-teal-soft);
@@ -30,10 +31,11 @@
     --color-navy-soft: oklch(21% 0.05 280);
 
     /* Teal action & qualified state */
-    --color-teal: oklch(78% 0.13 175);
-    --color-teal-dim: oklch(55% 0.10 175);
-    --color-teal-text: oklch(55% 0.10 175);
-    --color-teal-soft: oklch(94% 0.03 175);
+    --color-teal: oklch(58% 0.14 175);
+    --color-teal-hover: oklch(48% 0.15 175);
+    --color-teal-dim: oklch(42% 0.11 175);
+    --color-teal-text: oklch(42% 0.12 175);
+    --color-teal-soft: oklch(95% 0.03 175);
     --color-teal-soft-border: oklch(55% 0.10 175 / 0.25);
 
     /* Motion (violet-blue) distinct from Flexy (teal) */
@@ -83,11 +85,12 @@
     --color-navy-soft: oklch(24% 0.05 280);
 
     /* Teal on dark surfaces */
-    --color-teal: oklch(78% 0.13 175);
-    --color-teal-dim: oklch(55% 0.10 175);
+    --color-teal: oklch(65% 0.14 175);
+    --color-teal-hover: oklch(55% 0.15 175);
+    --color-teal-dim: oklch(50% 0.12 175);
     --color-teal-text: oklch(78% 0.13 175);
     --color-teal-soft: oklch(30% 0.05 175);
-    --color-teal-soft-border: oklch(78% 0.13 175 / 0.25);
+    --color-teal-soft-border: oklch(65% 0.14 175 / 0.25);
 
     /* Motion (violet-blue) dark */
     --color-motion: oklch(75% 0.10 280);

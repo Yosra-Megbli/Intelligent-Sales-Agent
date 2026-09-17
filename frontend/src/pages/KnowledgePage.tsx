@@ -582,7 +582,7 @@ export const KnowledgePage: React.FC = () => {
               type="button"
               disabled={!selectedFile || uploadMutation.isPending}
               onClick={() => uploadMutation.mutate()}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[var(--color-teal)] text-white hover:bg-[var(--color-teal-hover)] text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white text-xs font-bold shadow-xs transition-smooth cursor-pointer disabled:opacity-50 active:scale-[0.98]"
             >
               {uploadMutation.isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -787,7 +787,7 @@ export const KnowledgePage: React.FC = () => {
                                   setActionTargetDoc(doc);
                                   setActionType("publish");
                                 }}
-                                className="px-2.5 py-1 rounded bg-[var(--color-teal)] text-white text-[11px] font-semibold hover:bg-[var(--color-teal-hover)] transition-smooth cursor-pointer"
+                                className="px-2.5 py-1 rounded-md bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold shadow-2xs transition-smooth cursor-pointer active:scale-[0.98]"
                               >
                                 {t("knowledgePage.actionPublish") || "Publier"}
                               </button>
@@ -799,7 +799,7 @@ export const KnowledgePage: React.FC = () => {
                                   setActionTargetDoc(doc);
                                   setActionType("archive");
                                 }}
-                                className="px-2.5 py-1 rounded bg-amber-500 text-white text-[11px] font-semibold hover:opacity-90 transition-smooth cursor-pointer"
+                                className="px-2.5 py-1 rounded-md bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold shadow-2xs transition-smooth cursor-pointer active:scale-[0.98]"
                               >
                                 {t("knowledgePage.actionArchive") || "Archiver"}
                               </button>
@@ -842,7 +842,7 @@ export const KnowledgePage: React.FC = () => {
           <button
             type="button"
             onClick={openCreateModal}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[var(--color-teal)] text-white hover:bg-[var(--color-teal-hover)] text-xs font-semibold shadow-xs transition-smooth cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white text-xs font-bold shadow-xs transition-smooth cursor-pointer active:scale-[0.98]"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>{t("knowledgePage.addButton") || "Ajouter une entrée"}</span>
@@ -990,7 +990,7 @@ export const KnowledgePage: React.FC = () => {
                   type="button"
                   onClick={() => setActionTargetDoc(null)}
                   disabled={docActionMutation.isPending}
-                  className="px-3 py-1.5 rounded-[0.5rem] text-xs font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-hover)] transition-smooth cursor-pointer"
+                  className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[var(--ink-muted)] hover:text-[var(--ink)] hover:bg-[var(--surface-hover)] border border-transparent hover:border-[var(--border)] transition-smooth cursor-pointer"
                 >
                   {t("common.close")}
                 </button>
@@ -1003,14 +1003,14 @@ export const KnowledgePage: React.FC = () => {
                     })
                   }
                   disabled={docActionMutation.isPending}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[0.5rem] text-white text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50 ${
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-white text-xs font-bold shadow-sm transition-smooth cursor-pointer disabled:opacity-50 active:scale-[0.98] ${
                     actionType === "publish"
-                      ? "bg-[var(--color-teal)] hover:bg-[var(--color-teal-hover)]"
-                      : "bg-amber-500 hover:opacity-90"
+                      ? "bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white"
+                      : "bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white"
                   }`}
                 >
                   {docActionMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{actionType === "publish" ? "Confirmer la publication" : "Confirmer l'archivage"}</span>
+                  <span>{actionType === "publish" ? (t("knowledgePage.confirmPublishAction") || "Confirmer la publication") : (t("knowledgePage.confirmArchiveAction") || "Confirmer l'archivage")}</span>
                 </button>
               </div>
             </div>
@@ -1128,7 +1128,7 @@ export const KnowledgePage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={saveMutation.isPending}
-                    className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[var(--color-teal)] text-white hover:bg-[var(--color-teal-hover)] text-xs font-semibold transition-smooth cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 active:bg-teal-800 text-white text-xs font-bold transition-smooth cursor-pointer disabled:opacity-50 active:scale-[0.98]"
                   >
                     {saveMutation.isPending ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
