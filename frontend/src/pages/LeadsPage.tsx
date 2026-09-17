@@ -19,6 +19,8 @@ import { Button } from "@/components/ui/Button";
 import { LeadDrawer } from "@/components/leads/LeadDrawer";
 import { AddLeadModal } from "@/components/leads/AddLeadModal";
 import { CsvUploadModal } from "@/components/leads/CsvUploadModal";
+import { ExportModal } from "@/components/ui/ExportModal";
+import { exportLeadsToCsv, exportLeadsToExcel } from "@/utils/exportEngine";
 import {
   Search,
   Download,
@@ -35,32 +37,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const CSV_FORMULA_PREFIX = /^[=+\-@\t\r]/;
-
-// OWASP CSV injection guard: a field opened by Excel/Sheets that starts with
-// = + - @ is executed as a formula. Lead names/emails/suppliers are
-// user-entered (web, Telegram, manual creation), never trust them raw here.
-const sanitizeCsvField = (value: string): string =>
-  CSV_FORMULA_PREFIX.test(value) ? `'${value}` : value;
-
-// Belgian EANs are 18 digits; Excel's numeric precision caps at 15
-// significant digits, so a plain numeric CSV cell gets silently rounded or
-// shown in scientific notation. Wrapping it as a text-literal formula keeps
-// every digit exact on open, with no extra dependency.
-const forceExcelText = (digits: string): string => (digits ? `="${digits}"` : "");
-
-const formatCsvDate = (iso: string): string => {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
-
-const CSV_REGION_LABELS: Record<string, string> = {
-  VL: "Flandre (VL)",
-  WA: "Wallonie (WA)",
-};
-
 export const LeadsPage: React.FC = () => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,6 +48,7 @@ export const LeadsPage: React.FC = () => {
   const [selectedLead, setSelectedLead] = useState<LeadSummary | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const {
     data: leadsData,
@@ -131,59 +108,12 @@ export const LeadsPage: React.FC = () => {
     toast.success(t("leads.copyEanToast") || "Code EAN copié dans le presse-papier");
   };
 
-  const handleExportCsv = () => {
+  const handleOpenExport = () => {
     if (!filteredData.length) {
-      toast.error("Aucun prospect à exporter.");
+      toast.error(t("leads.noDataExport") || "Aucun prospect à exporter.");
       return;
     }
-
-    const headers = [
-      "Identifiant",
-      "Nom",
-      "Prénom",
-      "Email",
-      "Téléphone",
-      "Statut",
-      "Région",
-      "Gestionnaire de réseau",
-      "Fournisseur actuel",
-      "Code EAN",
-      "Date de création",
-    ];
-    const rows = filteredData.map((lead) => {
-      const isOpt = lead.status === "OPT_OUT";
-      const region = resolveRegion(lead);
-      return [
-        lead.id,
-        isOpt ? "RGPD_PURGED" : sanitizeCsvField(lead.last_name || ""),
-        isOpt ? "RGPD_PURGED" : sanitizeCsvField(lead.first_name || ""),
-        isOpt ? "" : sanitizeCsvField(lead.email || ""),
-        isOpt ? "" : sanitizeCsvField(lead.phone || ""),
-        t(`status.${lead.status}`, { defaultValue: lead.status }),
-        CSV_REGION_LABELS[region] || region,
-        resolveGrd(lead),
-        sanitizeCsvField(lead.current_supplier || ""),
-        isOpt ? "" : forceExcelText(lead.ean || ""),
-        formatCsvDate(lead.created_at),
-        // Excel/Sheets on a fr-BE locale default to ";" as the field
-        // separator when a .csv is double-clicked, not ",". Using "," here
-        // (as before) made every value collapse into column A on open.
-      ].map((val) => `"${String(val).replace(/"/g, '""')}"`).join(";");
-    });
-
-    const csvContent = [headers.join(";"), ...rows].join("\r\n");
-    // Leading BOM: without it, Excel on Windows reads the file with the
-    // system ANSI codepage instead of UTF-8 and every accented character
-    // (é, è, à in names and headers) turns to mojibake on open.
-    const blob = new Blob(['\uFEFF' + csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `leads-export-${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success(t("toast.exportedCsv") || "Export CSV généré avec succès");
+    setIsExportModalOpen(true);
   };
 
   // Define Columns
@@ -346,9 +276,9 @@ export const LeadsPage: React.FC = () => {
             <UploadCloud className="w-3.5 h-3.5 mr-1" />
             <span>{t("leads.importCsv") || "Importer CSV"}</span>
           </Button>
-          <Button variant="secondary" size="sm" onClick={handleExportCsv} className="text-xs">
+          <Button variant="secondary" size="sm" onClick={handleOpenExport} className="text-xs">
             <Download className="w-3.5 h-3.5 mr-1" />
-            <span>{t("leads.exportCsv")}</span>
+            <span>{t("leads.exportCsv") || "Exporter"}</span>
           </Button>
           <Button size="sm" onClick={() => setIsAddModalOpen(true)} className="text-xs">
             <UserPlus className="w-3.5 h-3.5 mr-1" />
@@ -572,6 +502,22 @@ export const LeadsPage: React.FC = () => {
         onClose={() => setIsCsvModalOpen(false)}
         onSuccess={() => {
           refetch();
+        }}
+      />
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        title="Exporter les prospects CRM"
+        subtitle="Téléchargez la liste filtrée au format Excel stylisé ou CSV optimisé pour tableur."
+        itemCount={filteredData.length}
+        itemLabel="prospects"
+        onExportExcel={() => {
+          exportLeadsToExcel(filteredData);
+          toast.success("Tableur Excel stylisé téléchargé !");
+        }}
+        onExportCsv={() => {
+          exportLeadsToCsv(filteredData);
+          toast.success("Fichier CSV optimisé téléchargé !");
         }}
       />
     </div>

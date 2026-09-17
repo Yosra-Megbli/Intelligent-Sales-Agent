@@ -72,6 +72,7 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 - **Frontend Phase 1 + login redesign:** navy/teal/lavender (oklch), full fr/nl/en i18n, dark mode.
 - **RAG v2 (Phases 1-4):** Phase 1 schema & ingestion (migration `0011`), Phase 2 retrieval + relevance gate + refusal + citation validator, Phase 3 obsolescence (ZEN W3 pattern, auto-archive, duplicate warning), Phase 4 Admin API + UI ("Base de Connaissances" screen with documents table, upload zone, tester QA box, obsolescence alerts, stats).
 - **Sprint 5 (Live Cockpit SSE):** C1 backend broker (`InProcessAsyncBroker`, Redis pub/sub seam), signed HMAC token (`/api/live/token`), `/api/live/stream`, rate-limiter, emission hooks; C2 frontend "Supervision Live" screen (`LiveCockpitPage.tsx`), EventSource client (`api/live.ts`), live active conversations cards, replay drawer, live in/out rate counters, 60s down detection with automatic 30s polling fallback.
+- **UI/UX High-Fidelity Exports:** `exportEngine.ts` and `ExportModal.tsx` for `LeadsPage` and `OverviewPage`. Rich SpreadsheetML Excel (`.xls`) with Ecofix branding, custom column widths (no `##########` truncation), colored status badges, and zebra rows; alongside clean CSV with UTF-8 BOM, text-guarded dates/EANs (`="val"`), OWASP injection protection, and sales-first column ordering.
 
 ### Known gaps (never claim "done")
 
