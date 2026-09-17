@@ -42,10 +42,12 @@ from ai.providers.embeddings.interface import (
     EmbeddingRateLimitError,
 )
 
+_genai_import_error: Optional[str] = None
 try:
     import google.generativeai as genai
-except ImportError:  # pragma: no cover - exercised via injected `client=` in tests
+except Exception as _exc:  # pragma: no cover - exercised via injected `client=` in tests
     genai = None  # type: ignore[assignment]
+    _genai_import_error = f"{type(_exc).__name__}: {_exc}"
 
 DEFAULT_MODEL = "models/gemini-embedding-001"
 DIMENSIONS = 768
@@ -82,8 +84,9 @@ class GoogleEmbeddingProvider(EmbeddingProvider):
         if not api_key:
             raise EmbeddingAuthenticationError("GOOGLE_AI_API_KEY is not set")
         if genai is None:
+            details = f" ({_genai_import_error})" if _genai_import_error else ""
             raise EmbeddingError(
-                "the 'google-generativeai' package is not installed - run: pip install google-generativeai"
+                f"the 'google-generativeai' package is not installed{details} - run: pip install google-generativeai"
             )
         genai.configure(api_key=api_key)
         self._client = genai
