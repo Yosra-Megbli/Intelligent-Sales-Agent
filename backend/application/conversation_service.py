@@ -123,6 +123,7 @@ class ConversationResponse:
     state: str
     required_action: Optional[str]
     engine_result: EngineResult
+    rate_limited: bool = False
 
 
 class ConversationService:
@@ -409,11 +410,17 @@ class ConversationService:
             to_state=conversation.current_state.value,
         )
 
+        was_rate_limited = bool(
+            (self.extractor and getattr(self.extractor, "was_rate_limited", False))
+            or (self.responder and getattr(self.responder, "was_rate_limited", False))
+        )
+
         return ConversationResponse(
             response_text=response_text,
             state=conversation.current_state.value,
             required_action=result.required_action,
             engine_result=result,
+            rate_limited=was_rate_limited,
         )
 
     def _emit_live_turn(

@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   RotateCcw,
   Archive,
+  Sliders,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -91,6 +92,7 @@ export const KnowledgePage: React.FC = () => {
     chunks: TestQueryChunk[];
     would_refuse: boolean;
   } | null>(null);
+  const [customThreshold, setCustomThreshold] = useState<number>(0.30);
 
   // Queries
   const { data: v1Data, isLoading: isV1Loading } = useQuery({
@@ -611,6 +613,46 @@ export const KnowledgePage: React.FC = () => {
               "Vérifiez exactement ce que Sophie extrait pour une question sans appel LLM."}
           </p>
 
+          {/* Dynamic Sensitivity Slider */}
+          <div className="p-3.5 rounded-xl border border-[var(--border)] bg-[var(--surface-hover)]/60 space-y-2.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+              <span className="font-semibold text-[var(--ink)] flex items-center gap-1.5">
+                <Sliders className="w-3.5 h-3.5 text-[var(--color-teal)]" />
+                Seuil de pertinence documentaire (RAG_MIN_SIMILARITY) :
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-bold px-2 py-0.5 rounded bg-[var(--surface)] border border-[var(--border)] text-[var(--color-teal)] text-xs">
+                  {customThreshold.toFixed(2)}
+                </span>
+                <span className="text-[10px] font-semibold">
+                  {customThreshold < 0.25 ? (
+                    <span className="text-amber-600 dark:text-amber-400">⚠️ Permissif (Risque de faux positifs)</span>
+                  ) : customThreshold <= 0.35 ? (
+                    <span className="text-emerald-600 dark:text-emerald-400">✓ Équilibré (Recommandé Sophie)</span>
+                  ) : (
+                    <span className="text-blue-600 dark:text-blue-400">🛡️ Strict (Refus légal sécurisé)</span>
+                  )}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono text-[var(--ink-muted)]">0.15 (Permissif)</span>
+              <input
+                type="range"
+                min="0.15"
+                max="0.60"
+                step="0.01"
+                value={customThreshold}
+                onChange={(e) => setCustomThreshold(parseFloat(e.target.value))}
+                className="flex-1 accent-[var(--color-teal)] cursor-pointer h-1.5 bg-[var(--border)] rounded-lg"
+              />
+              <span className="text-[10px] font-mono text-[var(--ink-muted)]">0.60 (Strict)</span>
+            </div>
+            <p className="text-[10px] text-[var(--ink-muted)] leading-normal">
+              Ajustez ce seuil en fonction des questions réelles des prospects pour équilibrer la précision des réponses documentées et le refus sécurisé sans hallucination.
+            </p>
+          </div>
+
           <div className="flex items-center gap-2">
             <input
               value={testQueryText}
@@ -649,38 +691,72 @@ export const KnowledgePage: React.FC = () => {
 
           {/* QA Test Result panel */}
           {testResults && (
-            <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface-hover)]/40 space-y-3 max-h-[300px] overflow-y-auto">
-              {testResults.would_refuse ? (
-                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs flex items-center gap-2 font-medium">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <span>{t("knowledgePage.testWouldRefuse") || "Refus Sophie (aucun segment n'atteint le seuil de pertinence)"}</span>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="text-xs font-semibold text-[var(--color-teal)] flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>{testResults.chunks.length} segments documentaires extraits :</span>
-                  </div>
-                  {testResults.chunks.map((m, idx) => (
-                    <div
-                      key={idx}
-                      className="p-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-xs space-y-1"
-                    >
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-semibold text-[var(--ink)]">
-                          [SOURCE {idx + 1}] {m.document_title} (v{m.version})
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded bg-[var(--color-teal)]/10 text-[var(--color-teal)] font-bold">
-                          score : {m.score.toFixed(4)}
+            <div className="p-4 rounded-xl border border-[var(--border)] bg-[var(--surface-hover)]/40 space-y-3 max-h-[350px] overflow-y-auto">
+              {(() => {
+                const eligibleChunks = testResults.chunks.filter((c) => c.score >= customThreshold);
+                const wouldRefuseSimulated = eligibleChunks.length === 0;
+
+                return (
+                  <>
+                    {wouldRefuseSimulated ? (
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-500 text-xs flex items-center gap-2 font-medium">
+                        <AlertTriangle className="w-4 h-4 shrink-0" />
+                        <span>
+                          {t("knowledgePage.testWouldRefuse") ||
+                            `Refus Sophie (aucun segment n'atteint le seuil calibré de ${customThreshold.toFixed(2)})`}
                         </span>
                       </div>
-                      <p className="text-[var(--ink-muted)] text-[11px] leading-relaxed line-clamp-3">
-                        {m.content_preview}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="text-xs font-semibold text-[var(--color-teal)] flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>{eligibleChunks.length} segment(s) documentaire(s) retenu(s) (score ≥ {customThreshold.toFixed(2)}) :</span>
+                          </span>
+                          {testResults.chunks.length > eligibleChunks.length && (
+                            <span className="text-[10px] text-[var(--ink-muted)] font-normal">
+                              ({testResults.chunks.length - eligibleChunks.length} segment(s) sous le seuil)
+                            </span>
+                          )}
+                        </div>
+                        {testResults.chunks.map((m, idx) => {
+                          const isAccepted = m.score >= customThreshold;
+                          return (
+                            <div
+                              key={idx}
+                              className={`p-2.5 rounded-lg border text-xs space-y-1 transition-smooth ${
+                                isAccepted
+                                  ? "border-[var(--color-teal-soft-border)] bg-[var(--surface)] shadow-2xs"
+                                  : "border-[var(--border)] bg-[var(--surface-hover)]/40 opacity-60"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-semibold text-[var(--ink)]">
+                                  [SOURCE {idx + 1}] {m.document_title} (v{m.version})
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className={`px-1.5 py-0.5 rounded font-mono font-bold text-[10px] ${
+                                      isAccepted
+                                        ? "bg-[var(--color-teal)]/10 text-[var(--color-teal)]"
+                                        : "bg-rose-500/10 text-rose-500"
+                                    }`}
+                                  >
+                                    score : {m.score.toFixed(4)} {isAccepted ? "✓ Retenu" : "✗ Sous seuil"}
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-[var(--ink-muted)] text-[11px] leading-relaxed line-clamp-3">
+                                {m.content_preview}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>

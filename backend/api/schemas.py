@@ -36,6 +36,7 @@ class SendMessageResponse(BaseModel):
     reply: Optional[str]
     state: str
     required_action: Optional[str]
+    rate_limited: bool = False
 
 
 class MessageOut(BaseModel):

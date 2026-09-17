@@ -239,6 +239,15 @@ class ContractService:
             )
             self._send_signed_confirmation(lead)
 
+            # Regenerate PDF with the official certified signed stamp
+            try:
+                STORAGE_DIR.mkdir(parents=True, exist_ok=True)
+                pdf_path = STORAGE_DIR / f"contract_{contract.id}.pdf"
+                generate_contract_pdf(lead, contract, output_path=str(pdf_path))
+                self.contract_repo.update_pdf_path(contract, str(pdf_path))
+            except Exception as exc:
+                logger.warning("Could not regenerate signed contract PDF: %s", exc)
+
         self.db.commit()
         return contract
 

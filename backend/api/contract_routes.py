@@ -53,6 +53,10 @@ class ContractResponse(BaseModel):
     digi_subscribed: bool = False
     yousign_status: Optional[str] = None
     yousign_label: Optional[str] = None
+    lead_name: Optional[str] = None
+    lead_email: Optional[str] = None
+    lead_phone: Optional[str] = None
+    lead_region: Optional[str] = None
 
 
 class ContractListResponse(BaseModel):
@@ -61,6 +65,18 @@ class ContractListResponse(BaseModel):
 
 
 def _serialize_contract(c: Any, base_url: str = "") -> ContractResponse:
+    lead = getattr(c, "lead", None)
+    lead_name = None
+    lead_email = None
+    lead_phone = None
+    lead_region = None
+    if lead:
+        full_name = f"{lead.first_name or ''} {lead.last_name or ''}".strip()
+        lead_name = full_name if full_name else "Prospect sans nom"
+        lead_email = lead.email
+        lead_phone = lead.phone
+        lead_region = lead.region
+
     return ContractResponse(
         id=str(c.id),
         lead_id=str(c.lead_id),
@@ -74,6 +90,10 @@ def _serialize_contract(c: Any, base_url: str = "") -> ContractResponse:
         updated_at=c.updated_at.isoformat() if c.updated_at else "",
         signed_at=c.signed_at.isoformat() if c.signed_at else None,
         withdrawn_at=c.withdrawn_at.isoformat() if c.withdrawn_at else None,
+        lead_name=lead_name,
+        lead_email=lead_email,
+        lead_phone=lead_phone,
+        lead_region=lead_region,
     )
 
 

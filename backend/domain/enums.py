@@ -157,4 +157,5 @@ class CampaignStatus(str, Enum):
     RUNNING = "RUNNING"
     PAUSED = "PAUSED"
     COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
 

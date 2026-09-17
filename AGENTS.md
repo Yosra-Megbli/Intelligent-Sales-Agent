@@ -52,11 +52,11 @@ Verified against the Sept 2026 tariff card on 2026-09-16. **Tariff cards change 
 
 ## Tests & CI
 
-897 tests green (`tests/` + `golden_tests/`, including `scenarios/conversations.yaml`). Separate real-LLM eval against Groq (`golden_tests/run_real_llm_eval.py`) — never collected by pytest, never gating.
+898 tests green (`tests/` + `golden_tests/`, including `scenarios/conversations.yaml`). Separate real-LLM eval against Groq (`golden_tests/run_real_llm_eval.py`) — never collected by pytest, never gating.
 
 CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus the frontend build on every push/PR to main. The real-LLM eval is `workflow_dispatch` opt-in.
 
-**Migration trap:** tests build the schema with `Base.metadata.create_all()` on SQLite in-memory, and `migration_runner.py` skips SQL migrations on any non-postgresql dialect. A broken `.sql` migration therefore passes CI green and fails at boot on Render. Any new table needs BOTH a SQLAlchemy model AND a SQL migration, kept consistent by hand — a static coherence test (column names cross-checked between the model and the `.sql` file) is the pattern to reuse; see `tests/test_rag_v2_migration_coherence.py` and `tests/test_activity_type_migration_coherence.py`. Next migration number is **0015** (`0013` and `0014` are used for `CITATION_STRIPPED` and contract `activity_type` enum values respectively).
+**Migration trap:** tests build the schema with `Base.metadata.create_all()` on SQLite in-memory, and `migration_runner.py` skips SQL migrations on any non-postgresql dialect. A broken `.sql` migration therefore passes CI green and fails at boot on Render. Any new table needs BOTH a SQLAlchemy model AND a SQL migration, kept consistent by hand — a static coherence test (column names cross-checked between the model and the `.sql` file) is the pattern to reuse; see `tests/test_rag_v2_migration_coherence.py`, `tests/test_activity_type_migration_coherence.py`, and `tests/test_campaign_status_migration_coherence.py`. Next migration number is **0016** (`0015` is used for `CampaignStatus.CANCELLED`).
 
 ## Status
 
@@ -73,13 +73,17 @@ CI: `.github/workflows/ci.yml` runs the suite on a Python 3.11/3.12 matrix plus 
 - **RAG v2 (Phases 1-4):** Phase 1 schema & ingestion (migration `0011`), Phase 2 retrieval + relevance gate + refusal + citation validator, Phase 3 obsolescence (ZEN W3 pattern, auto-archive, duplicate warning), Phase 4 Admin API + UI ("Base de Connaissances" screen with documents table, upload zone, tester QA box, obsolescence alerts, stats).
 - **Sprint 5 (Live Cockpit SSE):** C1 backend broker (`InProcessAsyncBroker`, Redis pub/sub seam), signed HMAC token (`/api/live/token`), `/api/live/stream`, rate-limiter, emission hooks; C2 frontend "Supervision Live" screen (`LiveCockpitPage.tsx`), EventSource client (`api/live.ts`), live active conversations cards, replay drawer, live in/out rate counters, 60s down detection with automatic 30s polling fallback.
 - **UI/UX High-Fidelity Exports:** `exportEngine.ts` and `ExportModal.tsx` for `LeadsPage` and `OverviewPage`. Rich SpreadsheetML Excel (`.xls`) with Ecofix branding, custom column widths (no `##########` truncation), colored status badges, and zebra rows; alongside clean CSV with UTF-8 BOM, text-guarded dates/EANs (`="val"`), OWASP injection protection, and sales-first column ordering.
+- **Sprint 6 (Contracts, Campaigns & AI Resiliency):**
+  - AI Rate Limit / Quota notification: `was_rate_limited` captured across Groq/Google AI (429 errors) and surfaced to user via toast and chat fallback alert.
+  - Dedicated "Contrats & Ventes" screen (`/contracts`): 5 sales KPIs (Total, Signés, En Attente, Taux de signature, ARR), search & status filters, contracts table, PDF download, and single-click signature simulation with certified eIDAS stamp and cryptographic SHA-256 hash.
+  - Campaign `CANCELLED` status & backend enum: migration `0015_add_campaign_status_cancelled.sql`, coherence test, `POST /api/campaigns/{id}/cancel`, and frontend cancel button with confirmation.
+  - Advanced 3-Step Campaign Wizard: Step 1 Info & Channel, Step 2 multi-mode targeting (Geographic rule, CRM checkbox lead selection, or dedicated CSV upload with validation), Step 3 recap & AI Act disclosure preview.
+  - RAG v2 Sensitivity Slider (`RAG_MIN_SIMILARITY`): interactive calibration gauge in the Knowledge Base QA transparency box to test precision vs. refusal trade-offs.
 
 ### Known gaps (never claim "done")
 
 - WhatsApp and Voice are built but NOT activated (API keys missing).
-- Yousign is sandbox-only; no real e-signature production key.
-- `RAG_MIN_SIMILARITY` calibration on real prospect queries (default 0.30).
-- Campaigns admin screen is real (list, create, two-step launch, pause/resume) but scoped down from the original vision: no lead multi-select/CSV-import wizard, no cancel.
+- Yousign is sandbox-only; no real e-signature production key (simulation & eIDAS badge available).
 - NL copy has never been field-tested.
 
 ## Knowledge & RAG

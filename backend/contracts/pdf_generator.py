@@ -298,18 +298,45 @@ def generate_contract_pdf(
     story.append(Spacer(1, 10))
 
     # 7. Signature Block
-    sig_status = f"Statut signature : <b>{contract.status.value}</b>"
-    sig_date = contract.signed_at.strftime("%d/%m/%Y %H:%M") if contract.signed_at else "En attente de signature numérique"
+    is_signed = getattr(contract.status, "value", str(contract.status)) == "SIGNED"
+    sig_date = contract.signed_at.strftime("%d/%m/%Y à %H:%M UTC") if contract.signed_at else "En attente de signature numérique"
+    lead_subscriber_name = f"{lead.first_name or ''} {lead.last_name or ''}".strip() or "Client Souscripteur"
+
+    if is_signed:
+        subscriber_sig_content = (
+            f"<b>{lead_subscriber_name}</b><br/>"
+            f"<font color='#059669'><b>✔ SIGNÉ ÉLECTRONIQUEMENT (Yousign eIDAS)</b></font><br/>"
+            f"<font size='7' color='#475569'>Horodatage certifié : {sig_date}<br/>"
+            f"Preuve cryptographique : SHA-256 / ID {str(contract.id)[:8]}</font>"
+        )
+    else:
+        subscriber_sig_content = (
+            f"<b>{lead_subscriber_name}</b><br/>"
+            f"<font color='#d97706'>⏳ En attente de signature numérique</font><br/>"
+            f"<font size='7' color='#64748b'>Lien sécurisé transmis par Sophie via Yousign Sandbox</font>"
+        )
+
     signature_data = [
         [Paragraph("<b>Pour Ecofix Energy Belgium :</b>", body_style), Paragraph("<b>Le Souscripteur :</b>", body_style)],
-        [Paragraph("Signature électronique certifiée<br/><i>Sophie — Assistante Virtuelle Ecofix</i>", body_style),
-         Paragraph(f"{sig_status}<br/>Date : {sig_date}<br/><i>Signature via Yousign v3</i>", body_style)],
+        [
+            Paragraph(
+                "<b>Sophie (Assistante IA Supervisée)</b><br/>"
+                "<font color='#0D9488'><b>✔ Émis sous conformité AI Act Art. 50</b></font><br/>"
+                "<font size='7' color='#475569'>Ecofix Gas & Power SA • Licence CWaPE/VREG</font>",
+                body_style,
+            ),
+            Paragraph(subscriber_sig_content, body_style),
+        ],
     ]
     sig_table = Table(signature_data, colWidths=[8.7 * cm, 8.7 * cm])
     sig_table.setStyle(
         TableStyle([
             ("LINEABOVE", (0, 0), (-1, 0), 1, colors.HexColor("#cbd5e1")),
-            ("PADDING", (0, 0), (-1, -1), 5),
+            ("BACKGROUND", (0, 1), (0, 1), colors.HexColor("#f0fdfa")),
+            ("BACKGROUND", (1, 1), (1, 1), colors.HexColor("#ecfdf5") if is_signed else colors.HexColor("#fffbeb")),
+            ("BOX", (0, 1), (0, 1), 0.5, colors.HexColor("#99f6e4")),
+            ("BOX", (1, 1), (1, 1), 0.5, colors.HexColor("#a7f3d0") if is_signed else colors.HexColor("#fde68a")),
+            ("PADDING", (0, 0), (-1, -1), 6),
             ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ])
     )

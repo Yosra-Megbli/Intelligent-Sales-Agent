@@ -99,15 +99,15 @@ def _fallback_for(required_action: str, rejection_reason: Optional[str], languag
 class Responder:
     """Wraps an `LLMProvider` to turn a `required_action` into a sentence.
 
-    Usage: `Responder(provider).respond("ASK_EAN", conversation=conversation)`.
-    `provider` may be `None` (or omitted) to always use the fixed fallback
-    text - useful for tests or a degraded-mode deployment with no LLM
-    configured.
+    Usage: `Responder(provider).respond(required_action, conversation)`.
+    Without a provider (or when the LLM call fails), returns a hardcoded
+    fallback sentence so Sophie can always reply.
     """
 
     def __init__(self, provider: Optional[LLMProvider] = None):
         self._provider = provider
         self.last_guard_violation: Optional[str] = None
+        self.was_rate_limited: bool = False
 
     def respond(
         self,
@@ -187,6 +187,7 @@ class Responder:
         fallback: str,
         required_action: Optional[str] = None,
     ) -> str:
+        self.was_rate_limited = False
         if self._provider is None:
             return fallback
 
@@ -195,7 +196,9 @@ class Responder:
         messages = [LLMMessage(role=LLMRole.SYSTEM, content=system_prompt)]
         try:
             response = self._provider.generate(messages, temperature=0.7, json_mode=False)
-        except LLMError:
+        except LLMError as exc:
+            if type(exc).__name__ == "LLMRateLimitError" or "rate" in str(exc).lower() or "429" in str(exc):
+                self.was_rate_limited = True
             return fallback
 
         text = (response.content or "").strip()

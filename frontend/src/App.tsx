@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { LoginScreen } from "@/components/auth/LoginScreen";
 import { OverviewPage } from "@/pages/OverviewPage";
 import { LeadsPage } from "@/pages/LeadsPage";
+import { ContractsPage } from "@/pages/ContractsPage";
 import { ConversationsPage } from "@/pages/ConversationsPage";
 import { CampaignsPage } from "@/pages/CampaignsPage";
 import { CompliancePage } from "@/pages/CompliancePage";
@@ -50,6 +51,7 @@ const DashboardContent: React.FC = () => {
     <AppShell currentTab={currentTab} onTabChange={setCurrentTab}>
       {currentTab === "overview" && <OverviewPage />}
       {currentTab === "leads" && <LeadsPage />}
+      {currentTab === "contracts" && <ContractsPage />}
       {currentTab === "conversations" && <ConversationsPage />}
       {currentTab === "chat" && <ChatSimulatorPage />}
       {currentTab === "handoffs" && <HandoffsPage />}

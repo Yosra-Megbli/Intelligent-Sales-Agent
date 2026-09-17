@@ -12,9 +12,10 @@ import {
   ShieldCheck,
   Send,
   Lock,
-  PhoneCall,
   CheckCircle,
   RotateCcw,
+  AlertTriangle,
+  PhoneCall,
 } from "lucide-react";
 
 export const HandoffsPage: React.FC = () => {
@@ -125,7 +126,13 @@ export const ChatSimulatorPage: React.FC = () => {
   const [isSending, setIsSending] = useState<boolean>(false);
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState<
-    Array<{ role: "assistant" | "user"; text: string; state?: string; action?: string | null }>
+    Array<{
+      role: "user" | "assistant";
+      text: string;
+      state?: string;
+      action?: string | null;
+      rate_limited?: boolean;
+    }>
   >([
     {
       role: "assistant",
@@ -190,6 +197,13 @@ export const ChatSimulatorPage: React.FC = () => {
       setCurrentState(res.state);
       setLastAction(res.required_action);
 
+      if (res.rate_limited) {
+        toast.warning(
+          "Quota de requêtes IA temporairement saturé : Sophie utilise les réponses certifiées de repli (Mode Haute Disponibilité).",
+          { duration: 6000 }
+        );
+      }
+
       setMessages((prev) => [
         ...prev,
         {
@@ -199,6 +213,7 @@ export const ChatSimulatorPage: React.FC = () => {
             "Merci pour votre réponse. Un conseiller humain reste à votre disposition.",
           state: res.state,
           action: res.required_action,
+          rate_limited: res.rate_limited,
         },
       ]);
     } catch (err: unknown) {
@@ -278,6 +293,12 @@ export const ChatSimulatorPage: React.FC = () => {
                 <div className="flex items-center gap-1.5 mt-1 px-1 text-[10px] font-mono text-[var(--ink-subtle)]">
                   <span>État : {m.state}</span>
                   {m.action && <span>• Action : {m.action}</span>}
+                </div>
+              )}
+              {m.rate_limited && (
+                <div className="flex items-center gap-1.5 mt-1 px-2 py-1 rounded bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-[10px] text-amber-800 dark:text-amber-200 font-medium">
+                  <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                  <span>Mode Haute Disponibilité actif (Quota IA saturé)</span>
                 </div>
               )}
             </div>

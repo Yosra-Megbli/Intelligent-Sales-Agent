@@ -148,6 +148,11 @@ def resume_campaign(campaign_id: UUID, db: Session = Depends(get_db_session)) ->
     return CampaignSummary.from_model(_apply_transition(CampaignService(db).resume_campaign, campaign_id))
 
 
+@router.post("/{campaign_id}/cancel", response_model=CampaignSummary)
+def cancel_campaign(campaign_id: UUID, db: Session = Depends(get_db_session)) -> CampaignSummary:
+    return CampaignSummary.from_model(_apply_transition(CampaignService(db).cancel_campaign, campaign_id))
+
+
 def _apply_transition(action, campaign_id: UUID):
     try:
         return action(campaign_id)

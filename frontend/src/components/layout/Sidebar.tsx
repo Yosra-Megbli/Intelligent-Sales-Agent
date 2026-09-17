@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import {
   LayoutDashboard,
   Users,
+  FileCheck2,
   UserCheck,
   Megaphone,
   MessageSquare,
@@ -44,6 +45,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: "leads",
       label: t("nav.leads"),
       icon: Users,
+      isPhase2: false,
+    },
+    {
+      id: "contracts",
+      label: t("nav.contracts") || "Contrats & Ventes",
+      icon: FileCheck2,
       isPhase2: false,
     },
     {

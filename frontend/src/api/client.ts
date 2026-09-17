@@ -362,6 +362,10 @@ export class ApiClient {
     return this.request<CampaignSummary>(`/api/campaigns/${campaignId}/resume`, { method: "POST" });
   }
 
+  async cancelCampaign(campaignId: string): Promise<CampaignSummary> {
+    return this.request<CampaignSummary>(`/api/campaigns/${campaignId}/cancel`, { method: "POST" });
+  }
+
   async deleteCampaign(campaignId: string): Promise<void> {
     await this.request<void>(`/api/campaigns/${campaignId}`, { method: "DELETE" });
   }
@@ -460,8 +464,8 @@ export class ApiClient {
   async sendChatMessage(
     conversationId: string,
     text: string
-  ): Promise<{ reply: string; state: string; required_action: string | null }> {
-    return this.request<{ reply: string; state: string; required_action: string | null }>(
+  ): Promise<{ reply: string; state: string; required_action: string | null; rate_limited?: boolean }> {
+    return this.request<{ reply: string; state: string; required_action: string | null; rate_limited?: boolean }>(
       `/api/conversations/${conversationId}/messages`,
       {
         method: "POST",

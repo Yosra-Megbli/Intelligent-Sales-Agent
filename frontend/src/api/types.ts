@@ -59,6 +59,10 @@ export interface ContractSummary {
   signed_at: string | null;
   withdrawn_at: string | null;
   digi_subscribed?: boolean;
+  lead_name?: string | null;
+  lead_email?: string | null;
+  lead_phone?: string | null;
+  lead_region?: string | null;
 }
 
 export interface ContractListResponse {
@@ -161,7 +165,7 @@ export interface OverviewResponse {
 // target_rules as an object) never matched the real API at all, which is
 // how CampaignsPage.tsx ended up rendering fabricated numbers instead of
 // a real, empty response.
-export type CampaignStatus = "DRAFT" | "RUNNING" | "PAUSED" | "COMPLETED";
+export type CampaignStatus = "DRAFT" | "RUNNING" | "PAUSED" | "COMPLETED" | "CANCELLED";
 
 export interface CampaignSummary {
   id: string;

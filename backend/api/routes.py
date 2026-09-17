@@ -108,6 +108,7 @@ def send_message(
         reply=reply.response_text,
         state=reply.state,
         required_action=reply.required_action,
+        rate_limited=getattr(reply, "rate_limited", False),
     )
 
 

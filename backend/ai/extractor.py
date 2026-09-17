@@ -169,15 +169,19 @@ class Extractor:
 
     def __init__(self, provider: LLMProvider):
         self._provider = provider
+        self.was_rate_limited: bool = False
 
     def extract(self, raw_text: Optional[str], *, expected_field: Optional[str] = None) -> Event:
+        self.was_rate_limited = False
         if not raw_text or not raw_text.strip():
             return Event(type=EventType.EXTRACTION_FAILED, raw_answer_text=raw_text)
 
         messages = _build_messages(raw_text, expected_field)
         try:
             response = self._provider.generate(messages, temperature=0.0, json_mode=True)
-        except LLMError:
+        except LLMError as exc:
+            if type(exc).__name__ == "LLMRateLimitError" or "rate" in str(exc).lower() or "429" in str(exc):
+                self.was_rate_limited = True
             return Event(type=EventType.EXTRACTION_FAILED, raw_answer_text=raw_text)
 
         return _parse_response(response.content, raw_text)

@@ -241,6 +241,16 @@ class CampaignService:
         self._emit_campaign_progress(campaign_id)
         return campaign
 
+    def cancel_campaign(self, campaign_id: UUID) -> Campaign:
+        """Cancels a campaign (sets status to CANCELLED)."""
+        campaign = self._require_campaign(campaign_id)
+        if campaign.status == CampaignStatus.CANCELLED:
+            return campaign
+        self.campaign_repo.set_status(campaign, CampaignStatus.CANCELLED)
+        self.db.commit()
+        self._emit_campaign_progress(campaign_id)
+        return campaign
+
     def _emit_campaign_progress(self, campaign_id: UUID) -> None:
         try:
             import logging
