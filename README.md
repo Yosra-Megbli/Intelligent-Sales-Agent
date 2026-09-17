@@ -25,7 +25,7 @@ Le projet est **déployé en production** sur une infrastructure cloud moderne, 
 | **Healthcheck** | Endpoint public DB + Redis | [`/health`](https://intelligent-sales-agent.onrender.com/health) (`{"status":"ok"}`) |
 | **Base de données** | Neon (PostgreSQL managé + extension pgvector) | Actif, index HNSW cosinus 768d |
 | **Cache & Pub/Sub** | Upstash (Redis serverless) | Actif pour le rate limiting et le streaming SSE |
-| **Frontend** | Vercel (React 18 + Vite + TypeScript) | Déployé avec proxy API sécurisé |
+| **Frontend (Dashboard)** | Render (intégré / SPA React 18 + Vite) | [`/dashboard`](https://intelligent-sales-agent.onrender.com/dashboard) |
 | **Inférence IA** | Groq Cloud (`openai/gpt-oss-120b` / Llama 3.3) | ~300 ms de latence moyenne |
 | **Embeddings RAG** | Google AI (`models/gemini-embedding-001`, 768 dimensions) | Actif, 12 grilles tarifaires officielles publiées |
 | **Bot Telegram** | Pilote inbound multi-canal | [`@EcofixSalesBot`](https://t.me/EcofixSalesBot) (actif en direct) |
