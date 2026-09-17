@@ -96,259 +96,261 @@ export const LoginScreen: React.FC = () => {
   const currentLang = i18n.language ? i18n.language.substring(0, 2) : "fr";
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-bg text-ink font-sans antialiased selection:bg-teal/20">
-      {/* LEFT PANEL: 60% width on md+, hidden on mobile */}
-      <div
-        className="hidden md:flex md:w-[60%] flex-col justify-between p-10 lg:p-16 relative overflow-hidden text-white select-none bg-navy"
-        style={{
-          background:
-            "radial-gradient(120% 90% at 15% 10%, oklch(15% 0.045 280) 0%, oklch(15% 0.045 280) 45%, oklch(45% 0.12 185) 100%)",
-          opacity: 0.9,
-        }}
-      >
-        {/* Subtle 28px grid texture at 6% opacity */}
+    <div className="min-h-screen w-full bg-[radial-gradient(circle_at_top,_rgba(137,196,255,0.16),_rgba(255,255,255,0)_35%)] bg-bg text-ink font-sans antialiased selection:bg-teal/20">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1500px] flex-col lg:flex-row">
+        {/* LEFT PANEL: 60% width on lg+, hidden on smaller screens */}
         <div
-          className="absolute inset-0 pointer-events-none"
+          className="hidden lg:flex lg:w-[58%] flex-col justify-between relative overflow-hidden p-8 xl:p-12 text-white select-none bg-navy"
           style={{
-            backgroundImage:
-              "linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px)",
-            backgroundSize: "28px 28px",
+            background:
+              "radial-gradient(120% 90% at 15% 10%, oklch(15% 0.045 280) 0%, oklch(15% 0.045 280) 45%, oklch(45% 0.12 185) 100%)",
+            opacity: 0.95,
           }}
-        />
+        >
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px), linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
 
-        {/* Windmill motif: 3 thin white lines + center dot, bottom-right, opacity 10%, 420px */}
-        <WindmillMotif />
+          <WindmillMotif />
 
-        {/* Ambient glow decorative accent */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-teal/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-navy-soft/30 blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-teal/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-navy-soft/30 blur-3xl pointer-events-none" />
 
-        {/* Top brand header: EcofixMark + wordmark "Sophie · Ecofix" */}
-        <div className="relative z-10">
-          <div className="flex items-center gap-3.5">
-            <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md flex items-center justify-center shadow-xs">
-              <EcofixMark className="w-6 h-6 text-teal" />
-            </div>
-            <div>
-              <span className="text-2xl font-bold tracking-tight text-white block">
-                Sophie · Ecofix
-              </span>
-              <span className="text-xs text-teal font-medium tracking-wide uppercase">
-                Ecofix Belgique
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Center narrative statement */}
-        <div className="relative z-10 max-w-xl my-auto py-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-white/90 mb-6 backdrop-blur-xs">
-            <span className="w-2 h-2 rounded-full bg-teal animate-pulse" />
-            <span>Agent Commercial Déterministe</span>
-          </div>
-
-          <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
-            L'intelligence artificielle au service de la transition énergétique belge.
-          </h1>
-
-          <p className="mt-4 text-sm lg:text-base text-white/85 leading-relaxed font-normal">
-            {t("login.brandTagline")}
-          </p>
-        </div>
-
-        {/* Bottom Trust Badges: pill shape (rounded-full), bg-white/10, teal icons */}
-        <div className="relative z-10 pt-6 border-t border-white/15">
-          <p className="text-[11px] font-semibold text-white/70 uppercase tracking-wider mb-3">
-            Standards de sécurité & conformité
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Badge 1: ShieldCheck - Conforme AI Act */}
-            <div className="px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-xs text-xs font-medium text-white flex items-center gap-2 shadow-xs transition-transform duration-200 hover:scale-[1.02]">
-              <ShieldCheck className="w-4 h-4 text-teal shrink-0" />
-              <span>{t("login.badgeAiAct")}</span>
-            </div>
-
-            {/* Badge 2: Lock - RGPD by design */}
-            <div className="px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-xs text-xs font-medium text-white flex items-center gap-2 shadow-xs transition-transform duration-200 hover:scale-[1.02]">
-              <Lock className="w-4 h-4 text-teal shrink-0" />
-              <span>{t("login.badgeGdpr")}</span>
-            </div>
-
-            {/* Badge 3: Globe2 - Hébergé UE-ready */}
-            <div className="px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-xs text-xs font-medium text-white flex items-center gap-2 shadow-xs transition-transform duration-200 hover:scale-[1.02]">
-              <Globe2 className="w-4 h-4 text-teal shrink-0" />
-              <span>{t("login.badgeHosting")}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT PANEL: 40% width on md+, full width on mobile */}
-      <div className="w-full md:w-[40%] flex flex-col justify-between p-6 sm:p-8 lg:p-12 relative bg-bg min-h-screen">
-        {/* Subtle top bar for mobile brand header + theme toggle */}
-        <div className="w-full flex items-center justify-between">
-          <div className="md:hidden flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-navy border border-white/10 flex items-center justify-center">
-              <EcofixMark className="w-4 h-4 text-teal" />
-            </div>
-            <span className="font-bold text-sm text-ink tracking-tight">
-              Sophie · Ecofix
-            </span>
-          </div>
-
-          <div className="ml-auto">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="p-2 rounded-xl text-ink/70 hover:text-ink hover:bg-surface border border-transparent hover:border-[var(--border)] transition-all duration-200 cursor-pointer"
-              title={theme === "dark" ? "Mode clair" : "Mode sombre"}
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? (
-                <Sun className="w-4 h-4 text-[var(--warn-amber)]" />
-              ) : (
-                <Moon className="w-4 h-4 text-ink/70" />
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Centered 400px Card: rounded-2xl, multi-layer soft shadow */}
-        <div className="w-full max-w-[400px] mx-auto my-auto py-8">
-          <div className="bg-surface border border-[var(--border)] rounded-2xl p-7 sm:p-8 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.04),0_12px_24px_-4px_rgba(0,0,0,0.06),0_24px_48px_-12px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.45)] transition-all duration-200 relative overflow-hidden">
-            {/* Top brand accent line */}
-            <div className="absolute top-0 left-0 right-0 h-1 bg-teal" />
-
-            {/* Header */}
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-ink tracking-tight">
-                {t("login.title")}
-              </h2>
-              <p className="text-xs text-ink/70 mt-1.5 leading-relaxed">
-                {t("login.subtitle")}
-              </p>
-            </div>
-
-            {/* Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="relative z-10">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md flex items-center justify-center shadow-xs">
+                <EcofixMark className="w-6 h-6 text-teal" />
+              </div>
               <div>
-                <label className="block text-xs font-semibold text-ink mb-1.5">
-                  {t("login.labelApiKey")}
-                </label>
-                <div
-                  className={`relative flex items-center rounded-2xl transition-all duration-200 focus-within:ring-3 focus-within:ring-teal/40 ${
-                    errorMessage
-                      ? "ring-2 ring-danger/20"
-                      : ""
-                  }`}
-                >
-                  <KeyRound className="w-4 h-4 text-ink/40 absolute left-3.5 pointer-events-none" />
-                  <input
-                    type="password"
-                    value={apiKeyInput}
-                    onChange={(e) => {
-                      setApiKeyInput(e.target.value);
-                      if (errorMessage) setErrorMessage(null);
-                    }}
-                    placeholder={t("login.placeholderApiKey")}
-                    className={`w-full pl-10 pr-3.5 py-2.5 text-xs sm:text-sm font-mono rounded-2xl border bg-surface text-ink placeholder:text-ink/40 focus:outline-none transition-all duration-200 ${
-                      errorMessage
-                        ? "border-danger"
-                        : "border-[var(--border)] focus:border-teal"
-                    }`}
-                    autoFocus
-                    autoComplete="current-password"
-                  />
-                </div>
+                <span className="text-2xl font-bold tracking-tight text-white block">
+                  Sophie · Ecofix
+                </span>
+                <span className="text-xs text-teal font-medium tracking-wide uppercase">
+                  Ecofix Belgique
+                </span>
+              </div>
+            </div>
+          </div>
 
-                {/* Inline Error State with Danger Border */}
-                {errorMessage && (
-                  <div className="flex items-center gap-2 mt-2.5 p-2.5 rounded-xl bg-danger/10 border border-danger/30 text-xs text-danger font-medium animate-in fade-in duration-200">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{errorMessage}</span>
-                  </div>
-                )}
+          <div className="relative z-10 max-w-xl py-12">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-white/90 mb-6 backdrop-blur-xs">
+              <span className="w-2 h-2 rounded-full bg-teal animate-pulse" />
+              <span>Agent Commercial Déterministe</span>
+            </div>
+
+            <h1 className="text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-tight">
+              L'intelligence artificielle au service de la transition énergétique belge.
+            </h1>
+
+            <p className="mt-4 text-sm xl:text-base text-white/85 leading-relaxed font-normal">
+              {t("login.brandTagline")}
+            </p>
+          </div>
+
+          <div className="relative z-10 pt-6 border-t border-white/15">
+            <p className="text-[11px] font-semibold text-white/70 uppercase tracking-wider mb-3">
+              Standards de sécurité & conformité
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-xs text-xs font-medium text-white flex items-center gap-2 shadow-xs">
+                <ShieldCheck className="w-4 h-4 text-teal shrink-0" />
+                <span>{t("login.badgeAiAct")}</span>
               </div>
 
-              {/* CTA: rounded-full bg-lavender text-lavender-ink font-semibold, hover:bg-lavender-hover */}
+              <div className="px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-xs text-xs font-medium text-white flex items-center gap-2 shadow-xs">
+                <Lock className="w-4 h-4 text-teal shrink-0" />
+                <span>{t("login.badgeGdpr")}</span>
+              </div>
+
+              <div className="px-4 py-2 rounded-full bg-white/10 border border-white/20 backdrop-blur-xs text-xs font-medium text-white flex items-center gap-2 shadow-xs">
+                <Globe2 className="w-4 h-4 text-teal shrink-0" />
+                <span>{t("login.badgeHosting")}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT PANEL: form area */}
+        <div className="flex w-full flex-1 items-center justify-center bg-bg px-4 py-5 sm:px-6 sm:py-8 lg:w-[42%] lg:px-8 xl:px-12">
+          <div className="w-full max-w-[440px]">
+            <div className="mb-5 flex items-center justify-between gap-3 lg:hidden">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-navy border border-white/10 shadow-sm">
+                  <EcofixMark className="h-4 w-4 text-teal" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold tracking-tight text-ink">Sophie · Ecofix</div>
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-ink/50">Ecofix Belgique</div>
+                </div>
+              </div>
+
               <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full mt-2 py-2.5 px-4 rounded-full bg-lavender hover:bg-lavender-hover text-lavender-ink text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition-all duration-200 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed group active:scale-[0.99]"
+                type="button"
+                onClick={toggleTheme}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-surface text-ink/70 transition hover:border-[var(--border-hover)] hover:text-ink"
+                title={theme === "dark" ? "Mode clair" : "Mode sombre"}
+                aria-label="Toggle theme"
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin shrink-0 text-lavender-ink" />
-                    <span>{t("login.submitting")}</span>
-                  </>
+                {theme === "dark" ? (
+                  <Sun className="w-4 h-4 text-[var(--warn-amber)]" />
                 ) : (
-                  <>
-                    <span>{t("login.submit")}</span>
-                    <ArrowRight className="w-4 h-4 shrink-0 text-lavender-ink transition-transform duration-200 group-hover:translate-x-0.5" />
-                  </>
+                  <Moon className="w-4 h-4 text-ink/70" />
                 )}
               </button>
-            </form>
+            </div>
 
-            {/* Optional Demo Key helper (if VITE_DEMO_API_KEY is configured) */}
-            {demoApiKey && (
-              <>
-                <div className="flex items-center my-4 text-xs text-ink/40">
-                  <div className="flex-1 border-t border-[var(--border)]" />
-                  <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-ink/40">
-                    {t("login.or")}
-                  </span>
-                  <div className="flex-1 border-t border-[var(--border)]" />
+            <div className="rounded-[28px] border border-[var(--border)] bg-surface p-5 shadow-[0_8px_32px_rgba(15,23,42,0.08)] sm:p-7 lg:p-8">
+              <div className="mb-6 hidden items-center justify-between lg:flex">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-navy/95 shadow-sm">
+                    <EcofixMark className="h-5 w-5 text-teal" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold tracking-tight text-ink">Sophie AI</div>
+                    <div className="text-[10px] uppercase tracking-[0.12em] text-ink/50">Console sécurisée</div>
+                  </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={handleFillDemo}
-                  className="w-full text-xs font-medium text-teal-dim hover:text-teal bg-teal/10 hover:bg-teal/15 py-2 px-3 rounded-full border border-teal/20 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
+                  onClick={toggleTheme}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--border)] bg-surface text-ink/70 transition hover:border-[var(--border-hover)] hover:text-ink"
+                  title={theme === "dark" ? "Mode clair" : "Mode sombre"}
+                  aria-label="Toggle theme"
                 >
-                  <Sparkles className="w-3.5 h-3.5 shrink-0 text-teal-dim" />
-                  <span>{t("login.useDemoKey")}</span>
+                  {theme === "dark" ? (
+                    <Sun className="w-4 h-4 text-[var(--warn-amber)]" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-ink/70" />
+                  )}
                 </button>
-              </>
-            )}
-
-            {/* Footer with Language switcher + Help mailto */}
-            <div className="mt-6 pt-5 border-t border-[var(--border)] flex items-center justify-between text-xs text-ink/70">
-              {/* Pill group container: bg-ink/[0.04], active pill bg-surface + shadow-sm */}
-              <div className="flex items-center gap-1 bg-ink/[0.04] p-1 rounded-full border border-[var(--border)]/60">
-                {(["fr", "nl", "en"] as const).map((lang) => {
-                  const isActive = currentLang === lang;
-                  return (
-                    <button
-                      key={lang}
-                      type="button"
-                      onClick={() => i18n.changeLanguage(lang)}
-                      className={`px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase transition-all duration-150 cursor-pointer ${
-                        isActive
-                          ? "bg-surface text-ink shadow-sm font-bold"
-                          : "text-ink/60 hover:text-ink"
-                      }`}
-                    >
-                      {lang}
-                    </button>
-                  );
-                })}
               </div>
 
-              {/* Help Link mailto in teal-dim */}
-              <a
-                href="mailto:support@ecofix.be"
-                className="text-[11px] text-teal-dim hover:text-teal hover:underline transition-colors font-medium"
-              >
-                {t("login.helpLink")}
-              </a>
+              <div className="mb-6">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-teal/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-teal-dim border border-teal/15">
+                  <span className="h-2 w-2 rounded-full bg-teal" />
+                  {t("login.helpLink")}
+                </div>
+                <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-[2rem]">
+                  {t("login.title")}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-ink/70 sm:text-[0.95rem]">
+                  {t("login.subtitle")}
+                </p>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-ink sm:text-sm">
+                    {t("login.labelApiKey")}
+                  </label>
+                  <div
+                    className={`relative flex items-center rounded-2xl transition-all duration-200 focus-within:ring-3 focus-within:ring-teal/40 ${
+                      errorMessage ? "ring-2 ring-danger/20" : ""
+                    }`}
+                  >
+                    <KeyRound className="pointer-events-none absolute left-3.5 h-4 w-4 text-ink/40" />
+                    <input
+                      type="password"
+                      value={apiKeyInput}
+                      onChange={(e) => {
+                        setApiKeyInput(e.target.value);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      placeholder={t("login.placeholderApiKey")}
+                      className={`w-full rounded-2xl border bg-surface py-3 pl-10 pr-3.5 text-xs font-mono text-ink placeholder:text-ink/40 focus:outline-none transition-all duration-200 sm:text-sm ${
+                        errorMessage ? "border-danger" : "border-[var(--border)] focus:border-teal"
+                      }`}
+                      autoFocus
+                      autoComplete="current-password"
+                    />
+                  </div>
+
+                  {errorMessage && (
+                    <div className="mt-2.5 flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 p-2.5 text-xs font-medium text-danger animate-in fade-in duration-200">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <span>{errorMessage}</span>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="group mt-1 flex w-full items-center justify-center gap-2 rounded-full bg-lavender px-4 py-3 text-sm font-semibold text-lavender-ink shadow-xs transition hover:bg-lavender-hover disabled:cursor-not-allowed disabled:opacity-80"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin shrink-0 text-lavender-ink" />
+                      <span>{t("login.submitting")}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{t("login.submit")}</span>
+                      <ArrowRight className="h-4 w-4 shrink-0 text-lavender-ink transition-transform duration-200 group-hover:translate-x-0.5" />
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {demoApiKey && (
+                <>
+                  <div className="my-4 flex items-center gap-3 text-xs text-ink/40">
+                    <div className="h-px flex-1 bg-[var(--border)]" />
+                    <span className="px-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/40">
+                      {t("login.or")}
+                    </span>
+                    <div className="h-px flex-1 bg-[var(--border)]" />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleFillDemo}
+                    className="flex w-full items-center justify-center gap-2 rounded-full border border-teal/20 bg-teal/10 px-3 py-2.5 text-xs font-medium text-teal-dim transition hover:bg-teal/15"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 shrink-0 text-teal-dim" />
+                    <span>{t("login.useDemoKey")}</span>
+                  </button>
+                </>
+              )}
+
+              <div className="mt-6 flex items-center justify-between gap-3 border-t border-[var(--border)] pt-5 text-xs text-ink/70">
+                <div className="flex items-center gap-1 rounded-full border border-[var(--border)]/60 bg-ink/[0.04] p-1">
+                  {(["fr", "nl", "en"] as const).map((lang) => {
+                    const isActive = currentLang === lang;
+                    return (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => i18n.changeLanguage(lang)}
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase transition-all duration-150 ${
+                          isActive ? "bg-surface text-ink shadow-sm" : "text-ink/60 hover:text-ink"
+                        }`}
+                      >
+                        {lang}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <a
+                  href="mailto:support@ecofix.be"
+                  className="text-[11px] font-medium text-teal-dim transition hover:text-teal hover:underline"
+                >
+                  {t("login.helpLink")}
+                </a>
+              </div>
+            </div>
+
+            <div className="mt-4 text-center text-[11px] text-ink/40">
+              <span>© {new Date().getFullYear()} Ecofix Belgique • Sophie AI</span>
             </div>
           </div>
-        </div>
-
-        {/* Bottom subtle copyright */}
-        <div className="text-center text-[11px] text-ink/40">
-          <span>© {new Date().getFullYear()} Ecofix Belgique • Sophie AI</span>
         </div>
       </div>
     </div>
