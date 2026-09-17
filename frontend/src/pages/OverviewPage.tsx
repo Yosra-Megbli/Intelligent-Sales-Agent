@@ -53,10 +53,90 @@ export const OverviewPage: React.FC = () => {
     toast.success(t("common.refresh"));
   };
 
-  const handlePhase2Action = (featureName: string) => {
-    toast.info(t("toast.phase2Title"), {
-      description: `${featureName} : ${t("toast.phase2Desc")}`,
-    });
+  const handleExportReport = () => {
+    if (!overview && !stats) {
+      toast.error(t("common.error") || "Données indisponibles pour l'export.");
+      return;
+    }
+
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const timeStr = now.toLocaleTimeString();
+
+    // Helper functions for CSV formatting
+    const sanitize = (val: string | number | undefined | null) => {
+      if (val === undefined || val === null) return '""';
+      const s = String(val).replace(/"/g, '""');
+      // OWASP CSV formula injection guard
+      return /^[=+\-@\t\r]/.test(s) ? `"'${s}"` : `"${s}"`;
+    };
+
+    const lines: string[] = [
+      `"RAPPORT DE SUPERVISION DES PERFORMANCES - SOPHIE AI (ECOFIX BELGIQUE)";""`,
+      `"Date de génération";"${dateStr} ${timeStr}"`,
+      `"Plateforme";"Production Render Live"`,
+      `""`,
+      `"=== INDICATEURS CLÉS DE PERFORMANCE (KPI) ===";""`,
+      `"Indicateur";"Valeur"`,
+      `"Contacts Engagés";${sanitize(overview?.contacted ?? stats?.total_leads ?? 0)}`,
+      `"Conversations Actives";${sanitize(overview?.active_conversations ?? 0)}`,
+      `"Prospects Qualifiés";${sanitize(overview?.qualified ?? 0)}`,
+      `"Contrats Signés";${sanitize(overview?.signed_contracts ?? 0)}`,
+      `"Taux de Transformation";${sanitize(`${(overview?.conversion_rate ?? 0).toFixed(1)} %`)}`,
+      `"Coût d'Acquisition / Vente (CAC)";${sanitize(`${(overview?.cost_per_sale ?? 0).toFixed(2)} €`)}`,
+      `"Chiffre d'Affaires Annuel Estimé (ARR)";${sanitize(`${(overview?.estimated_ca ?? 0).toLocaleString("fr-BE", { minimumFractionDigits: 2 })} €/an`)}`,
+      `"Coût Moyen par Conversation";${sanitize(`${(overview?.cost_per_conversation ?? 0.02).toFixed(2)} €`)}`,
+      `""`,
+      `"=== ENTONNOIR DE CONVERSION COMMERCIALE ===";""`,
+      `"Étape";"Volume"`,
+      `"01 - Nouveaux Contacts";${sanitize(overview?.total_leads ?? stats?.total_leads ?? 0)}`,
+      `"02 - Engagés par Sophie";${sanitize(overview?.contacted ?? 0)}`,
+      `"03 - Qualifiés (Flexy & Motion)";${sanitize(overview?.qualified ?? 0)}`,
+      `"04 - Contrats Signés";${sanitize(overview?.signed_contracts ?? 0)}`,
+      `""`,
+    ];
+
+    if (stats?.by_status && Object.keys(stats.by_status).length > 0) {
+      lines.push(`"=== RÉPARTITION DES STATUTS CRM ===";""`);
+      lines.push(`"Statut";"Nombre de Prospects"`);
+      for (const [st, count] of Object.entries(stats.by_status)) {
+        lines.push(`${sanitize(st)};${sanitize(count)}`);
+      }
+      lines.push(`""`);
+    }
+
+    if (activities?.items && activities.items.length > 0) {
+      lines.push(`"=== FLUX D'ACTIVITÉ RÉCENT ===";""`);
+      lines.push(`"Date & Heure";"Prospect";"Type d'activité";"Détails"`);
+      for (const act of activities.items) {
+        lines.push([
+          sanitize(act.created_at ? new Date(act.created_at).toLocaleString() : ""),
+          sanitize(act.lead_name || "Prospect"),
+          sanitize(act.type || ""),
+          sanitize(act.details || ""),
+        ].join(";"));
+      }
+      lines.push(`""`);
+    }
+
+    lines.push(`"=== CONFORMITÉ & MENTIONS LÉGALES ===";""`);
+    lines.push(`"Cadre réglementaire";"Marché de l'énergie belge (CWaPE Wallonie, VREG Flandre, Brugel non desservi)"`);
+    lines.push(`"Législation";"AI Act européen • Droit de rétractation 14 jours • RGPD Privacy by Design"`);
+    lines.push(`"Mention";"SPÉCIMEN / DÉMO - DONNÉES FICTIVES DE PROSPECTS"`);
+
+    const csvContent = lines.join("\r\n");
+    // UTF-8 BOM '\uFEFF' ensures Excel on Windows displays accents without mojibake
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `rapport-performance-sophie-${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success(t("toast.exportedCsv") || "Rapport de performance exporté avec succès (CSV)");
   };
 
   const isLoading = isOverviewLoading || isStatsLoading;
@@ -88,11 +168,11 @@ export const OverviewPage: React.FC = () => {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => handlePhase2Action("Export de rapport")}
+            onClick={handleExportReport}
             className="text-xs"
           >
             <Download className="w-3.5 h-3.5 mr-1" />
-            <span>Exporter</span>
+            <span>{t("common.export") || "Exporter"}</span>
           </Button>
         </div>
       </div>
