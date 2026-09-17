@@ -449,6 +449,30 @@ export class ApiClient {
     window.URL.revokeObjectURL(blobUrl);
   }
 
+  async downloadSpecimenPdf(filename = "contrat-specimen-ecofix.pdf"): Promise<void> {
+    const apiKey = this.getApiKey();
+    const headers: Record<string, string> = {};
+    if (apiKey) {
+      headers["X-API-Key"] = apiKey;
+    }
+    const url = `${this.baseUrl.replace(/\/$/, "")}/api/contracts/specimen/pdf`;
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      // Direct static fallback
+      window.open("/contrat-specimen.pdf", "_blank");
+      return;
+    }
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(blobUrl);
+  }
+
   async startConversation(payload?: {
     first_name?: string;
     last_name?: string;

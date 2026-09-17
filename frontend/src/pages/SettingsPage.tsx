@@ -318,14 +318,22 @@ export const SettingsPage: React.FC = () => {
             )}
 
             <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-[var(--border)]">
-              <a
-                href="/contrat-specimen.pdf"
-                download="contrat-specimen-ecofix.pdf"
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    toast.info("Téléchargement du contrat spécimen en cours...");
+                    await apiClient.downloadSpecimenPdf();
+                    toast.success("Contrat spécimen téléchargé avec succès !");
+                  } catch (err: any) {
+                    toast.error(err?.message || "Erreur lors du téléchargement");
+                  }
+                }}
                 className="inline-flex items-center justify-center px-3 py-1.5 text-xs font-semibold rounded-[0.5rem] bg-lavender text-lavender-ink hover:bg-lavender-hover transition-smooth shadow-xs gap-1.5 cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>{t("settingsPage.downloadSpecimen")}</span>
-              </a>
+              </button>
             </div>
           </CardContent>
         </Card>

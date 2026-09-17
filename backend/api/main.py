@@ -167,6 +167,25 @@ if _DASHBOARD_DIR.is_dir():
 
     _dashboard_index = _DASHBOARD_DIR / "index.html"
 
+    @app.get("/contrat-specimen.pdf", include_in_schema=False)
+    @app.get("/dashboard/contrat-specimen.pdf", include_in_schema=False)
+    def download_specimen_pdf():
+        specimen_path = _DASHBOARD_DIR / "contrat-specimen.pdf"
+        if not specimen_path.exists():
+            specimen_path = Path(__file__).resolve().parent.parent.parent / "frontend" / "public" / "contrat-specimen.pdf"
+        if specimen_path.exists():
+            return FileResponse(
+                specimen_path,
+                media_type="application/pdf",
+                filename="contrat-specimen-ecofix.pdf",
+                headers={
+                    "Content-Disposition": 'attachment; filename="contrat-specimen-ecofix.pdf"',
+                    "Cache-Control": "public, max-age=3600",
+                },
+            )
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Specimen contract not found")
+
     @app.get("/dashboard", include_in_schema=False)
     @app.get("/dashboard/{full_path:path}", include_in_schema=False)
     def dashboard_spa(full_path: str = "") -> FileResponse:

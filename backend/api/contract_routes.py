@@ -18,6 +18,7 @@ from typing import Any, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -145,6 +146,26 @@ def get_contract(
     if not contract:
         raise HTTPException(status_code=404, detail=f"Contract {contract_id} not found")
     return _serialize_contract(contract)
+
+
+@router.get("/specimen/pdf")
+def get_specimen_contract_pdf():
+    """Serves the certified static specimen contract PDF."""
+    from pathlib import Path
+    dashboard_specimen = Path(__file__).resolve().parent.parent / "dashboard" / "contrat-specimen.pdf"
+    if not dashboard_specimen.exists():
+        dashboard_specimen = Path(__file__).resolve().parent.parent.parent / "frontend" / "public" / "contrat-specimen.pdf"
+    if dashboard_specimen.exists():
+        return FileResponse(
+            dashboard_specimen,
+            media_type="application/pdf",
+            filename="contrat-specimen-ecofix.pdf",
+            headers={
+                "Content-Disposition": 'attachment; filename="contrat-specimen-ecofix.pdf"',
+                "Cache-Control": "public, max-age=3600",
+            },
+        )
+    raise HTTPException(status_code=404, detail="Specimen contract not found")
 
 
 @router.get("/{contract_id}/pdf", dependencies=[Depends(require_api_key)])
