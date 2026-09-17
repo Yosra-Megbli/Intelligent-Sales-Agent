@@ -260,9 +260,20 @@ def test_get_overview_computes_headline_metrics(db_session):
     assert overview.human_handoff == 1
     assert overview.conversion_rate == 40.0  # 2 qualified / 5 total leads
     assert overview.cost_per_conversation == 0.02
-    assert overview.cost_per_sale == 0.03
-    assert overview.estimated_ca == 120.0
+    # Canonical: cost_per_sale = total_cost / signed_contracts. No contracts signed → 0.0
+    assert overview.cost_per_sale == 0.0
+    # Canonical: estimated_ca = signed_contracts * 60.0 (0 signed); fallback = qualified * 60
+    assert overview.estimated_ca == 120.0  # 2 qualified * 60.0 fallback
     assert overview.currency == "EUR"
+    # New canonical fields from MetricsService
+    assert overview.signed_contracts == 0
+    assert overview.engaged_conversations == 0  # no messages were seeded
+    # Funnel sanity check
+    assert overview.funnel["total"] == 5
+    assert overview.funnel["contacted"] == 4
+    assert overview.funnel["qualified"] == 2
+    assert overview.funnel["signed"] == 0
+    assert len(overview.funnel["stages"]) == 4
 
 
 # --- list_handoffs (P04, Handoff Queue) --------------------------------------

@@ -1,7 +1,7 @@
 import React from "react";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
 
 export interface KpiCardProps {
   title: string;
@@ -21,7 +21,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
   title,
   value,
   delta,
-  sparklineData = [10, 15, 12, 18, 20, 26, 28],
+  sparklineData,
   isLoading = false,
   prefix,
   suffix,
@@ -47,7 +47,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
         <span className="text-xs font-medium text-[var(--ink-muted)] truncate">
           {title}
         </span>
-        {sparklineData && (
+        {sparklineData && sparklineData.length > 0 && (
           <Sparkline
             data={sparklineData}
             positive={isPositive}
@@ -94,7 +94,11 @@ export const KpiCard: React.FC<KpiCardProps> = ({
           )}
         </div>
       ) : (
-        <div className="h-4" />
+        /* No invented delta: show a neutral real-time indicator */
+        <div className="flex items-center gap-1 text-[10px] text-[var(--ink-subtle)]">
+          <Activity className="w-3 h-3 text-[var(--color-teal)]" />
+          <span>Données en temps réel</span>
+        </div>
       )}
     </div>
   );

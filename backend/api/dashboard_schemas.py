@@ -9,7 +9,7 @@ and persisted - this layer only reads it back.
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -246,6 +246,8 @@ class OverviewResponse(BaseModel):
     currency: str = "EUR"
     signed_contracts: int = 0
     optional_digi_revenue: float = 0.0
+    engaged_conversations: int = 0
+    funnel: Optional[dict[str, Any]] = None
 
 
 class ConversationDetailItemResponse(BaseModel):

@@ -143,6 +143,23 @@ export interface ActivityFeedListResponse {
   items: ActivityFeedEntryResponse[];
 }
 
+export interface FunnelStage {
+  stage_id: string;
+  label_key: string;
+  count: number;
+  pct: number;
+  dropoff: number;
+  color: string;
+}
+
+export interface FunnelPayload {
+  total: number;
+  contacted: number;
+  qualified: number;
+  signed: number;
+  stages: FunnelStage[];
+}
+
 export interface OverviewResponse {
   total_leads: number;
   active_conversations: number;
@@ -158,6 +175,8 @@ export interface OverviewResponse {
   currency?: string;
   signed_contracts?: number;
   optional_digi_revenue?: number;
+  engaged_conversations?: number;
+  funnel?: FunnelPayload | null;
 }
 
 // Matches backend/api/campaign_schemas.py's CampaignSummary exactly -

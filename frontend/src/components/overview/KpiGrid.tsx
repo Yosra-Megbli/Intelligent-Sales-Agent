@@ -1,52 +1,41 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { KpiCard } from "./KpiCard";
-import { OverviewResponse, StatsSummaryResponse } from "@/api/types";
+import { OverviewResponse } from "@/api/types";
 
 interface KpiGridProps {
   overview?: OverviewResponse | null;
-  stats?: StatsSummaryResponse | null;
   isLoading?: boolean;
 }
 
 export const KpiGrid: React.FC<KpiGridProps> = ({
   overview,
-  stats,
   isLoading = false,
 }) => {
   const { t } = useTranslation();
 
-  // Extract raw counts or fallback
+  // All values come directly from the canonical MetricsService via the
+  // /api/dashboard/overview endpoint. No fallback fabrication.
   const contacts = overview?.contacted ?? 0;
   const conversations = overview?.active_conversations ?? 0;
   const qualified = overview?.qualified ?? 0;
+  const signedContracts = overview?.signed_contracts ?? 0;
 
-  // Signed contracts: real CRM count from overview.signed_contracts or stats.by_status.CUSTOMER
-  const flexyCount = stats?.by_status?.QUALIFIED_FLEXY ?? 0;
-  const motionCount = stats?.by_status?.QUALIFIED_MOTION ?? 0;
-  const fallbackSales = flexyCount + motionCount > 0 ? flexyCount + motionCount : Math.round(qualified * 0.45);
+  // Conversion rate: already rounded to 1 decimal by MetricsService
+  const convRate =
+    overview?.conversion_rate != null
+      ? overview.conversion_rate.toFixed(1)
+      : "0.0";
 
-  const signedContracts =
-    overview?.signed_contracts !== undefined && overview?.signed_contracts !== null
-      ? overview.signed_contracts
-      : (stats?.by_status?.CUSTOMER ?? fallbackSales);
-
-  // Conversion rate: percent (formatted with 1 decimal)
-  const convRate = overview?.conversion_rate
-    ? (overview.conversion_rate > 1 ? overview.conversion_rate : overview.conversion_rate * 100).toFixed(1)
-    : "0.0";
-
-  // Cost per sale: analytical metric computed by backend (total conversation AI cost / qualified leads)
+  // Cost per sale: from canonical MetricsService (total_conversations * 0.02 / signed)
   const costPerSale =
-    overview?.cost_per_sale !== undefined && overview?.cost_per_sale !== null
+    overview?.cost_per_sale != null
       ? overview.cost_per_sale.toFixed(2)
-      : signedContracts > 0
-        ? (245 / signedContracts).toFixed(2)
-        : "0.00";
+      : "0.00";
 
-  // Estimated Annual Revenue (CA) from base fixed fee (60,00 €/an base = 5,00 €/mois)
+  // Estimated Annual Revenue = signed_contracts * 60.00 €/yr (canonical base fee)
   const estimatedRevenue =
-    overview?.estimated_ca !== undefined && overview?.estimated_ca !== null
+    overview?.estimated_ca != null
       ? overview.estimated_ca.toLocaleString("fr-BE", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -62,8 +51,6 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
       <KpiCard
         title={t("overview.kpi.contacts")}
         value={contacts}
-        delta={{ value: 18.4, label: t("overview.delta.vsLastWeek"), isPositive: true }}
-        sparklineData={[12, 19, 15, 22, 28, 35, contacts || 40]}
         isLoading={isLoading}
       />
 
@@ -71,8 +58,6 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
       <KpiCard
         title={t("overview.kpi.conversations")}
         value={conversations}
-        delta={{ value: 8.2, label: t("overview.delta.vsLastWeek"), isPositive: true }}
-        sparklineData={[5, 8, 12, 10, 14, 18, conversations || 22]}
         isLoading={isLoading}
       />
 
@@ -80,17 +65,13 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
       <KpiCard
         title={t("overview.kpi.qualified")}
         value={qualified}
-        delta={{ value: 24.5, label: t("overview.delta.vsLastWeek"), isPositive: true }}
-        sparklineData={[3, 5, 8, 12, 16, 20, qualified || 25]}
         isLoading={isLoading}
       />
 
       {/* 4. Contrats Signés */}
       <KpiCard
-        title={t("overview.kpi.signedContracts") || "Contrats Signés"}
+        title={t("overview.kpi.signedContracts")}
         value={signedContracts}
-        delta={{ value: 15.0, label: t("overview.delta.vsLastWeek"), isPositive: true }}
-        sparklineData={[2, 3, 5, 7, 10, 12, signedContracts || 15]}
         isLoading={isLoading}
       />
 
@@ -99,8 +80,6 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
         title={t("overview.kpi.conversionRate")}
         value={convRate}
         suffix="%"
-        delta={{ value: 3.1, label: t("overview.delta.vsLastWeek"), isPositive: true }}
-        sparklineData={[18.2, 19.5, 21.0, 22.4, 23.8, 25.1, parseFloat(convRate) || 26.5]}
         isLoading={isLoading}
       />
 
@@ -109,8 +88,6 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
         title={t("overview.kpi.costPerSale")}
         value={costPerSale}
         prefix="€"
-        delta={{ value: -6.4, label: t("overview.delta.vsLastWeek"), isPositive: true }} // Negative cost is good!
-        sparklineData={[18.5, 16.2, 15.8, 14.2, 13.5, 12.9, parseFloat(costPerSale) || 12.5]}
         isLoading={isLoading}
       />
 
@@ -121,8 +98,6 @@ export const KpiGrid: React.FC<KpiGridProps> = ({
           value={estimatedRevenue}
           prefix="€"
           suffix={t("overview.kpi.annualSuffix") || "/an"}
-          delta={{ value: 28.3, label: t("overview.delta.target"), isPositive: true }}
-          sparklineData={[120, 180, 240, 310, 420, 560, parseFloat(estimatedRevenue.replace(/\s/g, "").replace(",", ".")) || 650]}
           isLoading={isLoading}
         />
       </div>

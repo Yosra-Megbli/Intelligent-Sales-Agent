@@ -77,7 +77,9 @@
       "stepNew": "Nieuwe Contacten",
       "stepContacted": "Benaderd door Sophie",
       "stepQualified": "Gekwalificeerd (Flexy & Motion)",
-      "stepSigned": "Ondertekende Contracten"
+      "stepSigned": "Ondertekende Contracten",
+      "deterministicBadge": "Gecertificeerde deterministische engine",
+      "dropoff": "uitval bij deze stap"
     },
     "statusDistribution": {
       "title": "CRM Statusverdeling",

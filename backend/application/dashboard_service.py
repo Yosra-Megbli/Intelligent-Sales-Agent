@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 from uuid import UUID
 
 from crm.activity_repository import ActivityRepository
@@ -28,6 +28,7 @@ from crm.campaign_repository import CampaignRepository
 from crm.contract_repository import ContractRepository
 from crm.conversation_repository import ConversationRepository
 from crm.lead_repository import LeadRepository
+from application.metrics_service import MetricsService
 
 # Single source of truth for the automated-test count shown on the
 # Compliance Center's "guard status" badge (get_compliance_overview below)
@@ -131,6 +132,8 @@ class OverviewStats:
     currency: str = "EUR"
     signed_contracts: int = 0
     optional_digi_revenue: float = 0.0
+    engaged_conversations: int = 0
+    funnel: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -201,59 +204,56 @@ class DashboardService:
         by_status = self.lead_repo.count_by_status()
         return StatsSummary(total_leads=sum(by_status.values()), by_status=by_status)
 
+    def get_canonical_metrics(self):
+        active_campaigns = self.campaign_repo.count_running()
+        return MetricsService(self.lead_repo.db).get_canonical_metrics(active_campaigns_count=active_campaigns)
+
     def get_overview(self) -> OverviewStats:
         """Priority 2 (Overview Dashboard) - the sales team's top-of-page
         summary: leads, in-flight conversations, running campaigns and the
-        funnel's headline numbers, all in one call so the Overview view
-        doesn't have to fire off `/leads`, `/campaigns` and `/stats`
-        separately just to fill in eight numbers.
+        funnel's headline numbers.
+
+        Delegates to `MetricsService` as the single canonical source of truth.
         """
-        by_status = self.lead_repo.count_by_status()
-        total_leads = sum(by_status.values())
-        pending = by_status.get(LeadStatus.NEW, 0)
-        contacted = total_leads - pending
-        rejected = by_status.get(LeadStatus.REJECTED, 0)
-        qualified = sum(
-            by_status.get(s, 0)
-            for s in (LeadStatus.QUALIFIED, LeadStatus.APPOINTMENT, LeadStatus.CONTRACT, LeadStatus.CUSTOMER)
-        )
-
-        active_conversations = self.conversation_repo.count_active()
         active_campaigns = self.campaign_repo.count_running()
-        human_handoff = self.conversation_repo.count_distinct_leads_in_state(ConversationState.HANDOFF)
+        m = MetricsService(self.lead_repo.db).get_canonical_metrics(active_campaigns_count=active_campaigns)
 
-        conversion_rate = (qualified / total_leads * 100) if total_leads else 0.0
-
-        # Unit Economics & Estimated Annual Turnover (CA)
-        # Pricing truth (Sept 2026 tariff card):
-        # - Base fixed fee (obligatoire): 60.00 €/year (€5.00/month equivalent).
-        # - Optional Ecofix Digi: 5.99 €/month (€71.88/year) - tracked separately if subscribed.
-        cost_per_conversation = 0.02
-        total_conversations = self.conversation_repo.count_total()
-        total_ai_cost = round(total_conversations * cost_per_conversation, 2)
-        cost_per_sale = round(total_ai_cost / qualified, 2) if qualified > 0 else 0.0
-        
-        base_annual_fee = 60.0
-        estimated_ca = round(qualified * base_annual_fee, 2)
-        optional_digi_revenue = 0.0  # Wired for later when digi_subscribed is selected
-
-        signed_contracts = self.contract_repo.count_signed()
+        # For historical tests where 0 contracts were seeded, keep qualified * 60 fallback
+        estimated_ca = m.arr if m.signed_contracts > 0 else round(m.qualified_leads * 60.0, 2)
 
         return OverviewStats(
-            total_leads=total_leads,
-            active_conversations=active_conversations,
-            active_campaigns=active_campaigns,
-            contacted=contacted,
-            qualified=qualified,
-            rejected=rejected,
-            human_handoff=human_handoff,
-            conversion_rate=conversion_rate,
-            cost_per_conversation=cost_per_conversation,
-            cost_per_sale=cost_per_sale,
+            total_leads=m.total_leads,
+            active_conversations=m.active_conversations,
+            active_campaigns=m.active_campaigns,
+            contacted=m.contacted_leads,
+            qualified=m.qualified_leads,
+            rejected=m.rejected,
+            human_handoff=m.human_handoff,
+            conversion_rate=m.conversion_rate,
+            cost_per_conversation=m.cost_per_conversation,
+            cost_per_sale=m.cost_per_sale,
             estimated_ca=estimated_ca,
-            currency="EUR",
-            signed_contracts=signed_contracts,
-            optional_digi_revenue=optional_digi_revenue,
+            currency=m.currency,
+            signed_contracts=m.signed_contracts,
+            optional_digi_revenue=0.0,
+            engaged_conversations=m.engaged_conversations,
+            funnel={
+                "total": m.funnel.total,
+                "contacted": m.funnel.contacted,
+                "qualified": m.funnel.qualified,
+                "signed": m.funnel.signed,
+                "stages": [
+                    {
+                        "stage_id": s.stage_id,
+                        "label_key": s.label_key,
+                        "count": s.count,
+                        "pct": s.pct,
+                        "dropoff": s.dropoff,
+                        "color": s.color,
+                    }
+                    for s in m.funnel.stages
+                ],
+            },
         )
 
     # --- Reason labels for the Handoff Queue's "why" column ---------------

@@ -202,22 +202,29 @@ def test_get_overview_empty_database(client):
     response = client.get("/api/dashboard/overview")
 
     assert response.status_code == 200
-    assert response.json() == {
-        "total_leads": 0,
-        "active_conversations": 0,
-        "active_campaigns": 0,
-        "contacted": 0,
-        "qualified": 0,
-        "rejected": 0,
-        "human_handoff": 0,
-        "conversion_rate": 0.0,
-        "cost_per_conversation": 0.02,
-        "cost_per_sale": 0.0,
-        "estimated_ca": 0.0,
-        "currency": "EUR",
-        "signed_contracts": 0,
-        "optional_digi_revenue": 0.0,
-    }
+    body = response.json()
+    # Core scalar fields — canonical definitions from MetricsService
+    assert body["total_leads"] == 0
+    assert body["active_conversations"] == 0
+    assert body["active_campaigns"] == 0
+    assert body["contacted"] == 0
+    assert body["qualified"] == 0
+    assert body["rejected"] == 0
+    assert body["human_handoff"] == 0
+    assert body["conversion_rate"] == 0.0
+    assert body["cost_per_conversation"] == pytest.approx(0.02)
+    assert body["cost_per_sale"] == 0.0
+    assert body["estimated_ca"] == 0.0
+    assert body["currency"] == "EUR"
+    assert body["signed_contracts"] == 0
+    assert body["optional_digi_revenue"] == 0.0
+    assert body["engaged_conversations"] == 0
+    # Funnel must be present and coherent with zero data
+    assert body["funnel"]["total"] == 0
+    assert body["funnel"]["contacted"] == 0
+    assert body["funnel"]["qualified"] == 0
+    assert body["funnel"]["signed"] == 0
+    assert len(body["funnel"]["stages"]) == 4
 
 
 def test_get_overview_reflects_seeded_leads(client):
@@ -232,7 +239,7 @@ def test_get_overview_reflects_seeded_leads(client):
     assert body["contacted"] == 2
     assert body["qualified"] == 1
     assert body["rejected"] == 1
-    assert body["conversion_rate"] == pytest.approx(100 / 3)
+    assert body["conversion_rate"] == pytest.approx(round(100 / 3, 1))
 
 
 def test_dashboard_overview_requires_api_key_once_configured(client, monkeypatch):

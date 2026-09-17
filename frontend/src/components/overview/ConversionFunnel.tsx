@@ -3,17 +3,15 @@ import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
-import { OverviewResponse, StatsSummaryResponse } from "@/api/types";
+import { OverviewResponse } from "@/api/types";
 
 interface ConversionFunnelProps {
   overview?: OverviewResponse | null;
-  stats?: StatsSummaryResponse | null;
   isLoading?: boolean;
 }
 
 export const ConversionFunnel: React.FC<ConversionFunnelProps> = ({
   overview,
-  stats,
   isLoading = false,
 }) => {
   const { t } = useTranslation();
@@ -40,47 +38,70 @@ export const ConversionFunnel: React.FC<ConversionFunnelProps> = ({
     );
   }
 
-  const total = overview?.total_leads || 0;
-  const contacted = overview?.contacted || 0;
-  const qualified = overview?.qualified || 0;
-  const flexy = stats?.by_status?.QUALIFIED_FLEXY || 0;
-  const motion = stats?.by_status?.QUALIFIED_MOTION || 0;
-  const signed = flexy + motion > 0 ? flexy + motion : Math.round(qualified * 0.45);
+  // Canonical funnel data from backend MetricsService — no frontend fabrication.
+  // If overview.funnel is present (new canonical schema), use it directly.
+  // Otherwise fall back to the scalar fields for backward compat.
+  const apiStages = overview?.funnel?.stages;
 
-  const steps = [
-    {
-      id: "new",
-      label: t("overview.funnel.stepNew"),
-      count: total,
-      pct: 100,
-      dropoff: total > 0 ? Math.round(((total - contacted) / total) * 100) : 0,
-      color: "bg-neutral-500",
-    },
-    {
-      id: "contacted",
-      label: t("overview.funnel.stepContacted"),
-      count: contacted,
-      pct: total > 0 ? Math.round((contacted / total) * 100) : 0,
-      dropoff: contacted > 0 ? Math.round(((contacted - qualified) / contacted) * 100) : 0,
-      color: "bg-[var(--info-blue)]",
-    },
-    {
-      id: "qualified",
-      label: t("overview.funnel.stepQualified"),
-      count: qualified,
-      pct: total > 0 ? Math.round((qualified / total) * 100) : 0,
-      dropoff: qualified > 0 ? Math.round(((qualified - signed) / qualified) * 100) : 0,
-      color: "bg-[var(--teal-motion)]",
-    },
-    {
-      id: "signed",
-      label: t("overview.funnel.stepSigned"),
-      count: signed,
-      pct: total > 0 ? Math.round((signed / total) * 100) : 0,
-      dropoff: 0,
-      color: "bg-[var(--color-teal)]",
-    },
-  ];
+  const steps = apiStages
+    ? apiStages.map((s: {
+        stage_id: string;
+        label_key: string;
+        count: number;
+        pct: number;
+        dropoff: number;
+        color: string;
+      }) => ({
+        id: s.stage_id,
+        // Prefer backend label_key translated; fall back to raw key
+        label: t(s.label_key, s.label_key),
+        count: s.count,
+        pct: s.pct,
+        dropoff: s.dropoff,
+        color: s.color,
+      }))
+    : (() => {
+        // Scalar-only fallback (only if funnel object is missing)
+        const total = overview?.total_leads || 0;
+        const contacted = overview?.contacted || 0;
+        const qualified = overview?.qualified || 0;
+        const signed = overview?.signed_contracts || 0;
+
+        return [
+          {
+            id: "new",
+            label: t("overview.funnel.stepNew"),
+            count: total,
+            pct: 100,
+            dropoff: total > 0 ? Math.round(((total - contacted) / total) * 100) : 0,
+            color: "bg-neutral-500",
+          },
+          {
+            id: "contacted",
+            label: t("overview.funnel.stepContacted"),
+            count: contacted,
+            pct: total > 0 ? Math.round((contacted / total) * 100) : 0,
+            dropoff: contacted > 0 ? Math.round(((contacted - qualified) / contacted) * 100) : 0,
+            color: "bg-[var(--info-blue)]",
+          },
+          {
+            id: "qualified",
+            label: t("overview.funnel.stepQualified"),
+            count: qualified,
+            pct: total > 0 ? Math.round((qualified / total) * 100) : 0,
+            dropoff: qualified > 0 ? Math.round(((qualified - signed) / qualified) * 100) : 0,
+            color: "bg-[var(--teal-motion)]",
+          },
+          {
+            id: "signed",
+            label: t("overview.funnel.stepSigned"),
+            count: signed,
+            pct: total > 0 ? Math.round((signed / total) * 100) : 0,
+            dropoff: 0,
+            color: "bg-[var(--color-teal)]",
+          },
+        ];
+      })();
 
   return (
     <Card className="mt-6">
@@ -92,7 +113,7 @@ export const ConversionFunnel: React.FC<ConversionFunnelProps> = ({
           </div>
           <div className="flex items-center gap-1.5 text-xs text-[var(--color-teal-text)] font-semibold bg-[var(--color-teal-soft)] border border-[var(--color-teal-soft-border)] px-2.5 py-1 rounded-full self-start">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Moteur déterministe certifié</span>
+            <span>{t("overview.funnel.deterministicBadge")}</span>
           </div>
         </div>
       </CardHeader>
@@ -109,7 +130,7 @@ export const ConversionFunnel: React.FC<ConversionFunnelProps> = ({
                     0{idx + 1} • {step.label}
                   </span>
                   <span className="tabular-nums font-mono font-medium text-[11px]">
-                    {step.pct}%
+                    {step.pct.toFixed(1)}%
                   </span>
                 </div>
 
@@ -125,6 +146,13 @@ export const ConversionFunnel: React.FC<ConversionFunnelProps> = ({
                   style={{ width: `${Math.max(step.pct, 4)}%` }}
                 />
               </div>
+
+              {/* Drop-off annotation (not shown for last step) */}
+              {idx < steps.length - 1 && step.dropoff > 0 && (
+                <div className="text-[10px] text-[var(--ink-subtle)] mt-2 tabular-nums">
+                  ↓ {step.dropoff.toFixed(1)}% {t("overview.funnel.dropoff")}
+                </div>
+              )}
 
               {/* Step indicator arrow for desktop */}
               {idx < steps.length - 1 && (

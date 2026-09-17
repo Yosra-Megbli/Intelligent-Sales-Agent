@@ -127,10 +127,10 @@ export const OverviewPage: React.FC = () => {
       )}
 
       {/* 7 KPI Cards Grid */}
-      <KpiGrid overview={overview} stats={stats} isLoading={isLoading} />
+      <KpiGrid overview={overview} isLoading={isLoading} />
 
       {/* Conversion Funnel */}
-      <ConversionFunnel overview={overview} stats={stats} isLoading={isLoading} />
+      <ConversionFunnel overview={overview} isLoading={isLoading} />
 
       {/* Live Recent Activity Feed */}
       <RecentActivityList
