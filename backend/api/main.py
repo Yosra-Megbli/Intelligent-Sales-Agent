@@ -10,9 +10,9 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, status
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
@@ -158,6 +158,12 @@ if _DASHBOARD_DIR.is_dir():
         StaticFiles(directory=_DASHBOARD_DIR / "assets"),
         name="dashboard-assets",
     )
+    if (_DASHBOARD_DIR / "assets").exists():
+        app.mount(
+            "/assets",
+            StaticFiles(directory=_DASHBOARD_DIR / "assets"),
+            name="root-assets",
+        )
 
     _dashboard_index = _DASHBOARD_DIR / "index.html"
 
@@ -168,9 +174,13 @@ if _DASHBOARD_DIR.is_dir():
 
 
 
-@app.get("/")
-def root() -> dict:
-    """Root service discovery endpoint."""
+@app.get("/", response_model=None)
+def root(request: Request):
+    """Root service discovery endpoint, or redirect browser to /dashboard."""
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept and "application/json" not in accept:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/dashboard")
     return {
         "service": "Ecofix Sophie API",
         "status": "online",
