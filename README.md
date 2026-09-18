@@ -4,14 +4,14 @@
 ![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React-Vite%20%2B%20TS-61DAFB?logo=react&logoColor=black)
-![Tests](https://img.shields.io/badge/tests-897%20passing-brightgreen)
+![Tests](https://img.shields.io/badge/tests-898%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
 Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'électricité et de gaz Ecofix : elle engage la conversation, répond aux objections, collecte et valide les informations nécessaires, génère le contrat et le fait signer électroniquement, puis transmet les leads qualifiés à l'équipe commerciale humaine.
 
 ## In short (EN)
 
-A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision — the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live, SMS ready; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, PDF contract generation, Yousign e-signature integration, a React ops dashboard, a RAG v2 knowledge base with citation validation, API-key/webhook-signature security, and **897 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs — this project is built for a real French-speaking client.
+A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision — the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live, SMS ready; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, PDF contract generation, Yousign e-signature integration, a React ops dashboard, a RAG v2 knowledge base with citation validation, API-key/webhook-signature security, and **898 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs — this project is built for a real French-speaking client.
 
 ## Statut du projet & déploiement en production
 
@@ -47,7 +47,7 @@ Les métriques financières affichées dans le tableau de bord reflètent la ré
 
 ### 1. Structure de coûts de fonctionnement
 - **Coût d'inférence par conversation qualifiée** : ~0,02 € (architecture hybride : moteur déterministe YAML + extraction Groq ultra-rapide).
-- **Coût d'infrastructure d'hébergement** : 0,00 € / mois en phase pilote grâce aux niveaux gratuits de Render, Neon, Upstash et Vercel.
+- **Coût d'infrastructure d'hébergement** : 0,00 € / mois en phase pilote grâce aux niveaux gratuits de Render, Neon et Upstash.
 - **Marge brute d'acquisition** : > 99 % d'économie par rapport aux coûts d'un centre d'appels classique (8 à 15 € par lead qualifié par un opérateur humain).
 
 ### 2. Vérité tarifaire Ecofix (septembre 2026)
@@ -108,7 +108,7 @@ frontend/
 - **IA Conversationnelle** : Groq (`openai/gpt-oss-120b` / Llama 3.3), abstraction `LLMProvider` remplaçable
 - **Embeddings RAG** : Google AI (`models/gemini-embedding-001`, 768 dimensions), abstraction `EmbeddingProvider`
 - **Frontend** : React 18, Vite, TypeScript, Tailwind, TanStack Query
-- **Tests** : Pytest (897 tests unitaires/intégration + scénarios golden)
+- **Tests** : Pytest (898 tests unitaires/intégration + scénarios golden)
 
 ## Démarrage rapide — backend
 
@@ -154,15 +154,17 @@ pytest tests/ golden_tests/ -v
 
 ## Écrans du dashboard React
 
-Le dashboard d'administration et de supervision comporte 8 écrans complets :
+Le dashboard d'administration et de supervision comporte 10 écrans complets :
 
-- **Tableau de bord** (`/`) : indicateurs clés (taux de qualification, coût moyen par conversation ~0,02 €, coût d'acquisition, revenus annuels estimés avec distinction frais fixes 60 €/an et add-on Digi optionnel 5,99 €/mois).
+- **Tableau de bord** (`/`) : indicateurs clés (taux de qualification, coût moyen par conversation ~0,02 €, coût d'acquisition, revenus annuels estimés avec distinction frais fixes 60 €/an et add-on Digi optionnel 5,99 €/mois) — tous calculés par `application/metrics_service.py`, source unique de vérité partagée avec les autres écrans.
 - **Prospects & Leads** (`/leads`) : tableau CRM en temps réel, filtres multi-critères, modal d'import CSV avec prévisualisation et titres en gras, bouton d'ajout unitaire de prospect, tiroir de détail 360° du lead (données CRM, timeline d'activités, génération et signature du contrat SPÉCIMEN).
+- **Contrats & Ventes** (`/contracts`) : 5 KPIs commerciaux (Total, Signés, En attente, Taux de signature, ARR), recherche et filtres par statut, téléchargement PDF, et signature simulée avec tampon eIDAS certifié (hash SHA-256 + horodatage UTC) via le studio de signature interactif (`ContractVisualViewerModal.tsx`).
 - **Conversations & Replay** (`/conversations`) : historique trilingue des dialogues par canal, drawer de relecture pas à pas avec trace d'audit.
+- **Simulateur** (`/chat`) : bac à sable interactif connecté en direct au moteur de vente (state machine + rules engine), permettant d'éprouver les 5 couches anti-hallucination et les règles d'admissibilité en conditions réelles.
+- **Campagnes sortantes** (`/campaigns`) : assistant de création en 3 étapes (info & canal, ciblage géographique/CRM/CSV, récapitulatif avec aperçu de divulgation IA légale), prévisualisation obligatoire avant lancement, pause/reprise/annulation et métriques de progression en direct.
+- **Conformité** (`/compliance`) : synthèse RGPD (mécanisme STOP et purge des données) et cadre réglementaire du marché belge de l'énergie (gestionnaires de réseau par région, zéro frais de résiliation).
+- **Base de connaissances** (`/knowledge`) : gestionnaire RAG v2 avec table des documents sources PDF, statut de cycle de vie (Brouillon / Publié / Archivé), zone de téléversement avec vérification de la couche texte, testeur QA de transparence avec curseur de sensibilité `RAG_MIN_SIMILARITY` (inspection des segments extraits et score sans appel LLM), alertes d'obsolescence (cycle W3) et table de repli RAG v1 par mots-clés.
 - **Supervision Live** (`/live`) : cockpit temps réel alimenté par flux SSE (Server-Sent Events) via jeton HMAC signé, cartes de conversation actives dynamiques, compteurs in/out par minute, tiroir replay intégré et repli automatique sur polling 30 s si la liaison est interrompue plus de 60 s.
-- **Campagnes sortantes** (`/campaigns`) : gestion des campagnes sortantes SMS, prévisualisation obligatoire avant lancement (aperçu de divulgation IA légale et comptage réel des cibles), pause/reprise et métriques de progression en direct.
-- **Base de connaissances** (`/knowledge`) : gestionnaire RAG v2 avec table des documents sources PDF, statut de cycle de vie (Brouillon / Publié / Archivé), zone de téléversement avec vérification de la couche texte, testeur QA de transparence (inspection des segments extraits et score sans appel LLM), alertes d'obsolescence (cycle W3) et table de repli RAG v1 par mots-clés.
-- **Simulateur** (`/simulator`) : bac à sable interactif multi-canal et multi-langue (FR, NL, EN) permettant d'éprouver les 5 couches anti-hallucination et les règles d'admissibilité en direct.
 - **Paramètres** (`/settings`) : gestion sécurisée des clés API, secrets de webhooks, simulation Yousign Sandbox pour validation du cycle de vie contractuel et statut de santé des intégrations.
 
 ## Architecture RAG v2
