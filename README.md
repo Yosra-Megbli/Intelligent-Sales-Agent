@@ -13,6 +13,16 @@ Sophie est un agent conversationnel IA qui qualifie des prospects pour des contr
 
 A production-shaped AI sales agent, not a chatbot demo: a deterministic state machine + declarative YAML rules engine owns every dialogue/qualification decision — the LLM (Groq/Llama) only phrases replies in natural language, it never decides a state transition. Multi-channel (Telegram + Web live, SMS ready; WhatsApp and outbound Voice fully wired end-to-end via Twilio, pending activation), with an outbound campaign engine, PDF contract generation, Yousign e-signature integration, a React ops dashboard, a RAG v2 knowledge base with citation validation, API-key/webhook-signature security, and **898 automated tests** including end-to-end golden conversation scenarios. See below (French) for full docs — this project is built for a real French-speaking client.
 
+## Démo en ligne
+
+| Ressource | Lien |
+|---|---|
+| **Dashboard (démo live)** | https://intelligent-sales-agent.onrender.com/dashboard/ |
+| **Healthcheck de l'API** | https://intelligent-sales-agent.onrender.com/health |
+| **Bot Telegram** | https://t.me/EcofixSalesBot |
+
+> L'hébergement Render est en offre gratuite : après une période d'inactivité, le premier chargement peut prendre 30 à 60 secondes.
+
 ## Statut du projet & déploiement en production
 
 Le projet est **déployé en production** sur une infrastructure cloud moderne, sécurisée et optimisée (100 % free tier pour le pilote).
@@ -25,7 +35,7 @@ Le projet est **déployé en production** sur une infrastructure cloud moderne, 
 | **Healthcheck** | Endpoint public DB + Redis | [`/health`](https://intelligent-sales-agent.onrender.com/health) (`{"status":"ok"}`) |
 | **Base de données** | Neon (PostgreSQL managé + extension pgvector) | Actif, index HNSW cosinus 768d |
 | **Cache & Pub/Sub** | Upstash (Redis serverless) | Actif pour le rate limiting et le streaming SSE |
-| **Frontend (Dashboard)** | Render (intégré / SPA React 18 + Vite) | [`/dashboard`](https://intelligent-sales-agent.onrender.com/dashboard) |
+| **Frontend (Dashboard)** | Render (intégré / SPA React 18 + Vite) | [`/dashboard/`](https://intelligent-sales-agent.onrender.com/dashboard/) |
 | **Inférence IA** | Groq Cloud (`openai/gpt-oss-120b` / Llama 3.3) | ~300 ms de latence moyenne |
 | **Embeddings RAG** | Google AI (`models/gemini-embedding-001`, 768 dimensions) | Actif, 12 grilles tarifaires officielles publiées |
 | **Bot Telegram** | Pilote inbound multi-canal | [`@EcofixSalesBot`](https://t.me/EcofixSalesBot) (actif en direct) |
@@ -41,35 +51,46 @@ NOUVEAU LEAD → QUALIFIÉ → CONTRAT GÉNÉRÉ (PDF) → ENVOI YOUSIGN → SIG
 - **Génération de contrat PDF** : module ReportLab (`contracts/pdf_generator.py`) incluant les mentions légales obligatoires (loi IA européenne, droit de rétractation de 14 jours, grille tarifaire officielle).
 - **Signature électronique** : intégration Yousign Sandbox v3 (`integrations/yousign.py`) avec webhooks HMAC sécurisés et simulation de signature instantanée (`POST /api/contracts/{id}/simulate-sign`). Dégradation propre si `YOUSIGN_API_KEY` n'est pas configurée : le flux s'arrête proprement à l'étape PDF sans planter.
 
-## Économie réelle en production (unit economics)
+## Modèle économique (estimations du pilote)
 
-Les métriques financières affichées dans le tableau de bord reflètent la réalité du marché belge et la stricte vérité tarifaire Ecofix :
+Les chiffres ci-dessous sont des **estimations et hypothèses** du pilote, pas des résultats mesurés en production. Ils servent de base de discussion et sont à valider avec des données réelles :
 
 ### 1. Structure de coûts de fonctionnement
 - **Coût d'inférence par conversation qualifiée** : ~0,02 € (architecture hybride : moteur déterministe YAML + extraction Groq ultra-rapide).
 - **Coût d'infrastructure d'hébergement** : 0,00 € / mois en phase pilote grâce aux niveaux gratuits de Render, Neon et Upstash.
-- **Marge brute d'acquisition** : > 99 % d'économie par rapport aux coûts d'un centre d'appels classique (8 à 15 € par lead qualifié par un opérateur humain).
+- **Économie estimée** : de l'ordre de 99 % par rapport à un centre d'appels classique (hypothèse interne : 8 à 15 € par lead qualifié par un opérateur humain, à sourcer).
 
-### 2. Vérité tarifaire Ecofix (septembre 2026)
+### 2. Hypothèses tarifaires Ecofix (septembre 2026, à confirmer avec le client)
 - **Frais fixes de base (obligatoires)** : 60,00 € / an par contrat d'énergie (électricité ou gaz).
 - **Option Ecofix Digi (strictement optionnelle)** : 5,99 € / mois pour le suivi temps réel et le pilotage intelligent via l'application mobile — jamais présentée comme une redevance de base.
 - **Programme de parrainage « Friends with Benefits »** : remise permanente de 5,00 € / mois par filleul actif, sans plafond de cumul.
 - **Frais de sortie résidentielle en Belgique** : 0,00 € (résiliation libre à tout moment, bascule standard sous 3 à 4 semaines).
 
-### 3. Ratio financier du pilote
-Pour 1 000 conversations menées par Sophie :
+### 3. Projection financière du pilote (hypothèses)
+Pour 1 000 conversations menées par Sophie, avec les hypothèses de conversion suivantes :
 - Coût total d'inférence IA : 20,00 €
 - Leads hautement qualifiés (~30 %) : 300 prospects
 - Contrats conclus estimés (~10 %) : 100 souscriptions
 - Chiffre d'affaires brut généré (frais fixes seuls) : 6 000 € / an (hors consommation volumétrique et abonnements Digi)
 
-## Captures d'écran de la production
+## Captures d'écran
 
-### Tableau de bord & économie réelle
-![Tableau de bord production](docs/images/dashboard_production.jpg)
+Captures de l'application déployée ([dashboard en ligne](https://intelligent-sales-agent.onrender.com/dashboard/)).
 
-### Supervision live (cockpit SSE) & tiroir replay
-![Supervision live cockpit](docs/images/live_cockpit.jpg)
+### Tableau de bord
+![Tableau de bord](docs/images/01-dashboard.png)
+
+### Prospects (CRM) et tiroir de détail 360°
+![Prospects](docs/images/02-leads.png)
+
+### Simulateur de conversation
+![Simulateur](docs/images/03-simulateur.png)
+
+### Supervision live (flux SSE) et replay
+![Supervision live](docs/images/04-live.png)
+
+### Base de connaissances (RAG v2)
+![Base de connaissances](docs/images/05-knowledge.png)
 
 ## Architecture
 
@@ -136,7 +157,7 @@ npm run dev   # http://localhost:5173, proxy /api -> localhost:8001
 
 ## Migrations DB
 
-Ce projet gère ses migrations via des scripts SQL exécutés automatiquement au démarrage ou via `migration_runner.py`. Les scripts SQL correspondants vivent dans `backend/database/migrations/`, numérotés dans l'ordre où ils doivent être appliqués :
+Ce projet gère ses migrations via des scripts SQL exécutés automatiquement au démarrage ou via `backend/database/migration_runner.py`. Les scripts SQL correspondants vivent dans `backend/database/migrations/`, numérotés dans l'ordre où ils doivent être appliqués :
 
 ```bash
 psql "$DATABASE_URL" -f backend/database/migrations/0014_add_contract_activity_types.sql
@@ -158,7 +179,7 @@ Le dashboard d'administration et de supervision comporte 10 écrans complets :
 
 - **Tableau de bord** (`/`) : indicateurs clés (taux de qualification, coût moyen par conversation ~0,02 €, coût d'acquisition, revenus annuels estimés avec distinction frais fixes 60 €/an et add-on Digi optionnel 5,99 €/mois) — tous calculés par `application/metrics_service.py`, source unique de vérité partagée avec les autres écrans.
 - **Prospects & Leads** (`/leads`) : tableau CRM en temps réel, filtres multi-critères, modal d'import CSV avec prévisualisation et titres en gras, bouton d'ajout unitaire de prospect, tiroir de détail 360° du lead (données CRM, timeline d'activités, génération et signature du contrat SPÉCIMEN).
-- **Contrats & Ventes** (`/contracts`) : 5 KPIs commerciaux (Total, Signés, En attente, Taux de signature, ARR), recherche et filtres par statut, téléchargement PDF, et signature simulée avec tampon eIDAS certifié (hash SHA-256 + horodatage UTC) via le studio de signature interactif (`ContractVisualViewerModal.tsx`).
+- **Contrats & Ventes** (`/contracts`) : 5 KPIs commerciaux (Total, Signés, En attente, Taux de signature, ARR), recherche et filtres par statut, téléchargement PDF, et signature simulée avec tampon eIDAS certifié (hash SHA-256 + horodatage UTC) via le studio de signature interactif (`frontend/src/components/contracts/ContractVisualViewerModal.tsx`).
 - **Conversations & Replay** (`/conversations`) : historique trilingue des dialogues par canal, drawer de relecture pas à pas avec trace d'audit.
 - **Simulateur** (`/chat`) : bac à sable interactif connecté en direct au moteur de vente (state machine + rules engine), permettant d'éprouver les 5 couches anti-hallucination et les règles d'admissibilité en conditions réelles.
 - **Campagnes sortantes** (`/campaigns`) : assistant de création en 3 étapes (info & canal, ciblage géographique/CRM/CSV, récapitulatif avec aperçu de divulgation IA légale), prévisualisation obligatoire avant lancement, pause/reprise/annulation et métriques de progression en direct.
