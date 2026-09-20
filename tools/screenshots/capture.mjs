@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import fs from "node:fs";
 
-const URL = "https://intelligent-sales-agent.onrender.com/dashboard/";
+const TARGET_URL = "https://intelligent-sales-agent.onrender.com/dashboard/";
 const KEY = process.env.SOPHIE_API_KEY;
 if (!KEY) { console.error("Set SOPHIE_API_KEY first."); process.exit(1); }
 
@@ -33,7 +33,7 @@ const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2, locale: "fr-FR" });
 
 console.log("Opening the dashboard (free Render plan: allow up to 2 minutes)...");
-await page.goto(URL, { waitUntil: "domcontentloaded", timeout: 120000 });
+await page.goto(TARGET_URL, { waitUntil: "domcontentloaded", timeout: 120000 });
 const pwd = page.locator('input[type="password"]');
 await pwd.waitFor({ timeout: 120000 });
 await pwd.fill(KEY);
