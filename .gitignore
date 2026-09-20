@@ -26,6 +26,9 @@ dist-ssr/
 *.tsbuildinfo
 .vite/
 
+# --- Screenshot tooling ---
+tools/screenshots/node_modules/
+
 # --- OS / editor ---
 .DS_Store
 .vscode/
