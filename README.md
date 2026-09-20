@@ -21,6 +21,8 @@ A production-shaped AI sales agent, not a chatbot demo: a deterministic state ma
 | **Healthcheck de l'API** | https://intelligent-sales-agent.onrender.com/health |
 | **Bot Telegram** | https://t.me/EcofixSalesBot |
 
+> Le dashboard est protégé par une clé d'accès (`X-API-Key`), fournie sur demande.
+>
 > L'hébergement Render est en offre gratuite : après une période d'inactivité, le premier chargement peut prendre 30 à 60 secondes.
 
 ## Statut du projet & déploiement en production
@@ -80,7 +82,7 @@ Captures de l'application déployée ([dashboard en ligne](https://intelligent-s
 ### Tableau de bord
 ![Tableau de bord](docs/images/01-dashboard.png)
 
-### Prospects (CRM) et tiroir de détail 360°
+### Prospects (CRM)
 ![Prospects](docs/images/02-leads.png)
 
 ### Simulateur de conversation
