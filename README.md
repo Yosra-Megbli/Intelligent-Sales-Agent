@@ -1,4 +1,4 @@
-# Sophie — Agent IA de vente Ecofix
+# Sophie — Agent IA de vente
 Auteure & architecte : Yosra Megbli (github.com/Yosra-Megbli) — conception, architecture, code et industrialisation. Repo maintenu sous un compte familial (hébergement & déploiements).
 
 [![CI](https://github.com/Yosra-Megbli/Intelligent-Sales-Agent/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Yosra-Megbli/Intelligent-Sales-Agent/actions/workflows/ci.yml)
@@ -8,7 +8,7 @@ Auteure & architecte : Yosra Megbli (github.com/Yosra-Megbli) — conception, ar
 ![Tests](https://img.shields.io/badge/tests-898%20passing-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'électricité et de gaz Ecofix : elle engage la conversation, répond aux objections, collecte et valide les informations nécessaires, génère le contrat et le fait signer électroniquement, puis transmet les leads qualifiés à l'équipe commerciale humaine.
+Sophie est un agent conversationnel IA qui qualifie des prospects pour des contrats d'électricité et de gaz: elle engage la conversation, répond aux objections, collecte et valide les informations nécessaires, génère le contrat et le fait signer électroniquement, puis transmet les leads qualifiés à l'équipe commerciale humaine.
 
 ## In short (EN)
 
@@ -28,7 +28,8 @@ A production-shaped AI sales agent, not a chatbot demo: a deterministic state ma
 
 ## Statut du projet & déploiement en production
 
-Le projet est **déployé en production** sur une infrastructure cloud moderne, sécurisée et optimisée (100 % free tier pour le pilote).
+Le projet est **déployé en ligne (pilote / démo live) — sans charge de production réelle** sur une infrastructure cloud moderne, sécurisée et optimisée (100 % free tier pour le pilote).
+
 
 ### Infrastructure de production live
 
