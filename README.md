@@ -1,4 +1,5 @@
 # Sophie — Agent IA de vente Ecofix
+Auteure & architecte : Yosra Megbli (github.com/Yosra-Megbli) — conception, architecture, code et industrialisation. Repo maintenu sous un compte familial (hébergement & déploiements).
 
 [![CI](https://github.com/Yosra-Megbli/Intelligent-Sales-Agent/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Yosra-Megbli/Intelligent-Sales-Agent/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/Python-3.12+-blue?logo=python&logoColor=white)
