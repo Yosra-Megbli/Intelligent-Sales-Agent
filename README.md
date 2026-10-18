@@ -1,8 +1,10 @@
 # Sophie: Deterministic AI Sales Agent
 
+> Portfolio project: a fully working, deployed demo with fictional data. No real client, no real customers.
+
 ![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF) ![Python](https://img.shields.io/badge/Python-3.12-3776AB) ![FastAPI](https://img.shields.io/badge/FastAPI-009688) ![React](https://img.shields.io/badge/React-18-61DAFB) ![License](https://img.shields.io/badge/License-MIT-green)
 
-A conversational AI sales agent that qualifies leads for electricity and gas contracts. It engages prospects, handles objections, collects and validates required information, generates the contract, sends it for e-signature, and hands qualified leads to the human sales team.
+A conversational AI sales agent that qualifies leads for energy (electricity and gas) contracts. It engages prospects, handles objections, collects and validates required information, generates the contract, sends it for e-signature, and hands qualified leads to the human sales team.
 
 **Author and architect:** Yosra Megbli ([github.com/Yosra-Megbli](https://github.com/Yosra-Megbli)): design, architecture, code and deployment. The repository is hosted under a family account.
 
@@ -16,7 +18,7 @@ Sophie is not a chatbot demo. A **deterministic state machine plus a declarative
 |---|---|
 | Ops dashboard | https://intelligent-sales-agent.onrender.com/dashboard/ (access key on request) |
 | API health check | https://intelligent-sales-agent.onrender.com/health |
-| Telegram bot | https://t.me/EcofixSalesBot |
+| Telegram bot | Available on request |
 
 Hosted on Render's free tier: the first load after inactivity can take 30 to 60 seconds.
 
@@ -95,7 +97,7 @@ The simulator lets you exercise five protection layers against hallucination, in
 - Telegram, Twilio and Yousign webhooks verified by signature or shared secret (HMAC)
 - CORS disabled by default; rate limiting per conversation and IP
 - With `ENVIRONMENT=production`, the API refuses to start if `API_KEY` or `TELEGRAM_WEBHOOK_SECRET` is missing
-- Secrets are never committed; client delivery archives are built with `git archive`
+- Secrets are never committed (`.env` is git-ignored)
 
 ## GDPR
 
@@ -139,13 +141,13 @@ A local Redis server is required: several tests use the real cache instead of a 
 ## Known limitations
 
 - WhatsApp and Voice are architected, wired and tested but not activated until Twilio accounts are provisioned.
-- French is the main language tested under pilot conditions; Dutch and English are covered by the engine (RAG v2, disclosure, opt-out).
+- French is the main language tested; Dutch and English are covered by the engine (RAG v2, disclosure, opt-out).
 - The embeddings provider runs on a free tier and should be monitored if volume grows.
-- Cost and conversion figures in the project documentation are pilot estimates, not measured production results.
+- All data (tariffs, prospects, contracts) is fictional; no figures here are measured production results.
 
 ## Status
 
-Deployed as a live pilot and demo, without real production load.
+Deployed as a live demo, with fictional data and no real production load.
 
 ## License
 
